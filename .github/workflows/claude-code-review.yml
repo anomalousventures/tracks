@@ -40,8 +40,17 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
+            ## Context: Go 1.24+ Modern Practices
+            This project uses Go 1.25.3 with modern tooling patterns:
+            - The `tool` directive in go.mod (introduced in Go 1.24) declares development tools
+            - Tools are invoked with `go tool <name>` (e.g., `go tool golangci-lint`)
+            - This is the modern approach and replaces the legacy tools.go pattern
+            - All make commands should use `go tool` prefix for tools declared in the tool block
+            - Go 1.25.3 is the current stable version (not a typo)
+
+            ## Review Guidelines
             Please review this pull request and provide feedback on:
-            - Code quality and best practices
+            - Code quality and best practices (using modern Go patterns)
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
@@ -49,9 +58,15 @@ jobs:
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            ## Comment Management
+            IMPORTANT: Before leaving a review comment, check if you've already commented on this PR:
+            1. Run `gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.author.login == "claude-code[bot]") | .id'` to find your previous comment ID
+            2. If a previous comment exists, update it with `gh api repos/${{ github.repository }}/issues/comments/{comment_id} -X PATCH -f body="<your review>"`
+            3. If no previous comment exists, create one with `gh pr comment ${{ github.event.pull_request.number }} --body "<your review>"`
+
+            This ensures you maintain a single, updated review comment rather than creating multiple comments.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
 
