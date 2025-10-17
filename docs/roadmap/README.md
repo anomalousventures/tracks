@@ -2,7 +2,7 @@
 
 ## Overview
 
-This roadmap outlines the development phases for the Tracks framework. It is designed to be **flexible and adjustable** as we learn during implementation. Each phase builds on the previous ones, but the specifics can be revised based on discoveries and changing priorities.
+This roadmap outlines the development phases for the Tracks framework across **7 phases (Phase 0 through Phase 6)**. It is designed to be **flexible and adjustable** as we learn during implementation. Each phase builds on the previous ones, but the specifics can be revised based on discoveries and changing priorities.
 
 **Last Updated:** 2025-10-17
 **Roadmap Version:** 1.0.0
@@ -19,6 +19,8 @@ This roadmap outlines the development phases for the Tracks framework. It is des
 - [How to Adjust](./ADJUSTING.md) - Guidelines for updating this roadmap
 
 ## Progress Tracking
+
+Track progress across all 7 phases below.
 
 ### Phase 0: Foundation - Not Started
 
