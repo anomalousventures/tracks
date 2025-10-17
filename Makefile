@@ -18,13 +18,11 @@ install-linters: ## Install required linters (markdownlint-cli2)
 # Markdown linting
 lint-md: ## Run markdown linter on all .md files
 	@echo "Running markdown linter..."
-	@which markdownlint-cli2 > /dev/null || (echo "Error: markdownlint-cli2 not found. Run 'make install-linters' first." && exit 1)
-	@markdownlint-cli2 "**/*.md" "#node_modules"
+	@pnpm run lint:md
 
 lint-md-fix: ## Auto-fix markdown linting issues where possible
 	@echo "Auto-fixing markdown issues..."
-	@which markdownlint-cli2 > /dev/null || (echo "Error: markdownlint-cli2 not found. Run 'make install-linters' first." && exit 1)
-	@markdownlint-cli2 --fix "**/*.md" "#node_modules"
+	@pnpm run lint:md:fix
 
 # Go linting
 lint-go: ## Run golangci-lint
@@ -43,7 +41,7 @@ test: ## Run Go unit tests
 
 test-coverage: ## Run tests with coverage
 	@echo "Running tests with coverage..."
-	@go test -v -short -coverprofile=coverage.out ./...
+	@go test -v -race -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
