@@ -34,7 +34,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### Prerequisites
 
-- Go 1.23 or later
+- Go 1.25.3 or later
 - Node.js 24+ and pnpm
 - Git
 - Make
@@ -209,6 +209,43 @@ fix(db): handle connection timeouts gracefully
 
 Add retry logic and better error messages for database
 connection failures.
+```
+
+### PR Title and Description
+
+Since we use squash merging, your **PR title** becomes the commit message in the main branch.
+Use Conventional Commits format for PR titles.
+
+When you create a PR, our template provides a structure to fill out:
+
+**Example PR:**
+
+```text
+Title: feat(mcp): add session management support
+
+## What
+
+Add session management to the MCP server to maintain state across multiple
+client requests. Implements session creation, retrieval, and cleanup.
+
+## Why
+
+Users need persistent state when working with multi-step workflows. Without
+session management, each request starts from scratch which breaks complex
+operations.
+
+## Testing
+
+- [x] Tests pass locally
+- [x] Linting passes (`make lint`)
+- [x] Added unit tests for SessionManager
+- [x] Added integration test for session lifecycle
+
+## Notes
+
+- Uses in-memory storage for now, will add Redis support in future PR
+- Session timeout defaults to 30 minutes (configurable)
+- Fixes #42
 ```
 
 ### Review Process
