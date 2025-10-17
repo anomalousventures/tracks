@@ -1,0 +1,207 @@
+# GoReleaser configuration for Tracks
+# https://goreleaser.com
+
+version: 2
+
+before:
+  hooks:
+    # Ensure dependencies are up to date
+    - go mod tidy
+    # Generate CHANGELOG if it exists
+    - sh -c "command -v git-chglog && git-chglog -o CHANGELOG.md || true"
+
+builds:
+  - id: tracks
+    main: ./cmd/tracks
+    binary: tracks
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+      - -X main.builtBy=goreleaser
+
+  - id: tracks-mcp
+    main: ./cmd/tracks-mcp
+    binary: tracks-mcp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+      - -X main.builtBy=goreleaser
+
+archives:
+  - id: tracks
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+      - CHANGELOG.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: 'New Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Refactors'
+      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: 'Documentation'
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: 'Other Changes'
+      order: 999
+
+dockers:
+  - id: tracks
+    image_templates:
+      - "ghcr.io/anomalousventures/tracks:{{ .Version }}-amd64"
+      - "ghcr.io/anomalousventures/tracks:latest-amd64"
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    dockerfile: Dockerfile
+
+  - id: tracks-arm64
+    image_templates:
+      - "ghcr.io/anomalousventures/tracks:{{ .Version }}-arm64"
+      - "ghcr.io/anomalousventures/tracks:latest-arm64"
+    use: buildx
+    goarch: arm64
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    dockerfile: Dockerfile
+
+docker_manifests:
+  - name_template: 'ghcr.io/anomalousventures/tracks:{{ .Version }}'
+    image_templates:
+      - 'ghcr.io/anomalousventures/tracks:{{ .Version }}-amd64'
+      - 'ghcr.io/anomalousventures/tracks:{{ .Version }}-arm64'
+  - name_template: 'ghcr.io/anomalousventures/tracks:latest'
+    image_templates:
+      - 'ghcr.io/anomalousventures/tracks:latest-amd64'
+      - 'ghcr.io/anomalousventures/tracks:latest-arm64'
+
+brews:
+  - repository:
+      owner: anomalousventures
+      name: homebrew-tap
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    folder: Formula
+    homepage: https://tracks.anomalousventures.com
+    description: A Rails-like web framework for Go
+    license: MIT
+    test: |
+      system "#{bin}/tracks version"
+    install: |
+      bin.install "tracks"
+
+scoops:
+  - repository:
+      owner: anomalousventures
+      name: scoop-bucket
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    homepage: https://tracks.anomalousventures.com
+    description: A Rails-like web framework for Go
+    license: MIT
+
+announce:
+  skip: '{{gt .Patch 0}}'  # Skip patch releases
+
+release:
+  github:
+    owner: anomalousventures
+    name: tracks
+  prerelease: auto
+  name_template: "Tracks {{.Version}}"
+  header: |
+    ## Tracks {{ .Version }} ({{ .Date }})
+
+    Welcome to this new release of Tracks!
+
+    ### Highlights
+
+    {{ .ReleaseNotes }}
+
+  footer: |
+    ## Install or Upgrade
+
+    ### Homebrew (macOS/Linux)
+    ```bash
+    brew install anomalousventures/tap/tracks
+    # or
+    brew upgrade tracks
+    ```
+
+    ### Go Install
+    ```bash
+    go install github.com/anomalousventures/tracks/cmd/tracks@{{ .Tag }}
+    ```
+
+    ### Docker
+    ```bash
+    docker pull ghcr.io/anomalousventures/tracks:{{ .Version }}
+    ```
+
+    ---
+
+    **Full Changelog**: https://github.com/anomalousventures/tracks/compare/{{ .PreviousTag }}...{{ .Tag }}

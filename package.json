@@ -1,0 +1,40 @@
+{
+  "name": "tracks-monorepo",
+  "version": "0.1.0",
+  "description": "A Rails-like web framework for Go that generates idiomatic, production-ready applications",
+  "private": true,
+  "scripts": {
+    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#.chglog' '#website/node_modules'",
+    "lint:md:fix": "markdownlint-cli2 --fix '**/*.md' '#node_modules' '#.chglog' '#website/node_modules'",
+    "website:dev": "pnpm --filter website dev",
+    "website:build": "pnpm --filter website build",
+    "website:serve": "pnpm --filter website serve",
+    "website:deploy": "pnpm --filter website deploy"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "0.18.1"
+  },
+  "packageManager": "pnpm@10.18.3",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "keywords": [
+    "go",
+    "golang",
+    "framework",
+    "web",
+    "rails",
+    "mvc",
+    "code-generation",
+    "templ",
+    "htmx",
+    "sqlc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anomalousventures/tracks"
+  },
+  "license": "MIT",
+  "author": "Aaron Ross <aaron.ross@anomalous.ventures> (https://github.com/ashmortar)"
+}
