@@ -260,6 +260,8 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - **Notes**: Any relevant context (optional)
 
 Avoid:
+
+
 - Bullet-pointed lists with emojis
 - Overly formal or marketing language
 - Unnecessary sections like "Summary" or "Overview"
