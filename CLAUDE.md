@@ -245,10 +245,25 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ## Pull Request Process
 
 - PR titles must use Conventional Commits format (used for squash merge commit)
-- Follow the template in `.github/pull_request_template.md`
+- **MUST follow the template in `.github/pull_request_template.md`** - Fill in What, Why, Testing, and Notes sections
+- Write PR descriptions naturally and concisely - avoid verbose, AI-generated text
+- Keep descriptions brief and to the point, like a human would write them
 - Ensure tests pass locally and linting passes (`make lint`)
 - Keep PRs small and focused on a single change
 - PR title becomes the commit message in main branch (squash merge)
+
+### PR Description Guidelines
+
+- **What**: Brief description of what changed (1-2 sentences)
+- **Why**: Short explanation of why it's needed
+- **Testing**: Checklist of what was tested
+- **Notes**: Any relevant context (optional)
+
+Avoid:
+- Bullet-pointed lists with emojis
+- Overly formal or marketing language
+- Unnecessary sections like "Summary" or "Overview"
+- Verbose explanations when a few words suffice
 
 ## Important Notes
 
