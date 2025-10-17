@@ -1,3 +1,14 @@
+<!--
+PR Title must use Conventional Commits format (for squash merge):
+  feat: add new feature
+  fix: fix bug
+  chore: maintenance task
+  docs: documentation only
+  refactor: code refactoring
+  test: add tests
+  ci: CI/CD changes
+-->
+
 ## What
 
 Brief description of what this PR does.
