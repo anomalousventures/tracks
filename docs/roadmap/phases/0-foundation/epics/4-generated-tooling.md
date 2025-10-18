@@ -142,6 +142,8 @@ linters:
 
 **Note:** The Makefile uses `go tool golangci-lint run` instead of calling `golangci-lint` directly. This follows Go 1.25's modern tooling pattern where tools are declared in `go.mod` with the `tool` directive and invoked via `go tool <name>`.
 
+**Note on Logging:** Generated applications use zerolog for structured logging (servers running in production need JSON logs for observability). The tracks CLI tool uses the Renderer pattern with Lip Gloss + Bubbles for user-friendly output. These are two different contexts with different needs - don't confuse them.
+
 ### Dockerfile
 
 Keep it simple for Phase 0:
