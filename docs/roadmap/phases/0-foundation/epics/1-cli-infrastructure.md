@@ -48,14 +48,21 @@ The following tasks will become GitHub issues:
 2. **Set up Cobra root command with basic structure**
 3. **Implement version tracking and --version flag**
 4. **Add comprehensive help text and TUI placeholder message**
-5. **Implement mode detection and Renderer interfaces**
-6. **Implement ConsoleRenderer with Charm stack**
-7. **Implement JSONRenderer**
-8. **Create Makefile targets for building CLI**
-9. **Add cross-platform build configuration (Linux, macOS, Windows)**
-10. **Write unit tests for root command, version, and Renderer**
-11. **Set up CLI integration test framework**
-12. **Document CLI development workflow and Renderer pattern**
+5. **Define UIMode enum and basic DetectMode with TTY and CI detection**
+6. **Add flag support to mode detection (--json, --no-color, --interactive)**
+7. **Add environment variable support to mode detection (NO_COLOR, TRACKS_LOG_LEVEL)**
+8. **Define Renderer interface and core types (Section, Table, Progress)**
+9. **Create Lip Gloss theme system with color styles**
+10. **Implement ConsoleRenderer with Title and Section rendering**
+11. **Add Table rendering to ConsoleRenderer**
+12. **Add Progress bar rendering to ConsoleRenderer using Bubbles ViewAs**
+13. **Implement JSONRenderer with all Renderer methods**
+14. **Create Makefile targets for building CLI**
+15. **Add cross-platform build configuration (Linux, macOS, Windows)**
+16. **Write unit tests for root command, version, and mode detection**
+17. **Write unit tests for Renderer implementations**
+18. **Set up CLI integration test framework**
+19. **Document CLI development workflow and Renderer pattern**
 
 ## Dependencies
 
