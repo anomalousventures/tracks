@@ -47,25 +47,25 @@ The following tasks will become GitHub issues, ordered by dependency:
 1. **Initialize tracks CLI Go module** (Complete)
 2. **Set up Cobra root command with basic structure** (Complete)
 3. **Implement version tracking and --version flag** (Complete)
-4. **Define global CLI flags (--json, --no-color, --interactive)**
-5. **Add comprehensive help text with examples and flag documentation**
-6. **Add TUI placeholder message for no-args execution**
-7. **Define UIMode enum and UIConfig struct**
-8. **Implement basic DetectMode with TTY and CI detection**
-9. **Wire up flag support to mode detection**
-10. **Wire up environment variable support (NO_COLOR, TRACKS_LOG_LEVEL)**
-11. **Define Renderer interface and core types (Section, Table, Progress)**
-12. **Create Lip Gloss theme system with color styles and NO_COLOR support**
-13. **Implement ConsoleRenderer with Title and Section rendering**
-14. **Add Table rendering to ConsoleRenderer**
-15. **Add Progress bar rendering to ConsoleRenderer using Bubbles ViewAs**
-16. **Implement JSONRenderer with all Renderer methods**
-17. **Create Makefile targets for building CLI**
-18. **Add cross-platform build configuration (Linux, macOS, Windows)**
-19. **Write unit tests for mode detection and flags**
-20. **Write unit tests for Renderer implementations**
-21. **Set up CLI integration test framework**
-22. **Document CLI development workflow and Renderer pattern**
+4. **Define global CLI flags (--json, --no-color, --interactive)** ([#6](https://github.com/anomalousventures/tracks/issues/6))
+5. **Add comprehensive help text with examples and flag documentation** ([#7](https://github.com/anomalousventures/tracks/issues/7))
+6. **Add TUI placeholder message for no-args execution** ([#8](https://github.com/anomalousventures/tracks/issues/8))
+7. **Define UIMode enum and UIConfig struct** ([#9](https://github.com/anomalousventures/tracks/issues/9))
+8. **Implement basic DetectMode with TTY and CI detection** ([#10](https://github.com/anomalousventures/tracks/issues/10))
+9. **Wire up flag support to mode detection** ([#11](https://github.com/anomalousventures/tracks/issues/11))
+10. **Wire up environment variable support (NO_COLOR, TRACKS_LOG_LEVEL)** ([#12](https://github.com/anomalousventures/tracks/issues/12))
+11. **Define Renderer interface and core types (Section, Table, Progress)** ([#13](https://github.com/anomalousventures/tracks/issues/13))
+12. **Create Lip Gloss theme system with color styles and NO_COLOR support** ([#14](https://github.com/anomalousventures/tracks/issues/14))
+13. **Implement ConsoleRenderer with Title and Section rendering** ([#15](https://github.com/anomalousventures/tracks/issues/15))
+14. **Add Table rendering to ConsoleRenderer** ([#16](https://github.com/anomalousventures/tracks/issues/16))
+15. **Add Progress bar rendering to ConsoleRenderer using Bubbles ViewAs** ([#17](https://github.com/anomalousventures/tracks/issues/17))
+16. **Implement JSONRenderer with all Renderer methods** ([#18](https://github.com/anomalousventures/tracks/issues/18))
+17. **Create Makefile targets for building CLI** ([#19](https://github.com/anomalousventures/tracks/issues/19))
+18. **Add cross-platform build configuration (Linux, macOS, Windows)** ([#20](https://github.com/anomalousventures/tracks/issues/20))
+19. **Write unit tests for mode detection and flags** ([#21](https://github.com/anomalousventures/tracks/issues/21))
+20. **Write unit tests for Renderer implementations** ([#22](https://github.com/anomalousventures/tracks/issues/22))
+21. **Set up CLI integration test framework** ([#23](https://github.com/anomalousventures/tracks/issues/23))
+22. **Document CLI development workflow and Renderer pattern** ([#24](https://github.com/anomalousventures/tracks/issues/24))
 
 ## Dependencies
 

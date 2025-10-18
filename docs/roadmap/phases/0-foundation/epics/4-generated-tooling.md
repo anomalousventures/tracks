@@ -105,7 +105,7 @@ lint: ## Run linters
 	go tool golangci-lint run
 
 dev: ## Start development server with hot-reload
-	air -c .air.toml
+	go tool air -c .air.toml
 
 clean: ## Clean build artifacts
 	rm -rf bin/ coverage.out
@@ -140,7 +140,7 @@ linters:
     - gosimple
 ```
 
-**Note:** The Makefile uses `go tool golangci-lint run` instead of calling `golangci-lint` directly. This follows Go 1.25's modern tooling pattern where tools are declared in `go.mod` with the `tool` directive and invoked via `go tool <name>`.
+**Note:** The Makefile uses `go tool <name>` for all development tools (golangci-lint, air, etc.) instead of calling them directly. This follows Go 1.25's modern tooling pattern where tools are declared in `go.mod` with the `tool` directive and invoked via `go tool <name>`. This eliminates the need for global tool installations - all tools are versioned and managed within the project.
 
 **Note on Logging:** Generated applications use zerolog for structured logging (servers running in production need JSON logs for observability). The tracks CLI tool uses the Renderer pattern with Lip Gloss + Bubbles for user-friendly output. These are two different contexts with different needs - don't confuse them.
 
