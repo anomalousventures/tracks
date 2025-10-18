@@ -72,9 +72,15 @@ The following tasks will become GitHub issues, ordered by dependency:
 ### Prerequisites
 
 - Go 1.25+ installed
-- Access to github.com/spf13/cobra package
-- Access to Charm stack packages (lipgloss, bubbles, glamour)
-- Access to github.com/mattn/go-isatty
+- Access to external packages:
+  - github.com/spf13/cobra v1.10.1 (already in go.mod)
+  - github.com/charmbracelet/bubbletea v1.3.0 (already in go.mod)
+  - github.com/charmbracelet/lipgloss v1.1.0 (already in go.mod)
+  - github.com/charmbracelet/bubbles v0.21.0 (to be added)
+  - github.com/charmbracelet/glamour v0.10.0 (to be added)
+  - github.com/mattn/go-isatty v0.0.20 (already in go.mod)
+
+Note: Versions listed are current as of October 2025. Use `go get <package>@latest` during implementation to ensure latest stable versions. Development tools will be added to the `tool` directive in go.mod.
 
 ### Blocks
 
@@ -219,6 +225,10 @@ var rootCmd = &cobra.Command{
 ### Note on Logging vs Output
 
 The tracks CLI tool uses the Renderer pattern for user-facing output (progress bars, success messages, table data). Structured logging with zerolog is for generated applications (web servers), not the CLI tool itself. This separation keeps the CLI tool friendly for developers while generated apps remain production-ready with structured logs.
+
+### Note on Modern Go Tooling Pattern
+
+The CLI and generated projects use the `go tool <name>` pattern for all development tools (golangci-lint, air, etc.) instead of requiring global installations. Tools are declared in `go.mod` using the `tool` directive (Go 1.25+) and invoked via `go tool <name>`. This ensures consistent tool versions across all developers and CI environments, eliminates dependency on global installs, and makes the toolchain fully reproducible.
 
 ## Testing Strategy
 

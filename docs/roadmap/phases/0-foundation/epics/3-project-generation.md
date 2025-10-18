@@ -129,6 +129,29 @@ myapp/
 
 Initially keep it minimal - just the essential structure. Full structure comes with later phases.
 
+### Security: Environment Variables
+
+Generated projects must handle secrets securely:
+
+- `.gitignore` must include `.env` to prevent committing secrets
+- `.env.example` should be generated with placeholder values and a warning comment:
+
+```bash
+# WARNING: Never commit .env file with real secrets!
+# Copy this file to .env and fill in your actual values.
+DATABASE_URL=postgres://user:password@localhost:5432/dbname
+SECRET_KEY=your-secret-key-here
+```
+
+The generated `.gitignore` should include:
+
+```gitignore
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+```
+
 ### Validation Rules
 
 - **Project name:** lowercase, alphanumeric, hyphens/underscores allowed, no spaces
@@ -137,11 +160,39 @@ Initially keep it minimal - just the essential structure. Full structure comes w
 
 ### Error Handling
 
-Provide clear, actionable error messages:
+Provide clear, actionable error messages with proper error wrapping:
 
-- "Directory 'myapp' already exists. Use a different name or remove the directory."
-- "Invalid project name 'My App'. Use lowercase letters, numbers, hyphens, and underscores."
-- "Invalid module name 'not a valid module'. Must be a valid Go import path."
+```go
+// Example error handling pattern
+if err := os.MkdirAll(projectDir, 0755); err != nil {
+    return fmt.Errorf("failed to create project directory: %w", err)
+}
+
+if !isValidProjectName(name) {
+    return fmt.Errorf("invalid project name '%s': use lowercase letters, numbers, hyphens, and underscores", name)
+}
+
+if _, err := os.Stat(projectDir); err == nil {
+    return fmt.Errorf("directory '%s' already exists: use a different name or remove the directory", projectDir)
+}
+```
+
+Always use `fmt.Errorf` with `%w` to wrap errors, providing context while preserving the error chain for debugging.
+
+### Cross-Platform Path Handling
+
+Use `filepath` package functions for cross-platform compatibility:
+
+```go
+// Use filepath.Join for building paths
+projectDir := filepath.Join(baseDir, projectName)
+configFile := filepath.Join(projectDir, "tracks.yaml")
+
+// Use filepath.FromSlash for template paths
+templatePath := filepath.FromSlash("internal/templates/project")
+```
+
+Never construct paths with string concatenation or hardcoded slashes. The `filepath` package handles platform-specific separators (\ on Windows, / on Unix).
 
 ## Testing Strategy
 

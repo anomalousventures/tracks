@@ -159,6 +159,18 @@ COPY --from=builder /app/server /server
 ENTRYPOINT ["/server"]
 ```
 
+**Note on CGO and Alpine:** If the generated project uses LibSQL or SQLite (requires CGO), the Alpine builder image needs build tools:
+
+```dockerfile
+FROM golang:1.25-alpine AS builder
+RUN apk add --no-cache gcc musl-dev
+WORKDIR /app
+COPY . .
+RUN CGO_ENABLED=1 go build -o server cmd/server/main.go
+```
+
+PostgreSQL-based projects don't require CGO and can use the simpler Dockerfile above.
+
 ### GitHub Actions
 
 Basic CI workflow:

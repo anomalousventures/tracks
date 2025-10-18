@@ -120,6 +120,16 @@ internal/templates/
 
 Use Go's text/template for now. Don't overcomplicate with complex template logic. The goal is simple variable substitution.
 
+### Template File Naming Convention
+
+All template files use the `.tmpl` extension. The template engine strips this extension when writing output files:
+
+- `go.mod.tmpl` → `go.mod`
+- `.gitignore.tmpl` → `.gitignore`
+- `main.go.tmpl` → `main.go`
+
+Dotfiles are preserved: the leading dot in `.gitignore.tmpl` is kept, resulting in `.gitignore` in the generated project.
+
 ## Testing Strategy
 
 - Unit tests for template rendering with various variable combinations
