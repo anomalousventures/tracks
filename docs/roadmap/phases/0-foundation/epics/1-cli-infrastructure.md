@@ -42,27 +42,30 @@ Establish the foundational CLI tool using Cobra framework. This epic creates the
 
 ## Task Breakdown
 
-The following tasks will become GitHub issues:
+The following tasks will become GitHub issues, ordered by dependency:
 
-1. **Initialize tracks CLI Go module**
-2. **Set up Cobra root command with basic structure**
-3. **Implement version tracking and --version flag**
-4. **Add comprehensive help text and TUI placeholder message**
-5. **Define UIMode enum and basic DetectMode with TTY and CI detection**
-6. **Add flag support to mode detection (--json, --no-color, --interactive)**
-7. **Add environment variable support to mode detection (NO_COLOR, TRACKS_LOG_LEVEL)**
-8. **Define Renderer interface and core types (Section, Table, Progress)**
-9. **Create Lip Gloss theme system with color styles**
-10. **Implement ConsoleRenderer with Title and Section rendering**
-11. **Add Table rendering to ConsoleRenderer**
-12. **Add Progress bar rendering to ConsoleRenderer using Bubbles ViewAs**
-13. **Implement JSONRenderer with all Renderer methods**
-14. **Create Makefile targets for building CLI**
-15. **Add cross-platform build configuration (Linux, macOS, Windows)**
-16. **Write unit tests for root command, version, and mode detection**
-17. **Write unit tests for Renderer implementations**
-18. **Set up CLI integration test framework**
-19. **Document CLI development workflow and Renderer pattern**
+1. **Initialize tracks CLI Go module** (Complete)
+2. **Set up Cobra root command with basic structure** (Complete)
+3. **Implement version tracking and --version flag** (Complete)
+4. **Define global CLI flags (--json, --no-color, --interactive)**
+5. **Add comprehensive help text with examples and flag documentation**
+6. **Add TUI placeholder message for no-args execution**
+7. **Define UIMode enum and UIConfig struct**
+8. **Implement basic DetectMode with TTY and CI detection**
+9. **Wire up flag support to mode detection**
+10. **Wire up environment variable support (NO_COLOR, TRACKS_LOG_LEVEL)**
+11. **Define Renderer interface and core types (Section, Table, Progress)**
+12. **Create Lip Gloss theme system with color styles and NO_COLOR support**
+13. **Implement ConsoleRenderer with Title and Section rendering**
+14. **Add Table rendering to ConsoleRenderer**
+15. **Add Progress bar rendering to ConsoleRenderer using Bubbles ViewAs**
+16. **Implement JSONRenderer with all Renderer methods**
+17. **Create Makefile targets for building CLI**
+18. **Add cross-platform build configuration (Linux, macOS, Windows)**
+19. **Write unit tests for mode detection and flags**
+20. **Write unit tests for Renderer implementations**
+21. **Set up CLI integration test framework**
+22. **Document CLI development workflow and Renderer pattern**
 
 ## Dependencies
 
