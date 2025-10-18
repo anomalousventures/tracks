@@ -18,6 +18,18 @@ This phase establishes the basic CLI tool and project scaffolding capabilities. 
 - Build system with Makefile
 - Initial documentation
 
+## Epic Breakdown
+
+This phase has been broken down into 5 epics for implementation:
+
+1. [Epic 1: CLI Infrastructure](./epics/1-cli-infrastructure.md) - Foundation CLI with Cobra, version tracking, help system
+2. [Epic 2: Template Engine & Embedding](./epics/2-template-engine.md) - Go embed system, template rendering, variable substitution
+3. [Epic 3: Project Generation](./epics/3-project-generation.md) - `tracks new` command, directory structure, config generation
+4. [Epic 4: Generated Project Tooling](./epics/4-generated-tooling.md) - Makefile, Air config, linting, Docker, CI/CD
+5. [Epic 5: Documentation & Installation](./epics/5-documentation.md) - README templates, Docusaurus updates, guides
+
+Each epic contains detailed task breakdowns that will become GitHub issues.
+
 ## Features
 
 ### 0.1 CLI with Cobra
