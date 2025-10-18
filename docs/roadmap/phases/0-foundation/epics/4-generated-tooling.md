@@ -102,7 +102,7 @@ test: ## Run tests with coverage
 	go test -v -race -coverprofile=coverage.out ./...
 
 lint: ## Run linters
-	golangci-lint run
+	go tool golangci-lint run
 
 dev: ## Start development server with hot-reload
 	air -c .air.toml
@@ -139,6 +139,8 @@ linters:
     - unused
     - gosimple
 ```
+
+**Note:** The Makefile uses `go tool golangci-lint run` instead of calling `golangci-lint` directly. This follows Go 1.25's modern tooling pattern where tools are declared in `go.mod` with the `tool` directive and invoked via `go tool <name>`.
 
 ### Dockerfile
 
