@@ -27,32 +27,43 @@ type Config struct {
 // viperKey is used as a type-safe key for storing Viper in context.
 type viperKey struct{}
 
-func init() {
-	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format")
-	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output")
-	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode")
-
-	rootCmd.AddCommand(versionCmd())
-	rootCmd.AddCommand(newCmd())
-}
-
-var rootCmd = &cobra.Command{
-	Use:   "tracks",
-	Short: "A productive web framework for Go",
-	Long: `Tracks is a code-generating web framework for Go.
+// NewRootCmd creates a new root command with all flags and subcommands configured.
+// This returns a fresh command instance to avoid cross-test state coupling.
+func NewRootCmd() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "tracks",
+		Short: "A productive web framework for Go",
+		Long: `Tracks is a code-generating web framework for Go.
 
 It generates complete applications with type-safe templates (templ),
 type-safe SQL (SQLC), built-in authentication/authorization,
 and an interactive TUI for code generation.
 
 Generates idiomatic Go code you'd write yourself. No magic, full control.`,
+	}
+
+	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format")
+	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output")
+	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode")
+
+	rootCmd.AddCommand(versionCmd())
+	rootCmd.AddCommand(newCmd())
+
+	return rootCmd
 }
 
 // Execute initializes and runs the root command with build information.
-// It creates a Viper instance for configuration management, binds CLI flags,
+// It creates a fresh command instance and Viper configuration, binds CLI flags,
 // sets up environment variable support, and makes the configuration available
 // via context to all commands.
 func Execute(versionStr, commitStr, dateStr string) error {
+	rootCmd := NewRootCmd()
+
+	version = versionStr
+	commit = commitStr
+	date = dateStr
+	rootCmd.Version = getVersion()
+
 	v := viper.New()
 
 	if err := v.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json")); err != nil {
@@ -69,16 +80,11 @@ func Execute(versionStr, commitStr, dateStr string) error {
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.AutomaticEnv()
 
-	if os.Getenv("NO_COLOR") != "" {
-		v.Set("no-color", true)
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		v.SetDefault("no-color", true)
 	}
 
 	ctx := context.WithValue(context.Background(), viperKey{}, v)
-
-	version = versionStr
-	commit = commitStr
-	date = dateStr
-	rootCmd.Version = getVersion()
 
 	return rootCmd.ExecuteContext(ctx)
 }

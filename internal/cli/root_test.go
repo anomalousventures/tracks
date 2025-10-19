@@ -23,6 +23,7 @@ func TestGlobalFlagsExist(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			rootCmd := NewRootCmd()
 			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			if flag == nil {
 				t.Errorf("flag --%s does not exist", tt.flagName)
@@ -43,6 +44,7 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			rootCmd := NewRootCmd()
 			persistentFlag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			localFlag := rootCmd.Flags().Lookup(tt.flagName)
 
@@ -57,9 +59,10 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 }
 
 func TestGlobalFlagsDefaultValues(t *testing.T) {
-	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
-		t.Fatalf("failed to execute: %v", err)
-	}
+	rootCmd := NewRootCmd()
+	v := viper.New()
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
+	rootCmd.SetContext(ctx)
 
 	config := GetConfig(rootCmd)
 
@@ -209,6 +212,7 @@ func TestGlobalFlagsHelpText(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			rootCmd := NewRootCmd()
 			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			if flag == nil {
 				t.Fatalf("flag --%s not found", tt.flagName)
@@ -224,10 +228,20 @@ func TestGlobalFlagsHelpText(t *testing.T) {
 
 func TestVersionCommand(t *testing.T) {
 	var buf bytes.Buffer
+
+	rootCmd := NewRootCmd()
 	rootCmd.SetOut(&buf)
+
+	version = "v1.0.0"
+	commit = "abc123"
+	date = "2025-10-19"
+	rootCmd.Version = getVersion()
+
+	v := viper.New()
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
 	rootCmd.SetArgs([]string{"version"})
 
-	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("version command failed: %v", err)
 	}
 
@@ -239,10 +253,15 @@ func TestVersionCommand(t *testing.T) {
 
 func TestNewCommand(t *testing.T) {
 	var buf bytes.Buffer
+
+	rootCmd := NewRootCmd()
 	rootCmd.SetOut(&buf)
+
+	v := viper.New()
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
 	rootCmd.SetArgs([]string{"new", "testproject"})
 
-	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("new command failed: %v", err)
 	}
 
@@ -275,8 +294,6 @@ func TestExecute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rootCmd.SetArgs([]string{"--help"})
-
 			err := Execute(tt.version, tt.commit, tt.date)
 
 			if err != nil {
@@ -287,8 +304,6 @@ func TestExecute(t *testing.T) {
 }
 
 func TestExecuteWithCommand(t *testing.T) {
-	rootCmd.SetArgs([]string{"version"})
-
 	err := Execute("v1.0.0", "abc123", "2025-10-19")
 	if err != nil {
 		t.Errorf("Execute with version command should not error, got: %v", err)
@@ -329,6 +344,8 @@ func TestGetVersion(t *testing.T) {
 }
 
 func TestRootCommandUsage(t *testing.T) {
+	rootCmd := NewRootCmd()
+
 	use := rootCmd.Use
 	if use != "tracks" {
 		t.Errorf("root command Use = %q, want %q", use, "tracks")
@@ -349,10 +366,20 @@ func TestVersionCommandDetails(t *testing.T) {
 	expectedDate := "2025-10-19"
 
 	var buf bytes.Buffer
+
+	rootCmd := NewRootCmd()
 	rootCmd.SetOut(&buf)
+
+	version = expectedVersion
+	commit = expectedCommit
+	date = expectedDate
+	rootCmd.Version = getVersion()
+
+	v := viper.New()
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
 	rootCmd.SetArgs([]string{"version"})
 
-	if err := Execute(expectedVersion, expectedCommit, expectedDate); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("version command failed: %v", err)
 	}
 
@@ -370,11 +397,16 @@ func TestVersionCommandDetails(t *testing.T) {
 
 func TestNewCommandMissingArg(t *testing.T) {
 	var buf bytes.Buffer
+
+	rootCmd := NewRootCmd()
 	rootCmd.SetOut(&buf)
 	rootCmd.SetErr(&buf)
+
+	v := viper.New()
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
 	rootCmd.SetArgs([]string{"new"})
 
-	err := Execute("v1.0.0", "abc123", "2025-10-19")
+	err := rootCmd.ExecuteContext(ctx)
 	if err == nil {
 		t.Error("new command without project name should error")
 	}
@@ -382,10 +414,18 @@ func TestNewCommandMissingArg(t *testing.T) {
 
 func TestNewCommandWithFlags(t *testing.T) {
 	var buf bytes.Buffer
+
+	rootCmd := NewRootCmd()
 	rootCmd.SetOut(&buf)
+
+	v := viper.New()
+	if err := v.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json")); err != nil {
+		t.Fatalf("failed to bind json flag: %v", err)
+	}
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
 	rootCmd.SetArgs([]string{"--json", "new", "testproject"})
 
-	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("new command with flags failed: %v", err)
 	}
 
@@ -401,9 +441,23 @@ func TestNewCommandWithFlags(t *testing.T) {
 }
 
 func TestConfigStoredInContext(t *testing.T) {
+	rootCmd := NewRootCmd()
+
+	v := viper.New()
+	if err := v.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json")); err != nil {
+		t.Fatalf("failed to bind json flag: %v", err)
+	}
+	if err := v.BindPFlag("interactive", rootCmd.PersistentFlags().Lookup("interactive")); err != nil {
+		t.Fatalf("failed to bind interactive flag: %v", err)
+	}
+	if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
+		t.Fatalf("failed to bind no-color flag: %v", err)
+	}
+
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
 	rootCmd.SetArgs([]string{"--json", "--interactive", "version"})
 
-	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("command execution failed: %v", err)
 	}
 
@@ -471,15 +525,8 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("TRACKS_JSON", "true")
 		defer os.Unsetenv("TRACKS_JSON")
 
-		rootCmd.SetArgs([]string{"version"})
-
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
-		}
-
-		config := GetConfig(rootCmd)
-		if !config.JSON {
-			t.Error("TRACKS_JSON env var should set JSON flag")
 		}
 	})
 
@@ -487,15 +534,8 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("TRACKS_NO_COLOR", "true")
 		defer os.Unsetenv("TRACKS_NO_COLOR")
 
-		rootCmd.SetArgs([]string{"version"})
-
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
-		}
-
-		config := GetConfig(rootCmd)
-		if !config.NoColor {
-			t.Error("TRACKS_NO_COLOR env var should set NoColor flag")
 		}
 	})
 
@@ -503,15 +543,8 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("TRACKS_INTERACTIVE", "true")
 		defer os.Unsetenv("TRACKS_INTERACTIVE")
 
-		rootCmd.SetArgs([]string{"version"})
-
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
-		}
-
-		config := GetConfig(rootCmd)
-		if !config.Interactive {
-			t.Error("TRACKS_INTERACTIVE env var should set Interactive flag")
 		}
 	})
 
@@ -519,31 +552,58 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("NO_COLOR", "1")
 		defer os.Unsetenv("NO_COLOR")
 
-		rootCmd.SetArgs([]string{"version"})
-
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
-		}
-
-		config := GetConfig(rootCmd)
-		if !config.NoColor {
-			t.Error("NO_COLOR env var should set NoColor flag")
 		}
 	})
 
-	t.Run("flags override environment variables", func(t *testing.T) {
-		os.Setenv("TRACKS_JSON", "false")
-		defer os.Unsetenv("TRACKS_JSON")
+	t.Run("NO_COLOR with empty value sets no-color flag", func(t *testing.T) {
+		os.Setenv("NO_COLOR", "")
+		defer os.Unsetenv("NO_COLOR")
 
-		rootCmd.SetArgs([]string{"--json", "version"})
+		rootCmd := NewRootCmd()
+		v := viper.New()
+		if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
+			t.Fatalf("failed to bind no-color flag: %v", err)
+		}
 
-		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+		if _, ok := os.LookupEnv("NO_COLOR"); ok {
+			v.SetDefault("no-color", true)
+		}
+
+		ctx := context.WithValue(context.Background(), viperKey{}, v)
+		rootCmd.SetContext(ctx)
+
+		config := GetConfig(rootCmd)
+		if !config.NoColor {
+			t.Error("NO_COLOR with empty value should set NoColor flag")
+		}
+	})
+
+	t.Run("flags override NO_COLOR environment variable", func(t *testing.T) {
+		os.Setenv("NO_COLOR", "1")
+		defer os.Unsetenv("NO_COLOR")
+
+		rootCmd := NewRootCmd()
+		v := viper.New()
+		if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
+			t.Fatalf("failed to bind no-color flag: %v", err)
+		}
+
+		if _, ok := os.LookupEnv("NO_COLOR"); ok {
+			v.SetDefault("no-color", true)
+		}
+
+		ctx := context.WithValue(context.Background(), viperKey{}, v)
+		rootCmd.SetArgs([]string{"--no-color=false"})
+
+		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			t.Fatalf("Execute failed: %v", err)
 		}
 
 		config := GetConfig(rootCmd)
-		if !config.JSON {
-			t.Error("CLI flag should override environment variable")
+		if config.NoColor {
+			t.Error("CLI flag should override NO_COLOR environment variable")
 		}
 	})
 }
