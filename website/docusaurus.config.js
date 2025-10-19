@@ -8,11 +8,11 @@ const darkCodeTheme = themes.dracula;
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Tracks',
-  tagline: 'A Rails-like web framework for Go',
+  tagline: 'Go, fast. A batteries included toolkit for hypermedia servers',
   favicon: 'img/favicon.ico',
 
-  url: 'https://tracks.anomalousventures.com',
-  baseUrl: '/',
+  url: 'https://anomalousventures.github.io',
+  baseUrl: '/tracks/',
 
   organizationName: 'anomalousventures',
   projectName: 'tracks',

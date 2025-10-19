@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://anomalousventures.github.io/tracks/">Docs</a> ·
   <a href="#current-status">Status</a> ·
   <a href="#vision">Vision</a> ·
   <a href="#roadmap">Roadmap</a> ·
@@ -97,6 +98,12 @@ Tracks development is organized into 7 phases. See [`docs/roadmap`](./docs/roadm
 [View Full Roadmap →](./docs/roadmap/README.md)
 
 ## Documentation
+
+### Live Documentation
+
+**[📚 View Full Documentation →](https://anomalousventures.github.io/tracks/)**
+
+The complete documentation site includes guides, tutorials, API references, and examples.
 
 ### Product Requirements
 
