@@ -5,130 +5,119 @@
 </p>
 
 <p align="center">
-  <strong>A Rails-like web framework for Go that generates idiomatic, production-ready applications</strong>
+  <strong>⚡ Go, fast. A batteries included toolkit for hypermedia servers</strong>
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> "
-  <a href="#quick-start">Quick Start</a> "
-  <a href="#documentation">Documentation</a> "
-  <a href="#contributing">Contributing</a> "
+  <a href="#current-status">Status</a> ·
+  <a href="#vision">Vision</a> ·
+  <a href="#roadmap">Roadmap</a> ·
+  <a href="#documentation">Documentation</a> ·
   <a href="#license">License</a>
 </p>
 
 ---
 
-## Overview
+## Current Status
 
-Tracks is a command-line tool that generates and manages Go web applications with the productivity of Rails and the performance of Go. It provides a complete, opinionated framework with code generation, type-safe templates, and modern toolingall producing idiomatic Go code that you'd write yourself.
+Tracks is in **Phase 0 (Foundation)** development. The CLI tool and project scaffolding are being built.
 
-## Features
+**What works now:**
 
-### =� **Rapid Development**
+- ✅ Project structure and monorepo setup
+- ✅ Documentation and roadmap
+- 🚧 CLI infrastructure (in progress)
 
-- **Interactive TUI** - Beautiful terminal interface for project setup and code generation
-- **Smart Generators** - Create complete CRUD resources with a single command
-- **Live Reload** - Hot reload in development with Air
-- **MCP Server** - AI-powered development via Model Context Protocol
+**Coming next:**
 
-### <� **Modern Architecture**
+- Phase 0: CLI tool with `tracks new` command
+- Phase 1: Core web layer (routing, handlers, middleware)
+- Phase 2: Database layer (SQLC, migrations)
+- See [Roadmap](#roadmap) for details
 
-- **Type-Safe Templates** - [templ](https://github.com/a-h/templ) for compile-time HTML safety
-- **Type-Safe SQL** - [SQLC](https://sqlc.dev/) generates Go code from SQL queries
-- **Chi Router** - Lightweight, idiomatic HTTP routing
-- **Dependency Injection** - Services built for easy testing
+## Vision
 
-### = **Security First**
+Tracks will be a code-generating web framework for Go that produces idiomatic, production-ready applications. Built for developers who want the productivity of modern frameworks with the performance and simplicity of Go.
 
-- **Built-in Authentication** - Magic link, OTP, and OAuth providers
-- **RBAC Authorization** - Casbin-powered role-based access control
-- **Security Headers** - CSP, HSTS, and more configured by default
-- **Input Validation** - Comprehensive validation with go-playground/validator
+### Design Principles
 
-### =� **Database Support**
+#### Type-Safe Everything
 
-- **Multiple Drivers** - LibSQL/Turso (default), SQLite, PostgreSQL
-- **Type-Safe Migrations** - Goose migrations with rollback support
-- **Connection Pooling** - Production-ready database configuration
-- **UUIDv7 IDs** - Timestamp-ordered unique identifiers
+- [templ](https://github.com/a-h/templ) for compile-time HTML safety
+- [SQLC](https://sqlc.dev/) generates type-safe Go from SQL
+- No runtime reflection in generated code
 
-### <� **Frontend Ready**
+#### Hypermedia-First
 
-- **HTMX Integration** - Dynamic UIs without writing JavaScript
-- **Alpine.js** - Progressive enhancement where needed
-- **TailwindCSS** - Utility-first styling (optional)
-- **Asset Pipeline** - Embedded assets with content hashing
+- HTMX integration for dynamic UIs without JavaScript
+- Server-rendered templates with progressive enhancement
+- RESTful patterns with HTML as the engine of application state
 
-### =� **Production Ready**
+#### Idiomatic Go
 
-- **OpenTelemetry** - Distributed tracing and metrics
-- **Structured Logging** - JSON logs with zerolog
-- **Health Checks** - Kubernetes-ready liveness/readiness probes
-- **Graceful Shutdown** - Clean connection handling
+- Generated code looks hand-written by an experienced Go developer
+- Standard library patterns and clear error handling
+- Dependency injection via interfaces for easy testing
 
-## Quick Start
+#### Batteries Included
 
-### Prerequisites
+- Authentication (magic links, OTP, OAuth)
+- Authorization (Casbin RBAC)
+- Observability (OpenTelemetry)
+- Development tooling (hot reload, linting, CI/CD templates)
 
-- Go 1.23 or later
-- Node.js 18+ and pnpm (for development tools)
-- Git
+## Roadmap
 
-### Installation
+Tracks development is organized into 7 phases. See [`docs/roadmap`](./docs/roadmap) for detailed plans.
 
-```bash
-# Install Tracks CLI
-go install github.com/anomalousventures/tracks@latest
+### Phase 0: Foundation (Current)
 
-# Verify installation
-tracks version
-```
+**Goal:** Working CLI that generates project scaffolds
 
-### Create Your First App
+**Epics:**
 
-```bash
-# Launch interactive TUI
-tracks
+1. [CLI Infrastructure](./docs/roadmap/phases/0-foundation/epics/1-cli-infrastructure.md) - Cobra framework, Renderer pattern, version tracking
+2. [Template Engine](./docs/roadmap/phases/0-foundation/epics/2-template-engine.md) - Embed system for project templates
+3. [Project Generation](./docs/roadmap/phases/0-foundation/epics/3-project-generation.md) - `tracks new` command
+4. [Generated Project Tooling](./docs/roadmap/phases/0-foundation/epics/4-generated-tooling.md) - Makefiles, Air, linting, Docker, CI/CD
+5. [Documentation](./docs/roadmap/phases/0-foundation/epics/5-documentation.md) - Installation guides, getting started
 
-# Or use CLI directly
-tracks new myapp --db go-libsql
+**Status:** In progress · **Target:** v0.1.0
 
-# Start development server
-cd myapp
-tracks dev
-```
+### Future Phases
 
-Visit `http://localhost:8080` to see your app!
+- **Phase 1:** Core Web Layer - Chi router, handlers, middleware, templ templates
+- **Phase 2:** Database Layer - SQLC, Goose migrations, LibSQL/PostgreSQL support
+- **Phase 3:** Authentication - Magic links, OTP, OAuth providers
+- **Phase 4:** Interactive TUI - Bubble Tea interface for generators
+- **Phase 5:** Production - OpenTelemetry, health checks, deployment
+- **Phase 6:** Authorization - Casbin RBAC
+- **Phase 7:** Advanced Features - Real-time, file uploads, background jobs
 
-### Generate a Resource
-
-```bash
-# Generate complete CRUD resource
-tracks generate resource post title:string content:text author:relation published:bool
-
-# This creates:
-# - Database migration
-# - SQLC queries
-# - Repository (generated by SQLC)
-# - Service layer with business logic
-# - HTTP handlers (API + Web)
-# - Templ templates
-# - Tests with mocks
-# - Route registration
-```
+[View Full Roadmap →](./docs/roadmap/README.md)
 
 ## Documentation
 
-Comprehensive documentation is available in the [`docs/prd`](./docs/prd) directory:
+### Product Requirements
 
-- **[Getting Started Guide](./docs/prd/0_summary.md)** - Overview and architecture
-- **[Core Architecture](./docs/prd/1_core_architecture.md)** - Application structure
-- **[Database Layer](./docs/prd/2_database_layer.md)** - SQLC, migrations, and queries
-- **[Authentication](./docs/prd/3_authentication.md)** - Magic links, OTP, and OAuth
-- **[Authorization](./docs/prd/4_authorization_rbac.md)** - Casbin RBAC setup
-- **[Code Generation](./docs/prd/14_code_generation.md)** - Generators and CLI commands
-- **[Testing](./docs/prd/13_testing.md)** - Unit, integration, and E2E tests
-- **[Deployment](./docs/prd/17_deployment.md)** - Production deployment strategies
+Detailed PRD documents describe the complete vision:
+
+- [Summary](./docs/prd/0_summary.md) - Overview and goals
+- [Core Architecture](./docs/prd/1_core_architecture.md) - Application structure and patterns
+- [Database Layer](./docs/prd/2_database_layer.md) - SQLC, migrations, and query patterns
+- [Authentication](./docs/prd/3_authentication.md) - Magic links, OTP, and OAuth
+- [Authorization (RBAC)](./docs/prd/4_authorization_rbac.md) - Casbin integration
+- [Code Generation](./docs/prd/14_code_generation.md) - Generator design and CLI commands
+- [Testing Strategy](./docs/prd/13_testing.md) - Unit, integration, and E2E testing
+- [Deployment](./docs/prd/17_deployment.md) - Production deployment strategies
+
+### Development
+
+For contributors:
+
+- [CLAUDE.md](./CLAUDE.md) - Development commands and project structure
+- [Roadmap](./docs/roadmap/README.md) - Phase breakdown and epic details
+- [GitHub Issues](https://github.com/anomalousventures/tracks/issues) - Task tracking
 
 ## Philosophy
 
@@ -137,58 +126,83 @@ Comprehensive documentation is available in the [`docs/prd`](./docs/prd) directo
 Tracks generates code that looks like it was hand-written by an experienced Go developer:
 
 - No magic or reflection in generated code
-- Standard library patterns
-- Clear error handling
-- Interface-based design for testing
+- Standard library patterns and interfaces
+- Explicit error handling with context
+- Interface-based design for testability
 
-### Rails-Inspired Productivity
+### Type Safety
 
-- Convention over configuration
-- Generators for rapid development
-- Built-in authentication and authorization
-- Asset pipeline and view system
+Type safety catches errors at compile time:
 
-### Production Ready
+- templ templates are type-checked Go code
+- SQLC generates Go structs and functions from SQL
+- No string-based query building or SQL injection risks
+- DTOs with field-level validation
 
-- OpenTelemetry observability
-- Database connection pooling
-- Graceful shutdown
-- Health check endpoints
-- Structured logging
+### Hypermedia-First
+
+HTMX enables rich interactions without JavaScript complexity:
+
+- Server renders HTML with templ templates
+- HTMX provides dynamic UI updates via HTML over the wire
+- Progressive enhancement with Alpine.js where needed
+- Standard HTTP and REST patterns
+
+### Convention Over Configuration
+
+Sensible defaults with escape hatches:
+
+- Standard project structure and file organization
+- Generators follow consistent patterns
+- Override defaults when needed
+- Configuration via environment variables and YAML
+
+## Technology Stack
+
+**Router:** Chi - lightweight, idiomatic HTTP router
+**Templates:** templ - type-safe HTML templates compiled to Go
+**Database:** SQLC - generates type-safe Go from SQL queries
+**Migrations:** Goose - version-controlled database migrations
+**Auth:** Custom + OAuth providers (Google, GitHub, etc.)
+**Authorization:** Casbin - role-based access control
+**Frontend:** HTMX + Alpine.js + TailwindCSS (optional)
+**Observability:** OpenTelemetry - tracing, metrics, and logs
+**Logging:** zerolog - structured JSON logging
+**Testing:** Standard library + testify for assertions
+**CLI/TUI:** Cobra + Bubble Tea (Charm stack)
 
 ## Project Status
 
-Tracks is currently in **pre-release development** (v0.x). The API may change before v1.0.
+Tracks is in **pre-alpha development** (Phase 0). The API and generated code structure may change significantly before v1.0.
+
+**Not ready for production use.** Follow development progress via [GitHub Issues](https://github.com/anomalousventures/tracks/issues) and [Roadmap](./docs/roadmap/README.md).
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
+Contributions are welcome! The project is in active early development.
 
-- Code of Conduct
-- Development setup
-- Pull request process
-- Coding standards
+**Ways to contribute:**
 
-## Community
-
-- **Issues**: [GitHub Issues](https://github.com/anomalousventures/tracks/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/anomalousventures/tracks/discussions)
+- Report bugs and request features via [GitHub Issues](https://github.com/anomalousventures/tracks/issues)
+- Discuss ideas in [GitHub Discussions](https://github.com/anomalousventures/tracks/discussions)
+- Submit pull requests (see [CLAUDE.md](./CLAUDE.md) for development setup)
 
 ## License
 
-Tracks is released under the [MIT License](./LICENSE). See LICENSE file for details.
+Tracks is released under the [MIT License](./LICENSE).
 
 ## Acknowledgments
 
-Tracks builds on the excellent work of many open-source projects:
+Tracks builds on excellent open-source projects:
 
 - [Chi](https://github.com/go-chi/chi) - HTTP routing
 - [templ](https://github.com/a-h/templ) - Type-safe templates
 - [SQLC](https://sqlc.dev/) - SQL code generation
-- [Casbin](https://casbin.org/) - Authorization
+- [Casbin](https://casbin.org/) - Authorization framework
 - [Goose](https://github.com/pressly/goose) - Database migrations
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - TUI framework
+- [Cobra](https://github.com/spf13/cobra) - CLI framework
 
 ---
 
-**Made with d by [Anomalous Ventures](https://anomalousventures.com)**
+An [Anomalous Venture](https://github.com/enterprises/anomalousventures) by [Aaron Ross](https://github.com/ashmortar)
