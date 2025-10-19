@@ -1,10 +1,14 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -13,18 +17,23 @@ var (
 	date    = "unknown"
 )
 
-type GlobalConfig struct {
+// Config holds the global CLI configuration.
+type Config struct {
 	JSON        bool
 	NoColor     bool
 	Interactive bool
 }
 
-var globalConfig GlobalConfig
+// viperKey is used as a type-safe key for storing Viper in context.
+type viperKey struct{}
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&globalConfig.JSON, "json", false, "Output in JSON format")
-	rootCmd.PersistentFlags().BoolVar(&globalConfig.NoColor, "no-color", false, "Disable color output")
-	rootCmd.PersistentFlags().BoolVar(&globalConfig.Interactive, "interactive", false, "Force interactive TUI mode")
+	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format")
+	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output")
+	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode")
+
+	rootCmd.AddCommand(versionCmd())
+	rootCmd.AddCommand(newCmd())
 }
 
 var rootCmd = &cobra.Command{
@@ -37,24 +46,61 @@ type-safe SQL (SQLC), built-in authentication/authorization,
 and an interactive TUI for code generation.
 
 Generates idiomatic Go code you'd write yourself. No magic, full control.`,
-	Version: getVersion(),
 }
 
-func init() {
-	rootCmd.AddCommand(versionCmd())
-	rootCmd.AddCommand(newCmd())
-}
-
+// Execute initializes and runs the root command with build information.
+// It creates a Viper instance for configuration management, binds CLI flags,
+// sets up environment variable support, and makes the configuration available
+// via context to all commands.
 func Execute(versionStr, commitStr, dateStr string) error {
+	v := viper.New()
+
+	if err := v.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json")); err != nil {
+		return fmt.Errorf("failed to bind json flag: %w", err)
+	}
+	if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
+		return fmt.Errorf("failed to bind no-color flag: %w", err)
+	}
+	if err := v.BindPFlag("interactive", rootCmd.PersistentFlags().Lookup("interactive")); err != nil {
+		return fmt.Errorf("failed to bind interactive flag: %w", err)
+	}
+
+	v.SetEnvPrefix("TRACKS")
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.AutomaticEnv()
+
+	if os.Getenv("NO_COLOR") != "" {
+		v.Set("no-color", true)
+	}
+
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
+
 	version = versionStr
 	commit = commitStr
 	date = dateStr
 	rootCmd.Version = getVersion()
-	return rootCmd.Execute()
+
+	return rootCmd.ExecuteContext(ctx)
 }
 
-func GetGlobalConfig() GlobalConfig {
-	return globalConfig
+// GetViper extracts the Viper instance from the command's context.
+// Returns a new Viper instance if none is found in context (useful for testing).
+func GetViper(cmd *cobra.Command) *viper.Viper {
+	if v := cmd.Context().Value(viperKey{}); v != nil {
+		return v.(*viper.Viper)
+	}
+	return viper.New()
+}
+
+// GetConfig extracts the configuration from the command's Viper instance.
+// This is the primary way commands should access configuration values.
+func GetConfig(cmd *cobra.Command) Config {
+	v := GetViper(cmd)
+	return Config{
+		JSON:        v.GetBool("json"),
+		NoColor:     v.GetBool("no-color"),
+		Interactive: v.GetBool("interactive"),
+	}
 }
 
 func versionCmd() *cobra.Command {

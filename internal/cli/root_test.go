@@ -2,10 +2,13 @@ package cli
 
 import (
 	"bytes"
+	"context"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func TestGlobalFlagsExist(t *testing.T) {
@@ -54,9 +57,11 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 }
 
 func TestGlobalFlagsDefaultValues(t *testing.T) {
-	resetGlobalConfig()
+	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+		t.Fatalf("failed to execute: %v", err)
+	}
 
-	config := GetGlobalConfig()
+	config := GetConfig(rootCmd)
 
 	if config.JSON {
 		t.Error("JSON flag should default to false")
@@ -72,49 +77,56 @@ func TestGlobalFlagsDefaultValues(t *testing.T) {
 func TestGlobalFlagsParsing(t *testing.T) {
 	tests := []struct {
 		name        string
-		args        []string
+		setupViper  func(*viper.Viper)
 		wantJSON    bool
 		wantNoColor bool
 		wantInteractive bool
 	}{
 		{
 			name:        "no flags set",
-			args:        []string{},
+			setupViper:  func(v *viper.Viper) {},
 			wantJSON:    false,
 			wantNoColor: false,
 			wantInteractive: false,
 		},
 		{
 			name:        "json flag only",
-			args:        []string{"--json"},
+			setupViper:  func(v *viper.Viper) { v.Set("json", true) },
 			wantJSON:    true,
 			wantNoColor: false,
 			wantInteractive: false,
 		},
 		{
 			name:        "no-color flag only",
-			args:        []string{"--no-color"},
+			setupViper:  func(v *viper.Viper) { v.Set("no-color", true) },
 			wantJSON:    false,
 			wantNoColor: true,
 			wantInteractive: false,
 		},
 		{
 			name:        "interactive flag only",
-			args:        []string{"--interactive"},
+			setupViper:  func(v *viper.Viper) { v.Set("interactive", true) },
 			wantJSON:    false,
 			wantNoColor: false,
 			wantInteractive: true,
 		},
 		{
-			name:        "all flags set",
-			args:        []string{"--json", "--no-color", "--interactive"},
+			name: "all flags set",
+			setupViper: func(v *viper.Viper) {
+				v.Set("json", true)
+				v.Set("no-color", true)
+				v.Set("interactive", true)
+			},
 			wantJSON:    true,
 			wantNoColor: true,
 			wantInteractive: true,
 		},
 		{
-			name:        "json and no-color",
-			args:        []string{"--json", "--no-color"},
+			name: "json and no-color",
+			setupViper: func(v *viper.Viper) {
+				v.Set("json", true)
+				v.Set("no-color", true)
+			},
 			wantJSON:    true,
 			wantNoColor: true,
 			wantInteractive: false,
@@ -123,22 +135,18 @@ func TestGlobalFlagsParsing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetGlobalConfig()
+			v := viper.New()
+			tt.setupViper(v)
 
 			cmd := &cobra.Command{
 				Use: "test",
 				Run: func(cmd *cobra.Command, args []string) {},
 			}
-			rootCmd.AddCommand(cmd)
-			defer rootCmd.RemoveCommand(cmd)
 
-			rootCmd.SetArgs(append(tt.args, "test"))
+			ctx := context.WithValue(context.Background(), viperKey{}, v)
+			cmd.SetContext(ctx)
 
-			if err := rootCmd.Execute(); err != nil {
-				t.Fatalf("failed to execute command: %v", err)
-			}
-
-			config := GetGlobalConfig()
+			config := GetConfig(cmd)
 
 			if config.JSON != tt.wantJSON {
 				t.Errorf("JSON = %v, want %v", config.JSON, tt.wantJSON)
@@ -154,22 +162,19 @@ func TestGlobalFlagsParsing(t *testing.T) {
 }
 
 func TestGlobalFlagsAvailableToSubcommands(t *testing.T) {
-	resetGlobalConfig()
+	v := viper.New()
+	v.Set("json", true)
+	v.Set("no-color", true)
 
 	subCmd := &cobra.Command{
 		Use: "subtest",
 		Run: func(cmd *cobra.Command, args []string) {},
 	}
-	rootCmd.AddCommand(subCmd)
-	defer rootCmd.RemoveCommand(subCmd)
 
-	rootCmd.SetArgs([]string{"--json", "--no-color", "subtest"})
+	ctx := context.WithValue(context.Background(), viperKey{}, v)
+	subCmd.SetContext(ctx)
 
-	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("failed to execute command: %v", err)
-	}
-
-	config := GetGlobalConfig()
+	config := GetConfig(subCmd)
 
 	if !config.JSON {
 		t.Error("JSON flag should be available to subcommands")
@@ -218,13 +223,11 @@ func TestGlobalFlagsHelpText(t *testing.T) {
 }
 
 func TestVersionCommand(t *testing.T) {
-	resetGlobalConfig()
-
 	var buf bytes.Buffer
 	rootCmd.SetOut(&buf)
 	rootCmd.SetArgs([]string{"version"})
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 		t.Fatalf("version command failed: %v", err)
 	}
 
@@ -235,13 +238,11 @@ func TestVersionCommand(t *testing.T) {
 }
 
 func TestNewCommand(t *testing.T) {
-	resetGlobalConfig()
-
 	var buf bytes.Buffer
 	rootCmd.SetOut(&buf)
 	rootCmd.SetArgs([]string{"new", "testproject"})
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 		t.Fatalf("new command failed: %v", err)
 	}
 
@@ -274,7 +275,6 @@ func TestExecute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetGlobalConfig()
 			rootCmd.SetArgs([]string{"--help"})
 
 			err := Execute(tt.version, tt.commit, tt.date)
@@ -287,8 +287,6 @@ func TestExecute(t *testing.T) {
 }
 
 func TestExecuteWithCommand(t *testing.T) {
-	resetGlobalConfig()
-
 	rootCmd.SetArgs([]string{"version"})
 
 	err := Execute("v1.0.0", "abc123", "2025-10-19")
@@ -346,57 +344,52 @@ func TestRootCommandUsage(t *testing.T) {
 }
 
 func TestVersionCommandDetails(t *testing.T) {
-	resetGlobalConfig()
-	version = "v1.2.3"
-	commit = "abc123def"
-	date = "2025-10-19"
+	expectedVersion := "v1.2.3"
+	expectedCommit := "abc123def"
+	expectedDate := "2025-10-19"
 
 	var buf bytes.Buffer
 	rootCmd.SetOut(&buf)
 	rootCmd.SetArgs([]string{"version"})
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := Execute(expectedVersion, expectedCommit, expectedDate); err != nil {
 		t.Fatalf("version command failed: %v", err)
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, version) {
-		t.Errorf("version output should contain version %q", version)
+	if !strings.Contains(output, expectedVersion) {
+		t.Errorf("version output should contain version %q", expectedVersion)
 	}
-	if !strings.Contains(output, commit) {
-		t.Errorf("version output should contain commit %q", commit)
+	if !strings.Contains(output, expectedCommit) {
+		t.Errorf("version output should contain commit %q", expectedCommit)
 	}
-	if !strings.Contains(output, date) {
-		t.Errorf("version output should contain date %q", date)
+	if !strings.Contains(output, expectedDate) {
+		t.Errorf("version output should contain date %q", expectedDate)
 	}
 }
 
 func TestNewCommandMissingArg(t *testing.T) {
-	resetGlobalConfig()
-
 	var buf bytes.Buffer
 	rootCmd.SetOut(&buf)
 	rootCmd.SetErr(&buf)
 	rootCmd.SetArgs([]string{"new"})
 
-	err := rootCmd.Execute()
+	err := Execute("v1.0.0", "abc123", "2025-10-19")
 	if err == nil {
 		t.Error("new command without project name should error")
 	}
 }
 
 func TestNewCommandWithFlags(t *testing.T) {
-	resetGlobalConfig()
-
 	var buf bytes.Buffer
 	rootCmd.SetOut(&buf)
 	rootCmd.SetArgs([]string{"--json", "new", "testproject"})
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 		t.Fatalf("new command with flags failed: %v", err)
 	}
 
-	config := GetGlobalConfig()
+	config := GetConfig(rootCmd)
 	if !config.JSON {
 		t.Error("JSON flag should be set when passed to new command")
 	}
@@ -407,10 +400,150 @@ func TestNewCommandWithFlags(t *testing.T) {
 	}
 }
 
-func resetGlobalConfig() {
-	globalConfig = GlobalConfig{}
-	rootCmd.SetArgs([]string{})
-	version = "dev"
-	commit = "none"
-	date = "unknown"
+func TestConfigStoredInContext(t *testing.T) {
+	rootCmd.SetArgs([]string{"--json", "--interactive", "version"})
+
+	if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+		t.Fatalf("command execution failed: %v", err)
+	}
+
+	config := GetConfig(rootCmd)
+	if !config.JSON {
+		t.Error("JSON flag should be set in context")
+	}
+	if !config.Interactive {
+		t.Error("Interactive flag should be set in context")
+	}
+	if config.NoColor {
+		t.Error("NoColor flag should not be set")
+	}
+}
+
+func TestGetConfigWithoutContext(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+		Run: func(cmd *cobra.Command, args []string) {},
+	}
+
+	cmd.SetContext(context.Background())
+
+	config := GetConfig(cmd)
+
+	if config.JSON {
+		t.Error("JSON should default to false when no Viper in context")
+	}
+	if config.NoColor {
+		t.Error("NoColor should default to false when no Viper in context")
+	}
+	if config.Interactive {
+		t.Error("Interactive should default to false when no Viper in context")
+	}
+}
+
+func TestGetViper(t *testing.T) {
+	t.Run("returns viper from context", func(t *testing.T) {
+		v := viper.New()
+		v.Set("test-key", "test-value")
+
+		cmd := &cobra.Command{Use: "test"}
+		ctx := context.WithValue(context.Background(), viperKey{}, v)
+		cmd.SetContext(ctx)
+
+		result := GetViper(cmd)
+		if result.GetString("test-key") != "test-value" {
+			t.Error("GetViper should return Viper instance from context")
+		}
+	})
+
+	t.Run("returns new viper when not in context", func(t *testing.T) {
+		cmd := &cobra.Command{Use: "test"}
+		cmd.SetContext(context.Background())
+
+		result := GetViper(cmd)
+		if result == nil {
+			t.Error("GetViper should return new Viper instance when none in context")
+		}
+	})
+}
+
+func TestEnvironmentVariables(t *testing.T) {
+	t.Run("TRACKS_JSON sets json flag", func(t *testing.T) {
+		os.Setenv("TRACKS_JSON", "true")
+		defer os.Unsetenv("TRACKS_JSON")
+
+		rootCmd.SetArgs([]string{"version"})
+
+		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+			t.Fatalf("Execute failed: %v", err)
+		}
+
+		config := GetConfig(rootCmd)
+		if !config.JSON {
+			t.Error("TRACKS_JSON env var should set JSON flag")
+		}
+	})
+
+	t.Run("TRACKS_NO_COLOR sets no-color flag", func(t *testing.T) {
+		os.Setenv("TRACKS_NO_COLOR", "true")
+		defer os.Unsetenv("TRACKS_NO_COLOR")
+
+		rootCmd.SetArgs([]string{"version"})
+
+		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+			t.Fatalf("Execute failed: %v", err)
+		}
+
+		config := GetConfig(rootCmd)
+		if !config.NoColor {
+			t.Error("TRACKS_NO_COLOR env var should set NoColor flag")
+		}
+	})
+
+	t.Run("TRACKS_INTERACTIVE sets interactive flag", func(t *testing.T) {
+		os.Setenv("TRACKS_INTERACTIVE", "true")
+		defer os.Unsetenv("TRACKS_INTERACTIVE")
+
+		rootCmd.SetArgs([]string{"version"})
+
+		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+			t.Fatalf("Execute failed: %v", err)
+		}
+
+		config := GetConfig(rootCmd)
+		if !config.Interactive {
+			t.Error("TRACKS_INTERACTIVE env var should set Interactive flag")
+		}
+	})
+
+	t.Run("NO_COLOR standard env var sets no-color flag", func(t *testing.T) {
+		os.Setenv("NO_COLOR", "1")
+		defer os.Unsetenv("NO_COLOR")
+
+		rootCmd.SetArgs([]string{"version"})
+
+		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+			t.Fatalf("Execute failed: %v", err)
+		}
+
+		config := GetConfig(rootCmd)
+		if !config.NoColor {
+			t.Error("NO_COLOR env var should set NoColor flag")
+		}
+	})
+
+	t.Run("flags override environment variables", func(t *testing.T) {
+		os.Setenv("TRACKS_JSON", "false")
+		defer os.Unsetenv("TRACKS_JSON")
+
+		rootCmd.SetArgs([]string{"--json", "version"})
+
+		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
+			t.Fatalf("Execute failed: %v", err)
+		}
+
+		config := GetConfig(rootCmd)
+		if !config.JSON {
+			t.Error("CLI flag should override environment variable")
+		}
+	})
 }
