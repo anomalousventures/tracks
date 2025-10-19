@@ -2,115 +2,59 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Start
+
+**For development setup, coding standards, and contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).**
+
+This file contains Claude-specific context about the project architecture, common workflows, and patterns.
+
 ## Project Overview
 
-Tracks is a Rails-inspired web framework for Go that generates idiomatic, production-ready applications. It's a CLI tool built with Cobra that includes an interactive TUI (Bubble Tea) for code generation. The project uses a monorepo structure with Go code for the CLI and a Docusaurus website for documentation.
+Tracks is a code-generating web framework for Go that produces idiomatic, production-ready applications. It's a CLI tool built with Cobra that includes an interactive TUI (Bubble Tea) for code generation.
 
-## Development Commands
+**Current Status:** Phase 0 (Foundation) - building the CLI tool and project scaffolding.
 
-### Setup
+**Key Technologies:**
 
-```bash
-# Install all dependencies (Go + Node.js/pnpm)
-pnpm install
-go mod download
+- CLI: Cobra + Bubble Tea (TUI)
+- Generated Apps: Chi, templ, SQLC, HTMX
+- Monorepo: Go + Docusaurus
 
-# View all available commands
-make help
-```
-
-### Testing
+## Quick Command Reference
 
 ```bash
-# Run unit tests
-make test
-
-# Run tests with coverage report
-make test-coverage
-
-# Run integration tests
-make test-integration
-
-# Run all tests
-make test-all
+make help              # Show all available commands
+make test              # Run unit tests
+make lint              # Run all linters
+make build             # Build tracks CLI
+make website-dev       # Start Docusaurus dev server
 ```
 
-### Building
-
-```bash
-# Build tracks CLI
-make build
-
-# Build tracks-mcp server
-make build-mcp
-
-# Build all binaries
-make build-all
-
-# Install to $GOPATH/bin
-make install
-```
-
-### Linting
-
-```bash
-# Lint markdown files
-make lint-md
-
-# Auto-fix markdown issues
-make lint-md-fix
-
-# Lint Go code
-make lint-go
-
-# Run all linters
-make lint
-```
-
-### Website (Docusaurus)
-
-```bash
-# Start dev server with hot reload
-make website-dev
-
-# Build for production
-make website-build
-
-# Serve built site locally
-make website-serve
-
-# Deploy to GitHub Pages
-make website-deploy
-```
-
-### Development
-
-```bash
-# Run tracks CLI in development
-make dev
-
-# Clean build artifacts
-make clean
-
-# Update dependencies
-make deps
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for complete development workflow.
 
 ## Architecture
 
 ### Monorepo Structure
 
-- `/cmd/tracks/` - Main CLI tool with TUI
-- `/cmd/tracks-mcp/` - MCP server for AI-powered development
-- `/internal/` - Private Go packages (generator, TUI, MCP)
-- `/pkg/` - Public Go packages
-- `/website/` - Docusaurus documentation site
-- `/docs/prd/` - Product requirements and design docs
-- `/examples/` - Example applications
+```text
+tracks/
+├── cmd/
+│   ├── tracks/        # Main CLI tool
+│   └── tracks-mcp/    # MCP server
+├── internal/
+│   ├── cli/           # CLI commands and UI
+│   ├── generator/     # Code generators
+│   └── templates/     # Embedded templates
+├── docs/
+│   ├── prd/           # Product requirements (detailed specs)
+│   └── roadmap/       # Phase and epic breakdown
+├── website/           # Docusaurus documentation
+└── examples/          # Example generated apps
+```
 
 ### Generated Application Architecture
 
-Tracks generates applications with layered architecture:
+Tracks generates applications with clean layered architecture:
 
 **Request Flow:** HTTP Request → Handler → Service → Repository → Database
 
@@ -123,7 +67,7 @@ Tracks generates applications with layered architecture:
 5. **Type-Safe SQL** - Uses SQLC to generate Go code from SQL queries
 6. **Type-Safe Templates** - Uses templ for compile-time HTML safety
 
-### Layer Responsibilities
+**Layer Responsibilities:**
 
 - **Handlers** (`internal/handlers/`) - HTTP request/response, validation, call services
 - **Services** (`internal/services/`) - Business logic, independent of HTTP
@@ -131,25 +75,27 @@ Tracks generates applications with layered architecture:
 - **Middleware** (`internal/middleware/`) - Single-responsibility composable functions
 - **Templates** (`internal/templates/`) - templ components compiled to Go
 
-## Code Generation
+### CLI Tool Architecture (tracks itself)
 
-Tracks provides interactive TUI generators that produce idiomatic Go code:
+The tracks CLI tool uses different patterns than generated applications:
 
-```bash
-# Launch interactive TUI
-tracks
+**Output System:**
 
-# Generate complete CRUD resource
-tracks generate resource post title:string content:text author:relation published:bool
+- **Renderer Pattern** - Separates business logic from output formatting
+- **UIMode Detection** - Auto-detects console, JSON, or TUI mode
+- **Charm Stack** - Lip Gloss for styling, Bubbles for components, Bubble Tea for TUI
+- **NO structured logging** - CLI uses human-friendly output, not zerolog
 
-# Generate individual components
-tracks generate handler webhook
-tracks generate service notification
-tracks generate repository comment
-tracks generate migration add_published_to_posts
-```
+**Key Files:**
 
-### Generation Principles
+- `internal/cli/ui/mode.go` - Mode detection (TTY, CI, flags)
+- `internal/cli/ui/theme.go` - Lip Gloss styles (used in console and TUI)
+- `internal/cli/renderer/` - Renderer implementations (Console, JSON, TUI)
+- `internal/cli/commands/` - Cobra command definitions
+
+## Code Generation Principles
+
+When implementing or reviewing generators:
 
 1. Generated code should look hand-written by an experienced Go developer
 2. No magic or reflection - everything is explicit
@@ -158,126 +104,129 @@ tracks generate migration add_published_to_posts
 5. Route helpers are auto-generated for type-safe URLs
 6. Tests with mocks are generated by default
 
-## Coding Standards
+## Important Patterns and Gotchas
 
-### Go Code Style
+### Go 1.25+ Tool Directive
 
-- Follow standard Go conventions (gofmt, golint)
-- Comments explain WHY, never WHAT
-- Keep functions small and focused
-- Use interfaces for dependency injection
-- Handle errors explicitly, never ignore them
-- Use table-driven tests with `t.Run()` for subtests
+All development tools (golangci-lint, air, etc.) use the `go tool <name>` pattern:
 
-### Error Handling
+```bash
+go tool golangci-lint run
+go tool air -c .air.toml
+```
+
+This is the modern Go 1.25+ pattern where tools are declared in `go.mod` with the `tool` directive and invoked via `go tool <name>`. Never suggest global installations.
+
+### CLI Output vs Generated App Logging
+
+- **CLI Tool (tracks)** - Uses Renderer pattern for human-friendly output (Lip Gloss, Bubbles)
+- **Generated Apps** - Use zerolog for structured JSON logging in production
+
+These are two different contexts with different needs. Don't confuse them.
+
+### Cross-Platform Path Handling
+
+Always use `filepath` package for path operations:
 
 ```go
-// GOOD: Wrap errors with context
+// GOOD: Cross-platform
+projectDir := filepath.Join(baseDir, projectName)
+templatePath := filepath.FromSlash("internal/templates/project")
+
+// BAD: Platform-specific
+projectDir := baseDir + "/" + projectName
+```
+
+### Error Wrapping
+
+Always wrap errors with context using `%w`:
+
+```go
+// GOOD: Preserves error chain
 if err != nil {
     return fmt.Errorf("failed to create user: %w", err)
 }
 
-// BAD: Generic error
+// BAD: Loses error chain
 if err != nil {
     return errors.New("error occurred")
 }
 ```
 
-### Testing
+## Database Context
 
-- Write table-driven tests when appropriate
-- Use mocks for external dependencies
-- Test edge cases and error paths
-- Aim for >80% coverage on new code
+- **Default:** LibSQL/Turso (requires CGO, gcc/musl-dev on Alpine)
+- **Alternatives:** SQLite (requires CGO), PostgreSQL (no CGO, static builds)
+- **Migrations:** Goose with timestamp prefixes
+- **Queries:** Written in SQL, processed by SQLC for type safety
+- **IDs:** UUIDv7 (timestamp-ordered UUIDs)
+
+## Documentation Structure
+
+- **`/docs/prd/`** - Detailed product requirements (the "what" and "why")
+- **`/docs/roadmap/`** - Phase breakdown and epic planning (the "when" and "how")
+- **`/website/docs/`** - User-facing documentation (guides, tutorials)
+- **`CONTRIBUTING.md`** - Development setup and standards (start here for dev work)
 
 ## Configuration
 
-Uses hierarchical configuration (lowest to highest priority):
+Hierarchical configuration (lowest to highest priority):
 
 1. Default values in code
 2. Configuration file (`tracks.yaml`)
 3. Environment variables (prefixed with `APP_`)
 
-## Database
+## Development Workflow Tips
 
-- **Default:** LibSQL/Turso (requires CGO)
-- **Alternatives:** SQLite (requires CGO), PostgreSQL (no CGO)
-- **Migrations:** Goose with timestamp prefixes
-- **Queries:** Written in SQL, processed by SQLC for type safety
-- **IDs:** UUIDv7 (timestamp-ordered)
+### Working on CLI Features
+
+1. Read the relevant epic in `/docs/roadmap/phases/` to understand the plan
+2. Check GitHub issues for task breakdown and acceptance criteria
+3. Run `make build && ./bin/tracks <command>` to test changes
+4. Use `make lint` before committing
+
+### Working on Generators
+
+1. Check `/docs/prd/` for detailed specs on what should be generated
+2. Templates live in `internal/templates/` and are embedded via `embed.go`
+3. Test by generating actual projects and verifying they build/run
+4. Generated code should pass `go vet` and `golangci-lint`
+
+### Working on Documentation
+
+- Markdown files must pass `make lint-md`
+- Roadmap docs live in `/docs/roadmap/`
+- PRD docs live in `/docs/prd/`
+- User docs live in `/website/docs/` (Docusaurus)
+
+## Commit and PR Guidelines
+
+**See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed PR process.**
+
+Quick reminders:
+
+- PR titles use Conventional Commits format (becomes squash merge commit message)
+- Follow the PR template in `.github/pull_request_template.md`
+- Keep commit messages TERSE and focused
+- Write PR descriptions naturally, avoid AI slop
+- Use `make lint` before committing
+
+## Environment Requirements
+
+- **Go:** 1.25+ required
+- **Node.js:** 24+ with pnpm 10+ (for website)
+- **CGO:** Required for LibSQL/SQLite (needs gcc on Linux, xcode on macOS)
+- **Git:** For version control and release process
 
 ## Release Process
 
 ```bash
-# Generate changelog
-make changelog
-
-# Create and push release tag
-make release VERSION=v0.1.0
-
-# Test release locally
-make release-dry-run
+make changelog              # Generate changelog from commits
+make release VERSION=v0.1.0 # Create and push release tag
 ```
 
-Releases use:
+Uses Conventional Commits, GoReleaser, and GitHub Actions.
 
-- **Conventional Commits** for commit messages
-- **GoReleaser** for building cross-platform binaries
-- **git-chglog** for changelog generation
-- **GitHub Actions** for automated releases
+---
 
-## Commit Message Format
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```text
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`
-
-**IMPORTANT:** Commit messages should be TERSE. Keep descriptions concise and focused.
-
-## Pull Request Process
-
-- PR titles must use Conventional Commits format (used for squash merge commit)
-- **MUST follow the template in `.github/pull_request_template.md`** - Fill in What, Why, Testing, and Notes sections
-- Write PR descriptions naturally and concisely - avoid verbose, AI-generated text
-- Keep descriptions brief and to the point, like a human would write them
-- Ensure tests pass locally and linting passes (`make lint`)
-- Keep PRs small and focused on a single change
-- PR title becomes the commit message in main branch (squash merge)
-
-### PR Description Guidelines
-
-- **What**: Brief description of what changed (1-2 sentences)
-- **Why**: Short explanation of why it's needed
-- **Testing**: Checklist of what was tested
-- **Notes**: Any relevant context (optional)
-
-Avoid:
-
-
-- Bullet-pointed lists with emojis
-- Overly formal or marketing language
-- Unnecessary sections like "Summary" or "Overview"
-- Verbose explanations when a few words suffice
-
-## Important Notes
-
-- **Go Version:** Requires Go 1.25+
-- **Node Version:** Requires Node.js 24+ and pnpm 10+
-- **CGO Requirements:** LibSQL and SQLite require `CGO_ENABLED=1` and build tools (gcc/xcode)
-- **PostgreSQL:** Can build static binaries with `CGO_ENABLED=0`
-- **PR Process:** We use squash merging, so PR title becomes the commit message
-
-## Documentation
-
-- **PRD Docs:** `/docs/prd/` contains detailed product requirements
-- **Website Docs:** `/website/docs/` contains user-facing documentation
-- **API Docs:** Use godoc comments for exported functions
-- **Architecture:** See `/docs/prd/1_core_architecture.md` for details
+**Note:** This file focuses on Claude-specific context. For development setup, coding standards, and contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).
