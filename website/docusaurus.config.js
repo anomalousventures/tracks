@@ -38,8 +38,8 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/anomalousventures/tracks/tree/main/website/',
-          showLastUpdateTime: false,
-          showLastUpdateAuthor: false,
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: true,
         },
         blog: {
           showReadingTime: true,
