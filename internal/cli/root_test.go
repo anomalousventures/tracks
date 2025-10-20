@@ -11,6 +11,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+func findCommand(t *testing.T, rootCmd *cobra.Command, name string) *cobra.Command {
+	t.Helper()
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Name() == name {
+			return cmd
+		}
+	}
+	t.Fatalf("command %q not found", name)
+	return nil
+}
+
 func setupViperWithNoColor(t *testing.T, rootCmd *cobra.Command) *viper.Viper {
 	t.Helper()
 	v := viper.New()
@@ -242,6 +253,46 @@ func TestGlobalFlagsHelpText(t *testing.T) {
 	}
 }
 
+func TestFlagDescriptionsAreHelpful(t *testing.T) {
+	tests := []struct {
+		name         string
+		flagName     string
+		wantContains string
+	}{
+		{
+			name:         "json flag mentions scripting",
+			flagName:     "json",
+			wantContains: "scripting",
+		},
+		{
+			name:         "no-color flag mentions NO_COLOR",
+			flagName:     "no-color",
+			wantContains: "NO_COLOR",
+		},
+		{
+			name:         "interactive flag mentions TTY",
+			flagName:     "interactive",
+			wantContains: "TTY",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+			rootCmd := NewRootCmd(build)
+			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
+			if flag == nil {
+				t.Fatalf("flag --%s not found", tt.flagName)
+			}
+
+			usage := flag.Usage
+			if !strings.Contains(usage, tt.wantContains) {
+				t.Errorf("flag --%s usage should contain helpful context about %q, got: %q", tt.flagName, tt.wantContains, usage)
+			}
+		})
+	}
+}
+
 func TestVersionCommand(t *testing.T) {
 	var buf bytes.Buffer
 
@@ -366,6 +417,71 @@ func TestRootCommandUsage(t *testing.T) {
 
 	if rootCmd.Long == "" {
 		t.Error("root command should have a Long description")
+	}
+
+	if rootCmd.Example == "" {
+		t.Error("root command should have Example usage")
+	}
+}
+
+func TestRootCommandExamples(t *testing.T) {
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+	examples := rootCmd.Example
+
+	tests := []struct {
+		name    string
+		example string
+	}{
+		{"contains new command example", "tracks new myapp"},
+		{"contains version command example", "tracks version"},
+		{"contains JSON flag example", "tracks --json version"},
+		{"contains help command example", "tracks help new"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !strings.Contains(examples, tt.example) {
+				t.Errorf("Example field should contain %q", tt.example)
+			}
+		})
+	}
+}
+
+func TestCommandDescriptionsAreDetailed(t *testing.T) {
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+
+	tests := []struct {
+		name         string
+		commandName  string
+		wantContains []string
+	}{
+		{
+			name:        "version command has Long description",
+			commandName: "version",
+		},
+		{
+			name:         "new command mentions key technologies",
+			commandName:  "new",
+			wantContains: []string{"templ", "SQLC"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := findCommand(t, rootCmd, tt.commandName)
+
+			if cmd.Long == "" {
+				t.Errorf("command %q should have a Long description", tt.commandName)
+			}
+
+			for _, want := range tt.wantContains {
+				if !strings.Contains(cmd.Long, want) {
+					t.Errorf("command %q Long description should contain %q", tt.commandName, want)
+				}
+			}
+		})
 	}
 }
 

@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ REQUIRED: Pre-Commit Validation
+
+**Before making ANY commit, you MUST:**
+
+1. **Run `make lint`** - All linters must pass with zero errors
+2. **Run `make test`** - All tests must pass with zero failures
+3. **Remediate any errors** - Fix all issues found by linting and testing
+
+**Failure to complete these steps successfully means the code is NOT ready to commit.**
+
 ## Quick Start
 
 **For development setup, coding standards, and contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).**
@@ -226,6 +236,19 @@ make release VERSION=v0.1.0 # Create and push release tag
 ```
 
 Uses Conventional Commits, GoReleaser, and GitHub Actions.
+
+---
+
+## 🚨 MANDATORY: Always Validate Before Committing
+
+**This is a critical requirement that cannot be skipped:**
+
+Before creating any commit, you must SUCCESSFULLY complete:
+
+1. **`make lint`** - Fix ALL linting errors
+2. **`make test`** - Fix ALL test failures
+
+If either command fails, you MUST remediate the errors before proceeding. Code that fails linting or testing is NOT ready to commit.
 
 ---
 

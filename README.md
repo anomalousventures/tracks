@@ -122,7 +122,7 @@ Detailed PRD documents describe the complete vision:
 
 For contributors:
 
-- [CLAUDE.md](./CLAUDE.md) - Development commands and project structure
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Development setup and coding standards
 - [Roadmap](./docs/roadmap/README.md) - Phase breakdown and epic details
 - [GitHub Issues](https://github.com/anomalousventures/tracks/issues) - Task tracking
 
@@ -192,7 +192,7 @@ Contributions are welcome! The project is in active early development.
 
 - Report bugs and request features via [GitHub Issues](https://github.com/anomalousventures/tracks/issues)
 - Discuss ideas in [GitHub Discussions](https://github.com/anomalousventures/tracks/discussions)
-- Submit pull requests (see [CLAUDE.md](./CLAUDE.md) for development setup)
+- Submit pull requests (see [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup)
 
 ## License
 
