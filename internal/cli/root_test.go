@@ -530,8 +530,7 @@ func TestGetViper(t *testing.T) {
 
 func TestEnvironmentVariables(t *testing.T) {
 	t.Run("TRACKS_JSON sets json flag", func(t *testing.T) {
-		os.Setenv("TRACKS_JSON", "true")
-		defer os.Unsetenv("TRACKS_JSON")
+		t.Setenv("TRACKS_JSON", "true")
 
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
@@ -539,8 +538,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	})
 
 	t.Run("TRACKS_NO_COLOR sets no-color flag", func(t *testing.T) {
-		os.Setenv("TRACKS_NO_COLOR", "true")
-		defer os.Unsetenv("TRACKS_NO_COLOR")
+		t.Setenv("TRACKS_NO_COLOR", "true")
 
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
@@ -548,8 +546,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	})
 
 	t.Run("TRACKS_INTERACTIVE sets interactive flag", func(t *testing.T) {
-		os.Setenv("TRACKS_INTERACTIVE", "true")
-		defer os.Unsetenv("TRACKS_INTERACTIVE")
+		t.Setenv("TRACKS_INTERACTIVE", "true")
 
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
@@ -557,8 +554,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	})
 
 	t.Run("NO_COLOR standard env var sets no-color flag", func(t *testing.T) {
-		os.Setenv("NO_COLOR", "1")
-		defer os.Unsetenv("NO_COLOR")
+		t.Setenv("NO_COLOR", "1")
 
 		if err := Execute("v1.0.0", "abc123", "2025-10-19"); err != nil {
 			t.Fatalf("Execute failed: %v", err)
@@ -566,8 +562,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	})
 
 	t.Run("NO_COLOR with empty value sets no-color flag", func(t *testing.T) {
-		os.Setenv("NO_COLOR", "")
-		defer os.Unsetenv("NO_COLOR")
+		t.Setenv("NO_COLOR", "")
 
 		build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 		rootCmd := NewRootCmd(build)
@@ -582,8 +577,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	})
 
 	t.Run("flags override NO_COLOR environment variable", func(t *testing.T) {
-		os.Setenv("NO_COLOR", "1")
-		defer os.Unsetenv("NO_COLOR")
+		t.Setenv("NO_COLOR", "1")
 
 		build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 		rootCmd := NewRootCmd(build)
