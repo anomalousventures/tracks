@@ -53,7 +53,7 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 			if persistentFlag == nil {
 				t.Errorf("flag --%s is not persistent", tt.flagName)
 			}
-			if localFlag != nil && !localFlag.Changed {
+			if localFlag != nil {
 				t.Errorf("flag --%s should only be in PersistentFlags, not local Flags", tt.flagName)
 			}
 		})

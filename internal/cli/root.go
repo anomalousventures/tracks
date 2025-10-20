@@ -35,8 +35,12 @@ func WithViper(ctx context.Context, v *viper.Viper) context.Context {
 
 // ViperFromContext retrieves the Viper instance from the context, if present.
 func ViperFromContext(ctx context.Context) *viper.Viper {
-	v, _ := ctx.Value(viperKey{}).(*viper.Viper)
-	return v
+	if v := ctx.Value(viperKey{}); v != nil {
+		if vv, ok := v.(*viper.Viper); ok {
+			return vv
+		}
+	}
+	return nil
 }
 
 // NewRootCmd creates a new root command with all flags and subcommands configured.
@@ -106,10 +110,8 @@ func Execute(versionStr, commitStr, dateStr string) error {
 // GetViper extracts the Viper instance from the command's context.
 // Returns a new Viper instance if none is found in context (useful for testing).
 func GetViper(cmd *cobra.Command) *viper.Viper {
-	if v := cmd.Context().Value(viperKey{}); v != nil {
-		if vv, ok := v.(*viper.Viper); ok {
-			return vv
-		}
+	if v := ViperFromContext(cmd.Context()); v != nil {
+		return v
 	}
 	return viper.New()
 }
