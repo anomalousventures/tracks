@@ -11,6 +11,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+func findCommand(t *testing.T, rootCmd *cobra.Command, name string) *cobra.Command {
+	t.Helper()
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Name() == name {
+			return cmd
+		}
+	}
+	t.Fatalf("command %q not found", name)
+	return nil
+}
+
 func setupViperWithNoColor(t *testing.T, rootCmd *cobra.Command) *viper.Viper {
 	t.Helper()
 	v := viper.New()
@@ -416,18 +427,24 @@ func TestRootCommandUsage(t *testing.T) {
 func TestRootCommandExamples(t *testing.T) {
 	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 	rootCmd := NewRootCmd(build)
-
 	examples := rootCmd.Example
-	requiredExamples := []string{
-		"tracks new myapp",
-		"tracks version",
-		"tracks --json version",
+
+	tests := []struct {
+		name    string
+		example string
+	}{
+		{"contains new command example", "tracks new myapp"},
+		{"contains version command example", "tracks version"},
+		{"contains JSON flag example", "tracks --json version"},
+		{"contains help command example", "tracks help new"},
 	}
 
-	for _, example := range requiredExamples {
-		if !strings.Contains(examples, example) {
-			t.Errorf("Example field should contain %q", example)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !strings.Contains(examples, tt.example) {
+				t.Errorf("Example field should contain %q", tt.example)
+			}
+		})
 	}
 }
 
@@ -435,21 +452,36 @@ func TestCommandDescriptionsAreDetailed(t *testing.T) {
 	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 	rootCmd := NewRootCmd(build)
 
-	versionCmd := rootCmd.Commands()[0]
-	if versionCmd.Long == "" {
-		t.Error("version command should have a Long description")
+	tests := []struct {
+		name         string
+		commandName  string
+		wantContains []string
+	}{
+		{
+			name:        "version command has Long description",
+			commandName: "version",
+		},
+		{
+			name:         "new command mentions key technologies",
+			commandName:  "new",
+			wantContains: []string{"templ", "SQLC"},
+		},
 	}
 
-	newCmd := rootCmd.Commands()[1]
-	if newCmd.Long == "" {
-		t.Error("new command should have a Long description")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := findCommand(t, rootCmd, tt.commandName)
 
-	if !strings.Contains(newCmd.Long, "templ") {
-		t.Error("new command Long description should mention templ")
-	}
-	if !strings.Contains(newCmd.Long, "SQLC") {
-		t.Error("new command Long description should mention SQLC")
+			if cmd.Long == "" {
+				t.Errorf("command %q should have a Long description", tt.commandName)
+			}
+
+			for _, want := range tt.wantContains {
+				if !strings.Contains(cmd.Long, want) {
+					t.Errorf("command %q Long description should contain %q", tt.commandName, want)
+				}
+			}
+		})
 	}
 }
 
