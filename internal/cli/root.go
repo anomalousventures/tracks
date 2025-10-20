@@ -56,12 +56,23 @@ type-safe SQL (SQLC), built-in authentication/authorization,
 and an interactive TUI for code generation.
 
 Generates idiomatic Go code you'd write yourself. No magic, full control.`,
+		Example: `  # Create a new Tracks application
+  tracks new myapp
+
+  # Show version information
+  tracks version
+
+  # Get JSON output for scripting
+  tracks --json version
+
+  # View help for any command
+  tracks help new`,
 		Version: build.getVersion(),
 	}
 
-	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format")
-	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output")
-	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode")
+	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format (useful for scripting)")
+	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output (respects NO_COLOR env var)")
+	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode even in non-TTY environments")
 
 	rootCmd.AddCommand(versionCmd(build))
 	rootCmd.AddCommand(newCmd())
@@ -131,6 +142,7 @@ func versionCmd(build BuildInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
+		Long:  "Display the version number, git commit hash, and build date for this Tracks CLI binary.",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(cmd.OutOrStdout(), "Tracks %s\n", build.getVersion())
 			fmt.Fprintf(cmd.OutOrStdout(), "Commit: %s\n", build.Commit)
@@ -143,7 +155,29 @@ func newCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "new [project-name]",
 		Short: "Create a new Tracks application",
-		Args:  cobra.ExactArgs(1),
+		Long: `Create a new Tracks application with the specified project name.
+
+This command generates a complete Go web application with:
+  - Proper project structure following Go best practices
+  - Type-safe templates using templ
+  - Type-safe SQL queries using SQLC
+  - Built-in authentication and authorization (RBAC)
+  - Development tooling (Makefile, hot-reload, linting)
+  - Docker and CI/CD configurations
+
+The generated application is production-ready and follows idiomatic Go patterns.`,
+		Example: `  # Create a new application with default settings
+  tracks new myapp
+
+  # Future: Specify database driver
+  tracks new myapp --db postgres
+
+  # Future: Custom Go module path
+  tracks new myapp --module github.com/myorg/myapp
+
+  # Future: Skip git initialization
+  tracks new myapp --no-git`,
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			projectName := args[0]
 			fmt.Fprintf(cmd.OutOrStdout(), "Creating new Tracks application: %s\n", projectName)

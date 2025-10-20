@@ -242,6 +242,46 @@ func TestGlobalFlagsHelpText(t *testing.T) {
 	}
 }
 
+func TestFlagDescriptionsAreHelpful(t *testing.T) {
+	tests := []struct {
+		name         string
+		flagName     string
+		wantContains string
+	}{
+		{
+			name:         "json flag mentions scripting",
+			flagName:     "json",
+			wantContains: "scripting",
+		},
+		{
+			name:         "no-color flag mentions NO_COLOR",
+			flagName:     "no-color",
+			wantContains: "NO_COLOR",
+		},
+		{
+			name:         "interactive flag mentions TTY",
+			flagName:     "interactive",
+			wantContains: "TTY",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+			rootCmd := NewRootCmd(build)
+			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
+			if flag == nil {
+				t.Fatalf("flag --%s not found", tt.flagName)
+			}
+
+			usage := flag.Usage
+			if !strings.Contains(usage, tt.wantContains) {
+				t.Errorf("flag --%s usage should contain helpful context about %q, got: %q", tt.flagName, tt.wantContains, usage)
+			}
+		})
+	}
+}
+
 func TestVersionCommand(t *testing.T) {
 	var buf bytes.Buffer
 
@@ -366,6 +406,50 @@ func TestRootCommandUsage(t *testing.T) {
 
 	if rootCmd.Long == "" {
 		t.Error("root command should have a Long description")
+	}
+
+	if rootCmd.Example == "" {
+		t.Error("root command should have Example usage")
+	}
+}
+
+func TestRootCommandExamples(t *testing.T) {
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+
+	examples := rootCmd.Example
+	requiredExamples := []string{
+		"tracks new myapp",
+		"tracks version",
+		"tracks --json version",
+	}
+
+	for _, example := range requiredExamples {
+		if !strings.Contains(examples, example) {
+			t.Errorf("Example field should contain %q", example)
+		}
+	}
+}
+
+func TestCommandDescriptionsAreDetailed(t *testing.T) {
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+
+	versionCmd := rootCmd.Commands()[0]
+	if versionCmd.Long == "" {
+		t.Error("version command should have a Long description")
+	}
+
+	newCmd := rootCmd.Commands()[1]
+	if newCmd.Long == "" {
+		t.Error("new command should have a Long description")
+	}
+
+	if !strings.Contains(newCmd.Long, "templ") {
+		t.Error("new command Long description should mention templ")
+	}
+	if !strings.Contains(newCmd.Long, "SQLC") {
+		t.Error("new command Long description should mention SQLC")
 	}
 }
 
