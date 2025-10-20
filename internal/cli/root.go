@@ -11,11 +11,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
-)
+// BuildInfo contains version metadata for the CLI.
+type BuildInfo struct {
+	Version string
+	Commit  string
+	Date    string
+}
 
 // Config holds the global CLI configuration.
 type Config struct {
@@ -27,9 +28,20 @@ type Config struct {
 // viperKey is used as a type-safe key for storing Viper in context.
 type viperKey struct{}
 
+// WithViper returns a new context with the provided Viper instance.
+func WithViper(ctx context.Context, v *viper.Viper) context.Context {
+	return context.WithValue(ctx, viperKey{}, v)
+}
+
+// ViperFromContext retrieves the Viper instance from the context, if present.
+func ViperFromContext(ctx context.Context) *viper.Viper {
+	v, _ := ctx.Value(viperKey{}).(*viper.Viper)
+	return v
+}
+
 // NewRootCmd creates a new root command with all flags and subcommands configured.
 // This returns a fresh command instance to avoid cross-test state coupling.
-func NewRootCmd() *cobra.Command {
+func NewRootCmd(build BuildInfo) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "tracks",
 		Short: "A productive web framework for Go",
@@ -40,13 +52,14 @@ type-safe SQL (SQLC), built-in authentication/authorization,
 and an interactive TUI for code generation.
 
 Generates idiomatic Go code you'd write yourself. No magic, full control.`,
+		Version: build.getVersion(),
 	}
 
 	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format")
 	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output")
 	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode")
 
-	rootCmd.AddCommand(versionCmd())
+	rootCmd.AddCommand(versionCmd(build))
 	rootCmd.AddCommand(newCmd())
 
 	return rootCmd
@@ -57,12 +70,13 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 // sets up environment variable support, and makes the configuration available
 // via context to all commands.
 func Execute(versionStr, commitStr, dateStr string) error {
-	rootCmd := NewRootCmd()
+	build := BuildInfo{
+		Version: versionStr,
+		Commit:  commitStr,
+		Date:    dateStr,
+	}
 
-	version = versionStr
-	commit = commitStr
-	date = dateStr
-	rootCmd.Version = getVersion()
+	rootCmd := NewRootCmd(build)
 
 	v := viper.New()
 
@@ -84,7 +98,7 @@ func Execute(versionStr, commitStr, dateStr string) error {
 		v.SetDefault("no-color", true)
 	}
 
-	ctx := context.WithValue(context.Background(), viperKey{}, v)
+	ctx := WithViper(context.Background(), v)
 
 	return rootCmd.ExecuteContext(ctx)
 }
@@ -93,7 +107,9 @@ func Execute(versionStr, commitStr, dateStr string) error {
 // Returns a new Viper instance if none is found in context (useful for testing).
 func GetViper(cmd *cobra.Command) *viper.Viper {
 	if v := cmd.Context().Value(viperKey{}); v != nil {
-		return v.(*viper.Viper)
+		if vv, ok := v.(*viper.Viper); ok {
+			return vv
+		}
 	}
 	return viper.New()
 }
@@ -109,14 +125,14 @@ func GetConfig(cmd *cobra.Command) Config {
 	}
 }
 
-func versionCmd() *cobra.Command {
+func versionCmd(build BuildInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "Tracks %s\n", getVersion())
-			fmt.Fprintf(cmd.OutOrStdout(), "Commit: %s\n", commit)
-			fmt.Fprintf(cmd.OutOrStdout(), "Built: %s\n", date)
+			fmt.Fprintf(cmd.OutOrStdout(), "Tracks %s\n", build.getVersion())
+			fmt.Fprintf(cmd.OutOrStdout(), "Commit: %s\n", build.Commit)
+			fmt.Fprintf(cmd.OutOrStdout(), "Built: %s\n", build.Date)
 		},
 	}
 }
@@ -134,9 +150,9 @@ func newCmd() *cobra.Command {
 	}
 }
 
-func getVersion() string {
-	if version != "dev" {
-		return version
+func (b BuildInfo) getVersion() string {
+	if b.Version != "dev" {
+		return b.Version
 	}
 
 	if info, ok := debug.ReadBuildInfo(); ok {
