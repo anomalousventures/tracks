@@ -37,7 +37,7 @@ Establish the foundational CLI tool using Cobra framework. This epic creates the
 - Actual command implementations (new, generate, etc.) - those come in later epics
 - Full TUI implementation - deferred to Phase 4
 - Structured logging with zerolog - only for generated apps, not CLI tool
-- Configuration file loading - minimal for now
+- Configuration file loading from tracks.yaml - deferred to later phases (Viper infrastructure ready)
 - Advanced CLI features (autocomplete, etc.)
 
 ## Task Breakdown
@@ -74,6 +74,7 @@ The following tasks will become GitHub issues, ordered by dependency:
 - Go 1.25+ installed
 - Access to external packages:
   - github.com/spf13/cobra v1.10.1 (already in go.mod)
+  - github.com/spf13/viper v1.20.1 (already in go.mod)
   - github.com/charmbracelet/bubbletea v1.3.0 (already in go.mod)
   - github.com/charmbracelet/lipgloss v1.1.0 (already in go.mod)
   - github.com/charmbracelet/bubbles v0.21.0 (to be added)
