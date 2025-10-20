@@ -11,6 +11,18 @@ import (
 	"github.com/spf13/viper"
 )
 
+func setupViperWithNoColor(t *testing.T, rootCmd *cobra.Command) *viper.Viper {
+	t.Helper()
+	v := viper.New()
+	if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
+		t.Fatalf("failed to bind no-color flag: %v", err)
+	}
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		v.SetDefault("no-color", true)
+	}
+	return v
+}
+
 func TestGlobalFlagsExist(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -559,15 +571,7 @@ func TestEnvironmentVariables(t *testing.T) {
 
 		build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 		rootCmd := NewRootCmd(build)
-		v := viper.New()
-		if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
-			t.Fatalf("failed to bind no-color flag: %v", err)
-		}
-
-		if _, ok := os.LookupEnv("NO_COLOR"); ok {
-			v.SetDefault("no-color", true)
-		}
-
+		v := setupViperWithNoColor(t, rootCmd)
 		ctx := WithViper(context.Background(), v)
 		rootCmd.SetContext(ctx)
 
@@ -583,15 +587,7 @@ func TestEnvironmentVariables(t *testing.T) {
 
 		build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 		rootCmd := NewRootCmd(build)
-		v := viper.New()
-		if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
-			t.Fatalf("failed to bind no-color flag: %v", err)
-		}
-
-		if _, ok := os.LookupEnv("NO_COLOR"); ok {
-			v.SetDefault("no-color", true)
-		}
-
+		v := setupViperWithNoColor(t, rootCmd)
 		ctx := WithViper(context.Background(), v)
 		rootCmd.SetArgs([]string{"--no-color=false"})
 
