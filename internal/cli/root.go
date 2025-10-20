@@ -68,6 +68,9 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
   # View help for any command
   tracks help new`,
 		Version: build.getVersion(),
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), "Interactive TUI mode coming in Phase 4. Use --help for available commands.")
+		},
 	}
 
 	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format (useful for scripting)")

@@ -644,6 +644,61 @@ func TestGetViper(t *testing.T) {
 	})
 }
 
+func TestRootCommandWithoutArgs(t *testing.T) {
+	var buf bytes.Buffer
+
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+	rootCmd.SetOut(&buf)
+
+	v := viper.New()
+	ctx := WithViper(context.Background(), v)
+	rootCmd.SetArgs([]string{})
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		t.Fatalf("root command without args failed: %v", err)
+	}
+
+	output := buf.String()
+	expectedMessage := "Interactive TUI mode coming in Phase 4. Use --help for available commands."
+	if !strings.Contains(output, expectedMessage) {
+		t.Errorf("root command without args output = %q, want to contain %q", output, expectedMessage)
+	}
+}
+
+func TestRootCommandHelpStillWorks(t *testing.T) {
+	var buf bytes.Buffer
+
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+	rootCmd.SetOut(&buf)
+
+	v := viper.New()
+	ctx := WithViper(context.Background(), v)
+	rootCmd.SetArgs([]string{"--help"})
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		t.Fatalf("root command with --help failed: %v", err)
+	}
+
+	output := buf.String()
+
+	if !strings.Contains(output, "Usage:") {
+		t.Error("help output should contain 'Usage:'")
+	}
+	if !strings.Contains(output, "Available Commands:") {
+		t.Error("help output should contain 'Available Commands:'")
+	}
+	if !strings.Contains(output, "Flags:") {
+		t.Error("help output should contain 'Flags:'")
+	}
+
+	placeholderMessage := "Interactive TUI mode coming in Phase 4"
+	if strings.Contains(output, placeholderMessage) {
+		t.Error("help output should NOT contain the placeholder message")
+	}
+}
+
 func TestEnvironmentVariables(t *testing.T) {
 	t.Run("TRACKS_JSON sets json flag", func(t *testing.T) {
 		t.Setenv("TRACKS_JSON", "true")
