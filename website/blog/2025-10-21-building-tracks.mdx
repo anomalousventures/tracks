@@ -1,0 +1,271 @@
+---
+slug: building-tracks
+title: "Building Tracks: A Rails-Inspired Go Web Framework for the AI Era"
+authors: [aaron-ross]
+tags: [announcement, go, framework, ai, htmx]
+date: 2025-10-21
+---
+
+*Why I'm creating a batteries-included Go framework with AI integration and code generation*
+
+:::info TL;DR
+
+**What is Tracks?** An opinionated Go web framework that brings Rails-like conventions to Go while embracing modern tools like [HTMX](https://htmx.org/), [templ](https://github.com/a-h/templ), and [SQLC](https://sqlc.dev/). Unlike traditional frameworks, it generates clean, readable Go code you own completely—no runtime dependencies, no magic.
+
+**What makes it unique:**
+- 🎛️ **Interactive Terminal UI** for development, debugging, and monitoring
+- 🤖 **AI Integration** via Model Context Protocol for intelligent code generation
+- 🎵 **DAW-style generation** - compose your app from separate "tracks" (models, services, handlers, templates)
+- 🚫 **Zero runtime dependencies** - generated code has no framework lock-in
+
+**Tech Stack:** Go • [HTMX](https://htmx.org/) • [templ](https://github.com/a-h/templ) • [SQLC](https://sqlc.dev/) • [Chi](https://github.com/go-chi/chi) • [Casbin](https://casbin.org/) • [OpenTelemetry](https://opentelemetry.io/)  
+**Who it's for:** Go developers who want rapid development without sacrificing control or code quality  
+**Current Status:** Phase 0 (Foundation) - Core scaffolding ✅ | Everything else 🚧
+
+[**GitHub**](https://github.com/anomalousventures/tracks) • [**Documentation**](https://anomalousventures.github.io/tracks)
+
+:::
+
+<!--truncate-->
+
+## Hi, I'm Aaron, and I Have a Framework Problem
+
+If you've spent any time in web development, you've probably had that moment. You know the one: where you're knee-deep in your fifth Express middleware setup of the month, copy-pasting the same auth logic you wrote last Tuesday, and you think, "There has to be a better way."
+
+Well, I'm Aaron Ross ([@ashmortar](https://github.com/ashmortar) everywhere that matters), and I've been having that moment on repeat for about 10 years now. Currently, I'm a Senior Software Engineer at Great Expectations Labs, where I spend my days building data quality tools and (here's the fun part) experimenting with letting AI agents write most of my code.
+
+That experience led me to start building **Tracks**: a Rails-inspired Go web framework designed for rapid development with modern tooling like [HTMX](https://htmx.org/), AI-assisted code generation, and a developer-friendly terminal interface.
+
+## The Vision (And Where We Are)
+
+:::note Building in Public
+
+Before I dive into what Tracks will be, let me be transparent: **Tracks is in early development** (Phase 0: Foundation). What I'm sharing here is the roadmap and vision for where this Go web framework is headed. Some features are working today, others are in progress, and some are planned for future phases.
+
+I'm building this in public because I believe the best frameworks come from real-world feedback, not ivory tower design. If this vision resonates with you, I'd love your input as we build it together.
+
+:::
+
+Now, let me tell you why I think this approach to Go web development is worth pursuing.
+
+## A Tour Through the Framework Graveyard
+
+Over the past decade, I've built production applications in just about every major web framework you can name. Express? Check. Rails? Oh boy, yes. NestJS? Absolutely. Flask, FastAPI, Phoenix? Yep, yep, and yep. Each one taught me something valuable:
+
+- **Rails** showed me the power of convention over configuration (and the pain of "magic" you don't understand)
+- **Phoenix** demonstrated what real-time features could look like when done right
+- **NestJS** proved that enterprise patterns could work in Node (even if the decorators sometimes felt like writing Java in TypeScript clothing)
+- **Express** taught me that sometimes minimal is good, but "batteries not included" gets old fast
+
+Through all of this wandering, I discovered something unexpected: **Go became my favorite server language.**
+
+## Go: The Language That (Almost) Has It All
+
+Now, I know what you're thinking. "Go? The language with if err != nil memes? The one where generics took a decade to arrive?"
+
+Hear me out.
+
+Go is fast. Genuinely, measurably fast. It's stable in a way that makes returning to old codebases almost pleasant. You know that Go project you wrote 3 years ago? It still looks pretty much like the Go project you'd write today. Try saying that about your React class components from 2019 (RIP).
+
+While I genuinely love TypeScript (its type system lets you do some absolutely bonkers things), Node applications tend to be resource-hungry beasts with dependency graphs that look like someone sneezed on a spider web. Meanwhile, Go compiles to a single, lightweight binary that's basically tailor-made for the Docker/Kubernetes world we all live in now.
+
+Go's "simplicity" that some developers complain about? That's actually a feature. When every project looks similar, when the patterns are consistent, when there's usually one obvious way to do things, that's not limiting. It's *liberating*. You spend less time debating architectural astronomy and more time shipping features.
+
+## But Here's the Rub...
+
+Go has been missing two crucial things for rapid web development:
+
+1. **A JSX-like templating experience** - Go's `html/template` package is... fine. But when you're used to the component model and type safety of React, going back to string-based templates feels like coding with oven mitts on.
+
+2. **Strong opinions and code reuse patterns** - Every Go web project starts the same way: write your router setup, write your middleware, write your auth logic, write your database migrations, write your validation helpers. You get the idea. It's Groundhog Day, but for HTTP handlers.
+
+## Enter the Game Changers
+
+The first problem? That's been beautifully solved by [templ](https://github.com/a-h/templ). If you haven't tried it yet, templ brings JSX-like syntax to Go with full type safety. You write your templates in a familiar, component-based style, and they compile to pure Go code. No runtime overhead, no string concatenation nightmares, just clean, type-safe HTML generation.
+
+But the second problem (the endless boilerplate, the lack of conventions, the constant reinventing of wheels)? That's where Tracks comes in.
+
+## What Tracks Will Be: The Complete Vision
+
+Here's the vision for what you'll get when you scaffold a Tracks application: a complete, production-ready Go web application with all the infrastructure you'd spend weeks building yourself. The roadmap includes:
+
+### Authentication & Authorization
+- Passwordless OTP via email/SMS
+- OAuth2 integration (Google, GitHub, etc.)
+- Secure session management with multiple backends
+- Full RBAC with [Casbin](https://casbin.org/) for permissions
+- Audit logging for compliance
+
+### Database Layer
+- Type-safe queries via [SQLC](https://sqlc.dev/) (no runtime overhead)
+- Migration management with up/down support
+- Repository pattern with clean interfaces
+- Support for [go-libsql](https://github.com/tursodatabase/libsql-client-go) ([Turso](https://turso.tech/)), SQLite3, or PostgreSQL
+- Connection pooling and query optimization
+
+### Background Jobs
+- Queue abstraction (memory, SQS, Google Pub/Sub)
+- Worker management with graceful shutdown
+- Retry logic and dead letter queues
+- Job status tracking and monitoring
+
+### Storage
+- Pluggable storage backends (local, S3, Cloudflare R2)
+- File upload handling with validation
+- Signed URLs for secure access
+- Image processing hooks
+
+### Observability
+- [OpenTelemetry](https://opentelemetry.io/) instrumentation out of the box
+- Structured logging with [zerolog](https://github.com/rs/zerolog)
+- Distributed tracing
+- Metrics and health check endpoints
+- Request correlation IDs
+
+### Security
+- Content Security Policy with nonces
+- CSRF protection
+- Rate limiting
+- SQL injection prevention (thanks to [SQLC](https://sqlc.dev/))
+- XSS protection via template escaping
+- Secure headers by default
+
+### Modern Web Stack
+- [HTMX](https://htmx.org/) for dynamic UIs without JavaScript complexity
+- [Alpine.js](https://alpinejs.dev/) for lightweight interactivity
+- [templ](https://github.com/a-h/templ) for type-safe, compiled templates
+- Live reload during development with [Air](https://github.com/cosmtrek/air)
+- Progressive enhancement philosophy
+
+This isn't a minimal framework. This is batteries-included web development for Go.
+
+## The Unique Bits: What Makes Tracks Different
+
+But here's where it gets interesting. Tracks isn't just another code generator. It's rethinking how we interact with frameworks entirely.
+
+### 1. The TUI: Your Command Center
+
+When you type `tracks` with no arguments, you don't get a help menu. You get a full-featured Terminal User Interface (TUI) that becomes your development command center.
+
+Imagine this: you're debugging a production issue. Instead of tailing logs in one terminal, checking database queries in another, and monitoring job queues in a third, you have a single, unified dashboard showing you everything in real-time. You can filter logs, inspect your database schema, watch job queue progress bars, and see performance metrics, all with live updates and interactive controls.
+
+The TUI isn't just pretty ASCII art (though it is that). It's a practical tool for:
+- **Real-time log streaming** with filtering and search
+- **Interactive code generation** with live previews
+- **Database inspection** showing schema, indexes, and migration status
+- **Job queue monitoring** with progress bars and failure tracking
+- **Performance profiling** with visual graphs and bottleneck detection
+
+Think of it like Ableton Live's interface for music production. Everything you need is visible and accessible. You're not juggling windows or memorizing commands. You're conducting your application.
+
+### 2. The MCP Server: AI as Your Pair Programmer
+
+This is where my work at Great Expectations Labs comes full circle. Tracks includes a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that exposes the entire framework to AI assistants like Claude.
+
+What does this mean practically? Your AI assistant can:
+- **Generate complete features** from natural language descriptions
+- **Analyze your codebase** to understand dependencies and structure
+- **Suggest optimizations** based on actual runtime traces
+- **Debug issues** by correlating logs, traces, and code
+- **Run tests** and interpret results
+- **Execute migrations** with safety checks
+
+The MCP server runs as a Docker container or standalone binary, integrating seamlessly with [Claude Code](https://docs.claude.com/en/docs/claude-code) or any MCP-compatible tool. It's not just autocomplete on steroids; it's having a framework expert sitting next to you who knows your entire project.
+
+### 3. Interactive Code Generation: The DAW Metaphor
+
+Remember I mentioned I'm a bassist who codes? Here's where the music production metaphor really comes into play.
+
+In a DAW (Digital Audio Workstation), you don't just click "create song" and hope for the best. You lay down tracks (bass, drums, synth, vocals) that work together in harmony. Each track has its own role, its own controls, its own effects chain. You can solo a track to work on it in isolation, adjust levels in the mix, swap out virtual instruments, and comp together the best takes.
+
+That's exactly how Tracks approaches code generation.
+
+When you generate a resource in the TUI, you get an interactive form where you:
+- **Select fields** with types, validation, and constraints
+- **Configure relationships** between models
+- **Choose features** like API endpoints, web views, full-text search
+- **Preview the code** before it's written
+- **Customize validation rules** for each field
+
+Tracks then generates multiple "tracks" for your feature:
+- **Migration track**: Database schema changes
+- **Repository track**: Type-safe database queries via [SQLC](https://sqlc.dev/)
+- **Service track**: Business logic with dependency injection
+- **Handler track**: HTTP endpoints with validation
+- **Template track**: Type-safe views with [templ](https://github.com/a-h/templ)
+- **Test track**: Comprehensive test suites with mocks
+
+Each track is cleanly separated, type-safe, and works in harmony with the others. And just like in a DAW, you can solo a track (work on just the service layer), adjust the mix (refactor the handler), or swap out an instrument entirely (replace the queue provider).
+
+The framework keeps everything in sync and provides the mixing board, but you're still the producer. You control the final output.
+
+### 4. Zero Magic, Full Control
+
+:::tip The Most Important Feature
+
+Here's the crucial difference between Tracks and most other frameworks: **you own the code**.
+
+When Tracks generates code, it's not hiding behind magical base classes or runtime reflection. It generates idiomatic Go code that looks like an experienced Go developer sat down and wrote it by hand. It's vendored into your project. You can read it, modify it, or completely replace it.
+
+Don't like Chi for routing? Swap it out. Need GraphQL instead of REST? Add it in. Want a different auth strategy? The code is right there, change it. The generated code has no dependencies on the Tracks framework at runtime. Zero. Nada. None.
+
+:::
+
+This is fundamentally different from Rails or Phoenix where "the magic" is always there, lurking in the framework. In Tracks, there is no magic. Just clean, readable Go code that happens to be written by a very opinionated robot.
+
+## The Stack: Opinionated but Not Locked
+
+Tracks is betting on a carefully chosen technology stack that represents the best of modern Go web development:
+
+- **[HTMX](https://htmx.org/)** for dynamic UIs without JavaScript complexity
+- **[templ](https://github.com/a-h/templ)** for type-safe, component-based Go templates  
+- **[SQLC](https://sqlc.dev/)** for compile-time verified SQL and type-safe database queries
+- **[Chi](https://github.com/go-chi/chi)** for lightweight, idiomatic Go routing (because sometimes boring is good)
+- **[Casbin](https://casbin.org/)** for flexible RBAC and authorization (when you inevitably need it)
+- **[Bubble Tea](https://github.com/charmbracelet/bubbletea)** for the terminal UI (because CLI tools should be delightful)
+- **[OpenTelemetry](https://opentelemetry.io/)** for production-grade observability (because you can't fix what you can't see)
+
+But remember: these are compile-time dependencies for code generation. At runtime, your Go application has no dependency on Tracks at all. You're just running a standard Go binary you own and understand. No framework lock-in, no runtime magic, just clean Go code.
+
+## Why Build Another Go Web Framework?
+
+:::caution Why Not Just Use [Echo/Gin/Fiber]?
+
+You might wonder why I'm building this now, when there are already established Go frameworks like Echo, Gin, and Fiber. Three reasons:
+
+1. **The Go ecosystem has matured** - Tools like [templ](https://github.com/a-h/templ), [SQLC](https://sqlc.dev/), and [Bubble Tea](https://github.com/charmbracelet/bubbletea) have finally given us the primitives we need to build something truly great. The golang web development landscape in 2025 is radically different from even two years ago.
+
+2. **[HTMX](https://htmx.org/) is having a moment** - The pendulum is swinging back toward server-rendered, hypermedia-driven applications. Turns out, sending HTML over the wire was a good idea all along. Go's performance characteristics make it perfect for this approach.
+
+3. **AI-assisted development is real** - At Great Expectations Labs, I'm seeing firsthand how AI can accelerate development. Code generation and AI assistance aren't the future anymore; they're the present. Tracks is designed from the ground up to work seamlessly with AI tooling through the [Model Context Protocol](https://modelcontextprotocol.io/).
+
+:::
+
+## Come Along for the Ride
+
+Tracks is in early development (Phase 0: Foundation, to be specific), and I'm building it in public. What I've shared here is the complete vision and roadmap. Some core pieces are working now, others are in active development, and some are planned for future phases.
+
+:::info Current Development Status
+
+- ✅ **Core CLI structure and project scaffolding** - Working
+- 🚧 **Database layer with SQLC integration** - In progress
+- 🚧 **Basic code generation patterns** - In progress
+- 🚧 **TUI implementation** - Planned
+- 🚧 **MCP server development** - Planned
+- 📋 **Full feature set** - Planned and documented
+
+:::
+
+If you've ever wanted to see how a modern Go web framework comes together from the very beginning, now's your chance. If you've been looking for a batteries-included Go framework with Rails-like conventions, or if you're interested in how AI can enhance developer workflows, I'd love your feedback as we build this together.
+
+The goal isn't to build the perfect framework (that doesn't exist). The goal is to build something that lets us **go fast** (pun absolutely intended) while writing the kind of clean, maintainable Go code we can be proud of.
+
+Because at the end of the day, the best framework is the one that gets out of your way and lets you build cool stuff. And that's exactly what Tracks aims to be.
+
+---
+
+*Want to follow along or contribute? Check out [Tracks on GitHub](https://github.com/anomalousventures/tracks) or dive into the [documentation](https://anomalousventures.github.io/tracks). Got opinions? I'd love to hear them: find me on GitHub [@ashmortar](https://github.com/ashmortar) or drop into the discussions.*
+
+*Tracks is part of [Anomalous Ventures](https://github.com/anomalousventures), where we're building tools to make developers more productive. Follow the org to see what else we're building!*
+
+*P.S. - Yes, I named it Tracks for the double meaning: Rails-inspired convention-over-configuration (the railroad kind) meets music production workflow (the DAW kind). As a bassist who codes, I couldn't resist. Yes, there will be both train puns and mix metaphors. No, I'm not sorry.* 🚂🎵
