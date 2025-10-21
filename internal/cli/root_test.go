@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -42,6 +43,8 @@ func TestGlobalFlagsExist(t *testing.T) {
 		{"json flag exists", "json"},
 		{"no-color flag exists", "no-color"},
 		{"interactive flag exists", "interactive"},
+		{"verbose flag exists", "verbose"},
+		{"quiet flag exists", "quiet"},
 	}
 
 	for _, tt := range tests {
@@ -64,6 +67,8 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 		{"json flag is persistent", "json"},
 		{"no-color flag is persistent", "no-color"},
 		{"interactive flag is persistent", "interactive"},
+		{"verbose flag is persistent", "verbose"},
+		{"quiet flag is persistent", "quiet"},
 	}
 
 	for _, tt := range tests {
@@ -87,6 +92,11 @@ func TestGlobalFlagsDefaultValues(t *testing.T) {
 	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 	rootCmd := NewRootCmd(build)
 	v := viper.New()
+
+	if os.Getenv("TRACKS_LOG_LEVEL") == "" {
+		v.SetDefault("log-level", "off")
+	}
+
 	ctx := WithViper(context.Background(), v)
 	rootCmd.SetContext(ctx)
 
@@ -100,6 +110,15 @@ func TestGlobalFlagsDefaultValues(t *testing.T) {
 	}
 	if config.Interactive {
 		t.Error("Interactive flag should default to false")
+	}
+	if config.Verbose {
+		t.Error("Verbose flag should default to false")
+	}
+	if config.Quiet {
+		t.Error("Quiet flag should default to false")
+	}
+	if config.LogLevel != "off" {
+		t.Errorf("LogLevel should default to 'off', got %q", config.LogLevel)
 	}
 }
 
@@ -765,4 +784,173 @@ func TestEnvironmentVariables(t *testing.T) {
 			t.Error("CLI flag should override NO_COLOR environment variable")
 		}
 	})
+}
+
+func TestVerboseAndQuietShorthandFlags(t *testing.T) {
+	tests := []struct {
+		name          string
+		args          []string
+		wantVerbose   bool
+		wantQuiet     bool
+	}{
+		{
+			name:        "verbose shorthand -v",
+			args:        []string{"-v", "version"},
+			wantVerbose: true,
+			wantQuiet:   false,
+		},
+		{
+			name:        "quiet shorthand -q",
+			args:        []string{"-q", "version"},
+			wantVerbose: false,
+			wantQuiet:   true,
+		},
+		{
+			name:        "verbose long form --verbose",
+			args:        []string{"--verbose", "version"},
+			wantVerbose: true,
+			wantQuiet:   false,
+		},
+		{
+			name:        "quiet long form --quiet",
+			args:        []string{"--quiet", "version"},
+			wantVerbose: false,
+			wantQuiet:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+			rootCmd := NewRootCmd(build)
+			rootCmd.SetOut(io.Discard)
+
+			v := viper.New()
+			if err := v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")); err != nil {
+				t.Fatalf("failed to bind verbose flag: %v", err)
+			}
+			if err := v.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet")); err != nil {
+				t.Fatalf("failed to bind quiet flag: %v", err)
+			}
+
+			ctx := WithViper(context.Background(), v)
+			rootCmd.SetArgs(tt.args)
+
+			if err := rootCmd.ExecuteContext(ctx); err != nil {
+				t.Fatalf("Execute failed: %v", err)
+			}
+
+			config := GetConfig(rootCmd)
+			if config.Verbose != tt.wantVerbose {
+				t.Errorf("Verbose = %v, want %v", config.Verbose, tt.wantVerbose)
+			}
+			if config.Quiet != tt.wantQuiet {
+				t.Errorf("Quiet = %v, want %v", config.Quiet, tt.wantQuiet)
+			}
+		})
+	}
+}
+
+func TestVerboseAndQuietMutuallyExclusive(t *testing.T) {
+	build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+	rootCmd := NewRootCmd(build)
+	rootCmd.SetOut(io.Discard)
+	rootCmd.SetErr(io.Discard)
+
+	v := viper.New()
+	if err := v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")); err != nil {
+		t.Fatalf("failed to bind verbose flag: %v", err)
+	}
+	if err := v.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet")); err != nil {
+		t.Fatalf("failed to bind quiet flag: %v", err)
+	}
+
+	v.Set("verbose", true)
+	v.Set("quiet", true)
+
+	ctx := WithViper(context.Background(), v)
+	rootCmd.SetContext(ctx)
+	rootCmd.SetArgs([]string{"version"})
+
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Error("Expected error when both --verbose and --quiet are set, got nil")
+		return
+	}
+
+	if !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Errorf("Expected 'mutually exclusive' error, got: %v", err)
+	}
+}
+
+func TestTracksLogLevelEnvironmentVariable(t *testing.T) {
+	tests := []struct {
+		name         string
+		envValue     string
+		wantLogLevel string
+	}{
+		{
+			name:         "TRACKS_LOG_LEVEL=debug",
+			envValue:     "debug",
+			wantLogLevel: "debug",
+		},
+		{
+			name:         "TRACKS_LOG_LEVEL=info",
+			envValue:     "info",
+			wantLogLevel: "info",
+		},
+		{
+			name:         "TRACKS_LOG_LEVEL=warn",
+			envValue:     "warn",
+			wantLogLevel: "warn",
+		},
+		{
+			name:         "TRACKS_LOG_LEVEL=error",
+			envValue:     "error",
+			wantLogLevel: "error",
+		},
+		{
+			name:         "TRACKS_LOG_LEVEL=off",
+			envValue:     "off",
+			wantLogLevel: "off",
+		},
+		{
+			name:         "TRACKS_LOG_LEVEL unset defaults to off",
+			envValue:     "",
+			wantLogLevel: "off",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.envValue != "" {
+				t.Setenv("TRACKS_LOG_LEVEL", tt.envValue)
+			}
+
+			build := BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
+			rootCmd := NewRootCmd(build)
+			rootCmd.SetOut(io.Discard)
+
+			v := viper.New()
+			v.SetEnvPrefix("TRACKS")
+			v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+			v.AutomaticEnv()
+
+			if os.Getenv("TRACKS_LOG_LEVEL") == "" {
+				v.SetDefault("log-level", "off")
+			}
+
+			ctx := WithViper(context.Background(), v)
+			rootCmd.SetArgs([]string{"version"})
+
+			if err := rootCmd.ExecuteContext(ctx); err != nil {
+				t.Fatalf("Execute failed: %v", err)
+			}
+
+			config := GetConfig(rootCmd)
+			if config.LogLevel != tt.wantLogLevel {
+				t.Errorf("LogLevel = %q, want %q", config.LogLevel, tt.wantLogLevel)
+			}
+		})
+	}
 }
