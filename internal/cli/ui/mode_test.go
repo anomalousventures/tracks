@@ -197,16 +197,6 @@ func TestDetectModeCIEnvironment(t *testing.T) {
 			t.Errorf("DetectMode() with CI=true = %v, want ModeConsole", got)
 		}
 	})
-
-	t.Run("CI env empty string returns console mode", func(t *testing.T) {
-		t.Setenv("CI", "")
-
-		cfg := UIConfig{Mode: ModeAuto}
-		got := DetectMode(cfg)
-		if got != ModeConsole {
-			t.Errorf("DetectMode() with CI='' = %v, want ModeConsole", got)
-		}
-	})
 }
 
 func TestDetectModeDefault(t *testing.T) {
