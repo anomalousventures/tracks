@@ -164,3 +164,55 @@ func TestUIConfigCanBeCompared(t *testing.T) {
 		t.Error("different configs should not be equal")
 	}
 }
+
+func TestDetectModeExplicitMode(t *testing.T) {
+	tests := []struct {
+		name string
+		mode UIMode
+		want UIMode
+	}{
+		{"explicit console mode", ModeConsole, ModeConsole},
+		{"explicit JSON mode", ModeJSON, ModeJSON},
+		{"explicit TUI mode", ModeTUI, ModeTUI},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := UIConfig{Mode: tt.mode}
+			got := DetectMode(cfg)
+			if got != tt.want {
+				t.Errorf("DetectMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectModeCIEnvironment(t *testing.T) {
+	t.Run("CI env set returns console mode", func(t *testing.T) {
+		t.Setenv("CI", "true")
+
+		cfg := UIConfig{Mode: ModeAuto}
+		got := DetectMode(cfg)
+		if got != ModeConsole {
+			t.Errorf("DetectMode() with CI=true = %v, want ModeConsole", got)
+		}
+	})
+
+	t.Run("CI env empty string returns console mode", func(t *testing.T) {
+		t.Setenv("CI", "")
+
+		cfg := UIConfig{Mode: ModeAuto}
+		got := DetectMode(cfg)
+		if got != ModeConsole {
+			t.Errorf("DetectMode() with CI='' = %v, want ModeConsole", got)
+		}
+	})
+}
+
+func TestDetectModeDefault(t *testing.T) {
+	cfg := UIConfig{Mode: ModeAuto}
+	got := DetectMode(cfg)
+	if got != ModeConsole {
+		t.Errorf("DetectMode() default = %v, want ModeConsole", got)
+	}
+}
