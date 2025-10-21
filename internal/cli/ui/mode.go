@@ -56,6 +56,12 @@ type UIConfig struct {
 	Interactive bool
 }
 
+// ttyDetector checks if a file descriptor is a TTY.
+type ttyDetector func(fd uintptr) bool
+
+// defaultTTYDetector uses isatty for production.
+var defaultTTYDetector ttyDetector = isatty.IsTerminal
+
 // DetectMode determines the appropriate UI mode based on configuration and environment.
 // Detection logic:
 //   - If cfg.Mode is not ModeAuto, returns the explicitly set mode
@@ -63,13 +69,18 @@ type UIConfig struct {
 //   - If stdout is not a TTY (piped/redirected), returns ModeConsole
 //   - Otherwise returns ModeConsole (TUI mode deferred to Phase 4)
 func DetectMode(cfg UIConfig) UIMode {
+	return detectModeWithTTY(cfg, defaultTTYDetector)
+}
+
+// detectModeWithTTY is an internal helper that allows TTY detection to be mocked for testing.
+func detectModeWithTTY(cfg UIConfig, isTTY ttyDetector) UIMode {
 	// Respect explicit mode setting
 	if cfg.Mode != ModeAuto {
 		return cfg.Mode
 	}
 
 	// CI environment or non-TTY output uses console mode
-	if os.Getenv("CI") != "" || !isatty.IsTerminal(os.Stdout.Fd()) {
+	if os.Getenv("CI") != "" || !isTTY(os.Stdout.Fd()) {
 		return ModeConsole
 	}
 

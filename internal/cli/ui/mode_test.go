@@ -206,3 +206,25 @@ func TestDetectModeDefault(t *testing.T) {
 		t.Errorf("DetectMode() default = %v, want ModeConsole", got)
 	}
 }
+
+func TestDetectModeTTYPath(t *testing.T) {
+	t.Run("TTY environment returns console mode", func(t *testing.T) {
+		cfg := UIConfig{Mode: ModeAuto}
+		mockTTY := func(fd uintptr) bool { return true }
+
+		got := detectModeWithTTY(cfg, mockTTY)
+		if got != ModeConsole {
+			t.Errorf("TTY path = %v, want ModeConsole", got)
+		}
+	})
+
+	t.Run("non-TTY environment returns console mode", func(t *testing.T) {
+		cfg := UIConfig{Mode: ModeAuto}
+		mockTTY := func(fd uintptr) bool { return false }
+
+		got := detectModeWithTTY(cfg, mockTTY)
+		if got != ModeConsole {
+			t.Errorf("non-TTY path = %v, want ModeConsole", got)
+		}
+	})
+}
