@@ -1,7 +1,7 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const {themes} = require('prism-react-renderer');
+const { themes } = require('prism-react-renderer');
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
 
@@ -62,6 +62,9 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      metadata: [
+        { name: 'algolia-site-verification', content: 'E19956C0D3CEBF80' },
+      ],
       image: 'img/tracks-social-card.png',
       navbar: {
         title: 'Tracks',
@@ -76,7 +79,7 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          { to: '/blog', label: 'Blog', position: 'left' },
           {
             href: 'https://github.com/anomalousventures/tracks',
             label: 'GitHub',
@@ -107,10 +110,6 @@ const config = {
                 label: 'GitHub Discussions',
                 href: 'https://github.com/anomalousventures/tracks/discussions',
               },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/anomalousvents',
-              },
             ],
           },
           {
@@ -136,10 +135,10 @@ const config = {
       },
       algolia: {
         // The application ID provided by Algolia
-        appId: 'YOUR_APP_ID',
+        appId: '9X6Z9ESPDG',
 
         // Public API key: it is safe to commit it
-        apiKey: 'YOUR_SEARCH_API_KEY',
+        apiKey: '1ce459620d6184d4f4ba2c5902aa9979',
 
         indexName: 'tracks',
 
@@ -153,7 +152,7 @@ const config = {
         searchPagePath: 'search',
 
         // Set to false once you have Algolia configured
-        disabled: true,
+        disabled: false,
       },
     }),
 };
