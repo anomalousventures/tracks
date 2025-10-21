@@ -228,3 +228,203 @@ func TestDetectModeTTYPath(t *testing.T) {
 		}
 	})
 }
+
+func TestDetectModeJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     UIConfig
+		mockTTY func(fd uintptr) bool
+		want    UIMode
+	}{
+		{
+			name:    "JSON overrides explicit console mode",
+			cfg:     UIConfig{Mode: ModeConsole, JSON: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name:    "JSON overrides explicit TUI mode",
+			cfg:     UIConfig{Mode: ModeTUI, JSON: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name:    "JSON overrides TTY detection",
+			cfg:     UIConfig{Mode: ModeAuto, JSON: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name:    "JSON works in CI environment",
+			cfg:     UIConfig{Mode: ModeAuto, JSON: true},
+			mockTTY: func(fd uintptr) bool { return false },
+			want:    ModeJSON,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "JSON works in CI environment" {
+				t.Setenv("CI", "true")
+			}
+
+			got := detectModeWithTTY(tt.cfg, tt.mockTTY)
+			if got != tt.want {
+				t.Errorf("DetectMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectModeInteractive(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     UIConfig
+		mockTTY func(fd uintptr) bool
+		want    UIMode
+	}{
+		{
+			name:    "Interactive overrides explicit console mode",
+			cfg:     UIConfig{Mode: ModeConsole, Interactive: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeTUI,
+		},
+		{
+			name:    "Interactive overrides explicit JSON mode",
+			cfg:     UIConfig{Mode: ModeJSON, Interactive: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeTUI,
+		},
+		{
+			name:    "Interactive overrides non-TTY detection",
+			cfg:     UIConfig{Mode: ModeAuto, Interactive: true},
+			mockTTY: func(fd uintptr) bool { return false },
+			want:    ModeTUI,
+		},
+		{
+			name:    "Interactive works in CI environment",
+			cfg:     UIConfig{Mode: ModeAuto, Interactive: true},
+			mockTTY: func(fd uintptr) bool { return false },
+			want:    ModeTUI,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Interactive works in CI environment" {
+				t.Setenv("CI", "true")
+			}
+
+			got := detectModeWithTTY(tt.cfg, tt.mockTTY)
+			if got != tt.want {
+				t.Errorf("DetectMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectModeBothSet(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     UIConfig
+		mockTTY func(fd uintptr) bool
+		want    UIMode
+	}{
+		{
+			name: "JSON takes precedence over Interactive",
+			cfg: UIConfig{
+				Mode:        ModeAuto,
+				JSON:        true,
+				Interactive: true,
+			},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name: "JSON precedence applies with explicit mode",
+			cfg: UIConfig{
+				Mode:        ModeConsole,
+				JSON:        true,
+				Interactive: true,
+			},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name: "JSON precedence applies in CI environment",
+			cfg: UIConfig{
+				Mode:        ModeAuto,
+				JSON:        true,
+				Interactive: true,
+			},
+			mockTTY: func(fd uintptr) bool { return false },
+			want:    ModeJSON,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "JSON precedence applies in CI environment" {
+				t.Setenv("CI", "true")
+			}
+
+			got := detectModeWithTTY(tt.cfg, tt.mockTTY)
+			if got != tt.want {
+				t.Errorf("DetectMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectModeNoOverrides(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     UIConfig
+		mockTTY func(fd uintptr) bool
+		want    UIMode
+	}{
+		{
+			name:    "no overrides with explicit console mode",
+			cfg:     UIConfig{Mode: ModeConsole, JSON: false, Interactive: false},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeConsole,
+		},
+		{
+			name:    "no overrides with explicit JSON mode",
+			cfg:     UIConfig{Mode: ModeJSON, JSON: false, Interactive: false},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name:    "no overrides with explicit TUI mode",
+			cfg:     UIConfig{Mode: ModeTUI, JSON: false, Interactive: false},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeTUI,
+		},
+		{
+			name:    "no overrides with auto mode in TTY",
+			cfg:     UIConfig{Mode: ModeAuto, JSON: false, Interactive: false},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeConsole,
+		},
+		{
+			name:    "no overrides with auto mode in CI",
+			cfg:     UIConfig{Mode: ModeAuto, JSON: false, Interactive: false},
+			mockTTY: func(fd uintptr) bool { return false },
+			want:    ModeConsole,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "no overrides with auto mode in CI" {
+				t.Setenv("CI", "true")
+			}
+
+			got := detectModeWithTTY(tt.cfg, tt.mockTTY)
+			if got != tt.want {
+				t.Errorf("DetectMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
