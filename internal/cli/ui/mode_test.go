@@ -428,3 +428,99 @@ func TestDetectModeNoOverrides(t *testing.T) {
 		})
 	}
 }
+
+func TestDetectModeNoColor(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     UIConfig
+		mockTTY func(fd uintptr) bool
+		want    UIMode
+	}{
+		{
+			name:    "NoColor set with auto mode returns console",
+			cfg:     UIConfig{Mode: ModeAuto, NoColor: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeConsole,
+		},
+		{
+			name:    "NoColor set doesn't override explicit JSON mode",
+			cfg:     UIConfig{Mode: ModeJSON, NoColor: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeJSON,
+		},
+		{
+			name:    "NoColor set doesn't override explicit TUI mode",
+			cfg:     UIConfig{Mode: ModeTUI, NoColor: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeTUI,
+		},
+		{
+			name:    "NoColor set doesn't override Interactive flag",
+			cfg:     UIConfig{Mode: ModeAuto, NoColor: true, Interactive: true},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeTUI,
+		},
+		{
+			name:    "NoColor false with auto mode and TTY returns console",
+			cfg:     UIConfig{Mode: ModeAuto, NoColor: false},
+			mockTTY: func(fd uintptr) bool { return true },
+			want:    ModeConsole,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := detectModeWithTTY(tt.cfg, tt.mockTTY)
+			if got != tt.want {
+				t.Errorf("DetectMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUIConfigLogLevel(t *testing.T) {
+	tests := []struct {
+		name         string
+		cfg          UIConfig
+		wantLogLevel string
+	}{
+		{
+			name:         "default log level",
+			cfg:          UIConfig{},
+			wantLogLevel: "",
+		},
+		{
+			name:         "debug log level",
+			cfg:          UIConfig{LogLevel: "debug"},
+			wantLogLevel: "debug",
+		},
+		{
+			name:         "info log level",
+			cfg:          UIConfig{LogLevel: "info"},
+			wantLogLevel: "info",
+		},
+		{
+			name:         "warn log level",
+			cfg:          UIConfig{LogLevel: "warn"},
+			wantLogLevel: "warn",
+		},
+		{
+			name:         "error log level",
+			cfg:          UIConfig{LogLevel: "error"},
+			wantLogLevel: "error",
+		},
+		{
+			name:         "off log level",
+			cfg:          UIConfig{LogLevel: "off"},
+			wantLogLevel: "off",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.cfg.LogLevel != tt.wantLogLevel {
+				t.Errorf("LogLevel = %q, want %q", tt.cfg.LogLevel, tt.wantLogLevel)
+			}
+		})
+	}
+}

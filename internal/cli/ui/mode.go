@@ -59,6 +59,10 @@ type UIConfig struct {
 	// Interactive forces interactive TUI mode even in non-TTY environments.
 	// Takes precedence over auto-detection but lower than JSON.
 	Interactive bool
+
+	// LogLevel controls developer debug logging (debug, info, warn, error, off).
+	// Defaults to "off" to hide debugging from end users.
+	LogLevel string
 }
 
 // ttyDetector checks if a file descriptor is a TTY.
@@ -72,7 +76,7 @@ var defaultTTYDetector ttyDetector = isatty.IsTerminal
 //  1. JSON set → returns ModeJSON (for scripting/automation)
 //  2. Interactive set → returns ModeTUI (force interactive)
 //  3. cfg.Mode (if not ModeAuto) → returns explicitly set mode
-//  4. CI environment or non-TTY → returns ModeConsole
+//  4. NO_COLOR, CI environment, or non-TTY → returns ModeConsole
 //  5. Default → returns ModeConsole (TUI coming in Phase 4)
 func DetectMode(cfg UIConfig) UIMode {
 	return detectModeWithTTY(cfg, defaultTTYDetector)
@@ -94,8 +98,8 @@ func detectModeWithTTY(cfg UIConfig, isTTY ttyDetector) UIMode {
 		return cfg.Mode
 	}
 
-	// CI environment or non-TTY output uses console mode
-	if os.Getenv("CI") != "" || !isTTY(os.Stdout.Fd()) {
+	// NO_COLOR, CI environment, or non-TTY output uses console mode
+	if cfg.NoColor || os.Getenv("CI") != "" || !isTTY(os.Stdout.Fd()) {
 		return ModeConsole
 	}
 

@@ -23,6 +23,9 @@ type Config struct {
 	JSON        bool
 	NoColor     bool
 	Interactive bool
+	Verbose     bool
+	Quiet       bool
+	LogLevel    string
 }
 
 // viperKey is used as a type-safe key for storing Viper in context.
@@ -68,6 +71,13 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
   # View help for any command
   tracks help new`,
 		Version: build.getVersion(),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			v := GetViper(cmd)
+			if v.GetBool("verbose") && v.GetBool("quiet") {
+				return fmt.Errorf("--verbose and --quiet flags are mutually exclusive")
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Fprintln(cmd.OutOrStdout(), "Interactive TUI mode coming in Phase 4. Use --help for available commands.")
 		},
@@ -76,6 +86,8 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	rootCmd.PersistentFlags().Bool("json", false, "Output in JSON format (useful for scripting)")
 	rootCmd.PersistentFlags().Bool("no-color", false, "Disable color output (respects NO_COLOR env var)")
 	rootCmd.PersistentFlags().Bool("interactive", false, "Force interactive TUI mode even in non-TTY environments")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output (shows detailed information)")
+	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode (suppress non-error output)")
 
 	rootCmd.AddCommand(versionCmd(build))
 	rootCmd.AddCommand(newCmd())
@@ -107,6 +119,12 @@ func Execute(versionStr, commitStr, dateStr string) error {
 	if err := v.BindPFlag("interactive", rootCmd.PersistentFlags().Lookup("interactive")); err != nil {
 		return fmt.Errorf("failed to bind interactive flag: %w", err)
 	}
+	if err := v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")); err != nil {
+		return fmt.Errorf("failed to bind verbose flag: %w", err)
+	}
+	if err := v.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet")); err != nil {
+		return fmt.Errorf("failed to bind quiet flag: %w", err)
+	}
 
 	v.SetEnvPrefix("TRACKS")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
@@ -114,6 +132,10 @@ func Execute(versionStr, commitStr, dateStr string) error {
 
 	if _, ok := os.LookupEnv("NO_COLOR"); ok {
 		v.SetDefault("no-color", true)
+	}
+
+	if os.Getenv("TRACKS_LOG_LEVEL") == "" {
+		v.SetDefault("log-level", "off")
 	}
 
 	ctx := WithViper(context.Background(), v)
@@ -138,6 +160,9 @@ func GetConfig(cmd *cobra.Command) Config {
 		JSON:        v.GetBool("json"),
 		NoColor:     v.GetBool("no-color"),
 		Interactive: v.GetBool("interactive"),
+		Verbose:     v.GetBool("verbose"),
+		Quiet:       v.GetBool("quiet"),
+		LogLevel:    v.GetString("log-level"),
 	}
 }
 
