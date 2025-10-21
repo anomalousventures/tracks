@@ -69,7 +69,8 @@ func DetectMode(cfg UIConfig) UIMode {
 	}
 
 	// CI environment or non-TTY output uses console mode
-	if os.Getenv("CI") != "" || !isatty.IsTerminal(os.Stdout.Fd()) {
+	_, isCi := os.LookupEnv("CI")
+	if isCi || !isatty.IsTerminal(os.Stdout.Fd()) {
 		return ModeConsole
 	}
 
