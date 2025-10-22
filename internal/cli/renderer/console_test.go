@@ -388,6 +388,13 @@ func TestConsoleRendererTableEmpty(t *testing.T) {
 				Rows:    [][]string{},
 			},
 		},
+		{
+			name: "table with empty row slices",
+			table: Table{
+				Headers: []string{},
+				Rows:    [][]string{{}},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -457,8 +464,8 @@ func TestConsoleRendererTableAlignment(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimRight(output, "\n"), "\n")
-	if len(lines) < 2 {
-		t.Errorf("Table should have at least 2 lines (header + 1 row), got %d", len(lines))
+	if len(lines) < 3 {
+		t.Errorf("Table should have at least 3 lines (header + 2 rows), got %d", len(lines))
 	}
 
 	for _, content := range []string{"Short", "Medium Length", "X", "A", "B", "C", "Very long content", "D", "E"} {
