@@ -38,7 +38,8 @@ type Table struct {
 	Headers []string
 
 	// Rows contains the table data, where each row is a slice of cell values.
-	// Each row should have the same length as Headers for proper alignment.
+	// Rows with fewer cells than Headers will be padded with empty strings.
+	// Extra cells beyond the number of headers are ignored.
 	Rows [][]string
 }
 
