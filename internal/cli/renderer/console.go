@@ -135,7 +135,9 @@ func (r *ConsoleRenderer) Table(t Table) {
 	}
 
 	for i := range colWidths {
-		colWidths[i] += columnPadding
+		if i < len(colWidths)-1 {
+			colWidths[i] += columnPadding
+		}
 	}
 
 	if len(t.Headers) > 0 {
