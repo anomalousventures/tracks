@@ -10,6 +10,7 @@ import (
 	"io"
 
 	"github.com/anomalousventures/tracks/internal/cli/ui"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // ConsoleRenderer implements the Renderer interface for human-readable
@@ -81,14 +82,83 @@ func (r *ConsoleRenderer) Section(sec Section) {
 	}
 }
 
-// Table is a stub implementation for table rendering.
+// Table displays structured tabular data with aligned columns.
 //
-// This method will be fully implemented in a future task. For now, it
-// exists to satisfy the Renderer interface but produces no output.
+// Headers are rendered using Theme.Title style. All columns are
+// automatically sized to fit their content with proper alignment.
+// Empty tables produce no output.
 //
-// See: Task 16 - Add Table rendering to ConsoleRenderer
+// Example:
+//
+//	renderer.Table(Table{
+//	    Headers: []string{"File", "Status", "Lines"},
+//	    Rows: [][]string{
+//	        {"user.go", "created", "42"},
+//	        {"user_test.go", "created", "128"},
+//	    },
+//	})
 func (r *ConsoleRenderer) Table(t Table) {
-	// Stub implementation - will be completed in task 16
+	if len(t.Headers) == 0 && len(t.Rows) == 0 {
+		return
+	}
+
+	numCols := len(t.Headers)
+	if numCols == 0 && len(t.Rows) > 0 {
+		numCols = len(t.Rows[0])
+	}
+
+	if numCols == 0 {
+		return
+	}
+
+	colWidths := make([]int, numCols)
+
+	for i, header := range t.Headers {
+		if i < numCols {
+			colWidths[i] = lipgloss.Width(header)
+		}
+	}
+
+	for _, row := range t.Rows {
+		for i, cell := range row {
+			if i < numCols {
+				width := lipgloss.Width(cell)
+				if width > colWidths[i] {
+					colWidths[i] = width
+				}
+			}
+		}
+	}
+
+	for i := range colWidths {
+		colWidths[i] += 2
+	}
+
+	if len(t.Headers) > 0 {
+		headerCells := make([]string, len(t.Headers))
+		for i, header := range t.Headers {
+			if i < numCols {
+				cellStyle := ui.Theme.Title.Width(colWidths[i])
+				headerCells[i] = cellStyle.Render(header)
+			}
+		}
+		headerRow := lipgloss.JoinHorizontal(lipgloss.Top, headerCells...)
+		fmt.Fprintln(r.out, headerRow)
+	}
+
+	for _, row := range t.Rows {
+		rowCells := make([]string, numCols)
+		for i := 0; i < numCols; i++ {
+			cell := ""
+			if i < len(row) {
+				cell = row[i]
+			}
+			cellStyle := lipgloss.NewStyle().Width(colWidths[i])
+			rowCells[i] = cellStyle.Render(cell)
+		}
+		rowStr := lipgloss.JoinHorizontal(lipgloss.Top, rowCells...)
+		fmt.Fprintln(r.out, rowStr)
+	}
 }
 
 // Progress is a stub implementation for progress bar rendering.
