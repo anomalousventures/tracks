@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 func TestThemeExists(t *testing.T) {
@@ -120,46 +121,53 @@ func TestThemeWithNOCOLOR(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name     string
-		envValue string
-		style    lipgloss.Style
-		text     string
+		name            string
+		envValue        string
+		style           lipgloss.Style
+		text            string
+		expectANSICodes bool
 	}{
 		{
-			name:     "NO_COLOR=1 with Title style",
-			envValue: "1",
-			style:    Theme.Title,
-			text:     "Title",
+			name:            "NO_COLOR=1 with Title style",
+			envValue:        "1",
+			style:           Theme.Title,
+			text:            "Title",
+			expectANSICodes: false,
 		},
 		{
-			name:     "NO_COLOR=1 with Success style",
-			envValue: "1",
-			style:    Theme.Success,
-			text:     "Success",
+			name:            "NO_COLOR=1 with Success style",
+			envValue:        "1",
+			style:           Theme.Success,
+			text:            "Success",
+			expectANSICodes: false,
 		},
 		{
-			name:     "NO_COLOR=1 with Error style",
-			envValue: "1",
-			style:    Theme.Error,
-			text:     "Error",
+			name:            "NO_COLOR=1 with Error style",
+			envValue:        "1",
+			style:           Theme.Error,
+			text:            "Error",
+			expectANSICodes: false,
 		},
 		{
-			name:     "NO_COLOR=1 with Warning style",
-			envValue: "1",
-			style:    Theme.Warning,
-			text:     "Warning",
+			name:            "NO_COLOR=1 with Warning style",
+			envValue:        "1",
+			style:           Theme.Warning,
+			text:            "Warning",
+			expectANSICodes: false,
 		},
 		{
-			name:     "NO_COLOR=1 with Muted style",
-			envValue: "1",
-			style:    Theme.Muted,
-			text:     "Muted",
+			name:            "NO_COLOR=1 with Muted style",
+			envValue:        "1",
+			style:           Theme.Muted,
+			text:            "Muted",
+			expectANSICodes: false,
 		},
 		{
-			name:     "NO_COLOR empty with Title style",
-			envValue: "",
-			style:    Theme.Title,
-			text:     "Title",
+			name:            "NO_COLOR empty with Title style",
+			envValue:        "",
+			style:           Theme.Title,
+			text:            "Title",
+			expectANSICodes: false,
 		},
 	}
 
@@ -177,10 +185,54 @@ func TestThemeWithNOCOLOR(t *testing.T) {
 				t.Error("Style.Render should contain the input text")
 			}
 
-			if tt.envValue != "" {
-				if strings.Contains(rendered, "\033[") {
-					t.Errorf("Style.Render should not contain ANSI escape codes when NO_COLOR=%s", tt.envValue)
-				}
+			hasANSI := strings.Contains(rendered, "\033[")
+			if hasANSI && !tt.expectANSICodes {
+				t.Errorf("Style.Render should not contain ANSI escape codes when NO_COLOR=%s", tt.envValue)
+			}
+			if !hasANSI && tt.expectANSICodes {
+				t.Error("Style.Render should contain ANSI escape codes when colors are enabled")
+			}
+		})
+	}
+}
+
+func TestThemeWithColorsEnabled(t *testing.T) {
+	originalNOCOLOR := os.Getenv("NO_COLOR")
+	originalProfile := lipgloss.ColorProfile()
+	defer func() {
+		if originalNOCOLOR != "" {
+			os.Setenv("NO_COLOR", originalNOCOLOR)
+		} else {
+			os.Unsetenv("NO_COLOR")
+		}
+		lipgloss.SetColorProfile(originalProfile)
+	}()
+
+	os.Unsetenv("NO_COLOR")
+	lipgloss.SetColorProfile(termenv.TrueColor)
+
+	tests := []struct {
+		name  string
+		style lipgloss.Style
+		text  string
+	}{
+		{"Colors enabled with Title", Theme.Title, "Title"},
+		{"Colors enabled with Success", Theme.Success, "Success"},
+		{"Colors enabled with Error", Theme.Error, "Error"},
+		{"Colors enabled with Warning", Theme.Warning, "Warning"},
+		{"Colors enabled with Muted", Theme.Muted, "Muted"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rendered := tt.style.Render(tt.text)
+
+			if !strings.Contains(rendered, tt.text) {
+				t.Error("Rendered output should contain the input text")
+			}
+
+			if !strings.Contains(rendered, "\033[") {
+				t.Error("Rendered output should contain ANSI escape codes when NO_COLOR is not set")
 			}
 		})
 	}
