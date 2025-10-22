@@ -13,6 +13,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	columnPadding = 2
+)
+
 // ConsoleRenderer implements the Renderer interface for human-readable
 // terminal output.
 //
@@ -103,7 +107,7 @@ func (r *ConsoleRenderer) Table(t Table) {
 	}
 
 	numCols := len(t.Headers)
-	if numCols == 0 && len(t.Rows) > 0 {
+	if numCols == 0 && len(t.Rows) > 0 && len(t.Rows[0]) > 0 {
 		numCols = len(t.Rows[0])
 	}
 
@@ -131,7 +135,7 @@ func (r *ConsoleRenderer) Table(t Table) {
 	}
 
 	for i := range colWidths {
-		colWidths[i] += 2
+		colWidths[i] += columnPadding
 	}
 
 	if len(t.Headers) > 0 {

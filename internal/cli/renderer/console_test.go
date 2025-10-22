@@ -309,9 +309,10 @@ func TestConsoleRendererRespectsNOCOLOR(t *testing.T) {
 
 func TestConsoleRendererTable(t *testing.T) {
 	tests := []struct {
-		name          string
-		table         Table
-		shouldContain []string
+		name             string
+		table            Table
+		shouldContain    []string
+		shouldNotContain []string
 	}{
 		{
 			name: "simple table with headers and rows",
@@ -346,6 +347,18 @@ func TestConsoleRendererTable(t *testing.T) {
 			},
 			shouldContain: []string{"Short", "Very Long Header Name", "A", "B", "Long content here", "X"},
 		},
+		{
+			name: "table with extra columns in rows - extra columns ignored",
+			table: Table{
+				Headers: []string{"Name", "Status"},
+				Rows: [][]string{
+					{"item1", "active", "ignored"},
+					{"item2", "pending", "also-ignored", "more-ignored"},
+				},
+			},
+			shouldContain:    []string{"Name", "Status", "item1", "active", "item2", "pending"},
+			shouldNotContain: []string{"ignored", "also-ignored", "more-ignored"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -362,6 +375,12 @@ func TestConsoleRendererTable(t *testing.T) {
 				}
 			}
 
+			for _, notExpected := range tt.shouldNotContain {
+				if strings.Contains(output, notExpected) {
+					t.Errorf("Table output should not contain %q\nGot: %q", notExpected, output)
+				}
+			}
+
 			if output == "" {
 				t.Error("Table should produce output for non-empty table")
 			}
@@ -371,15 +390,20 @@ func TestConsoleRendererTable(t *testing.T) {
 
 func TestConsoleRendererTableEmpty(t *testing.T) {
 	tests := []struct {
-		name  string
-		table Table
+		name              string
+		table             Table
+		shouldHaveOutput  bool
+		shouldContain     []string
+		shouldNotContain  []string
 	}{
 		{
-			name: "empty table with no rows",
+			name: "empty table with no rows - headers displayed",
 			table: Table{
 				Headers: []string{"Col1", "Col2"},
 				Rows:    [][]string{},
 			},
+			shouldHaveOutput: true,
+			shouldContain:    []string{"Col1", "Col2"},
 		},
 		{
 			name: "table with no headers and no rows",
@@ -387,6 +411,7 @@ func TestConsoleRendererTableEmpty(t *testing.T) {
 				Headers: []string{},
 				Rows:    [][]string{},
 			},
+			shouldHaveOutput: false,
 		},
 		{
 			name: "table with empty row slices",
@@ -394,6 +419,7 @@ func TestConsoleRendererTableEmpty(t *testing.T) {
 				Headers: []string{},
 				Rows:    [][]string{{}},
 			},
+			shouldHaveOutput: false,
 		},
 	}
 
@@ -405,9 +431,24 @@ func TestConsoleRendererTableEmpty(t *testing.T) {
 			renderer.Table(tt.table)
 
 			output := buf.String()
-			if len(tt.table.Headers) == 0 {
-				if len(tt.table.Rows) == 0 && output != "" {
-					t.Error("Empty table should produce no output")
+
+			if tt.shouldHaveOutput && output == "" {
+				t.Error("Expected output but got empty string")
+			}
+
+			if !tt.shouldHaveOutput && output != "" {
+				t.Errorf("Expected no output but got: %q", output)
+			}
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(output, expected) {
+					t.Errorf("Output should contain %q\nGot: %q", expected, output)
+				}
+			}
+
+			for _, notExpected := range tt.shouldNotContain {
+				if strings.Contains(output, notExpected) {
+					t.Errorf("Output should not contain %q\nGot: %q", notExpected, output)
 				}
 			}
 		})
