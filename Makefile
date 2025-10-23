@@ -67,7 +67,42 @@ build-mcp: ## Build tracks-mcp server
 	@mkdir -p bin
 	@go build $(LDFLAGS) -o bin/tracks-mcp ./cmd/tracks-mcp
 
-build-all: build build-mcp ## Build all binaries
+build-all: build build-mcp ## Build all binaries for current platform
+
+# Cross-platform build targets
+.PHONY: build-linux build-linux-arm64 build-darwin build-darwin-arm64 build-windows build-all-platforms
+
+build-linux: ## Build for Linux amd64
+	@echo "Building for Linux (amd64)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-linux-amd64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-linux-amd64 ./cmd/tracks-mcp
+
+build-linux-arm64: ## Build for Linux arm64 (Raspberry Pi, WSL on ARM)
+	@echo "Building for Linux (arm64)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-linux-arm64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-mcp-linux-arm64 ./cmd/tracks-mcp
+
+build-darwin: ## Build for macOS amd64 (Intel)
+	@echo "Building for macOS (amd64/Intel)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-darwin-amd64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-darwin-amd64 ./cmd/tracks-mcp
+
+build-darwin-arm64: ## Build for macOS arm64 (Apple Silicon)
+	@echo "Building for macOS (arm64/Apple Silicon)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-darwin-arm64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-mcp-darwin-arm64 ./cmd/tracks-mcp
+
+build-windows: ## Build for Windows amd64
+	@echo "Building for Windows (amd64)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-windows-amd64.exe ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-windows-amd64.exe ./cmd/tracks-mcp
+
+build-all-platforms: build-linux build-linux-arm64 build-darwin build-darwin-arm64 build-windows ## Build for all platforms
 
 # Website targets
 .PHONY: website-dev website-build website-serve website-deploy

@@ -8,10 +8,12 @@ on:
 
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -41,9 +43,53 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage.out
-          flags: unittests
+          flags: unittests-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+
+  build-platforms:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        go-version: ['1.25.3']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build binaries
+        run: make build build-mcp
+
+      - name: Verify binaries (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          ./bin/tracks --version
+          ./bin/tracks-mcp --version
+
+      - name: Verify binaries (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          .\bin\tracks.exe --version
+          .\bin\tracks-mcp.exe --version
 
   lint:
     name: Lint
