@@ -13,10 +13,10 @@ package renderer
 //	}
 type Section struct {
 	// Title is the section heading, displayed prominently.
-	Title string
+	Title string `json:"title"`
 
 	// Body is the section content, may span multiple lines.
-	Body string
+	Body string `json:"body"`
 }
 
 // Table represents structured tabular data.
@@ -35,12 +35,12 @@ type Section struct {
 //	}
 type Table struct {
 	// Headers are the column names displayed at the top of the table.
-	Headers []string
+	Headers []string `json:"headers"`
 
 	// Rows contains the table data, where each row is a slice of cell values.
 	// Rows with fewer cells than Headers will be padded with empty strings.
 	// Extra cells beyond the number of headers are ignored.
-	Rows [][]string
+	Rows [][]string `json:"rows"`
 }
 
 // ProgressSpec specifies the configuration for a progress tracker.
