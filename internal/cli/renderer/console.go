@@ -10,6 +10,7 @@ import (
 	"io"
 
 	"github.com/anomalousventures/tracks/internal/cli/ui"
+	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -167,15 +168,30 @@ func (r *ConsoleRenderer) Table(t Table) {
 	}
 }
 
-// Progress is a stub implementation for progress bar rendering.
+// Progress creates a progress bar for tracking long-running operations.
 //
-// This method will be fully implemented in a future task. For now, it
-// returns a stub Progress implementation that satisfies the interface
-// but produces no output.
+// Returns a ConsoleProgress instance that renders using Bubbles progress
+// component with gradient colors. Uses ViewAs for standalone rendering
+// without requiring a Bubble Tea event loop.
 //
-// See: Task 17 - Add Progress bar rendering to ConsoleRenderer
+// The progress bar updates in-place using \r (carriage return) and
+// completes with a newline when Done() is called.
+//
+// Example:
+//
+//	progress := renderer.Progress(ProgressSpec{Label: "Downloading", Total: 100})
+//	progress.Increment(25)  // 25%
+//	progress.Increment(50)  // 75%
+//	progress.Increment(25)  // 100%
+//	progress.Done()         // Adds newline
 func (r *ConsoleRenderer) Progress(spec ProgressSpec) Progress {
-	return &stubProgress{}
+	bar := progress.New(progress.WithScaledGradient("#7D56F4", "#04B575"))
+	return &ConsoleProgress{
+		out:   r.out,
+		bar:   bar,
+		label: spec.Label,
+		total: spec.Total,
+	}
 }
 
 // Flush ensures all buffered output is written.
@@ -190,15 +206,55 @@ func (r *ConsoleRenderer) Flush() error {
 	return nil
 }
 
-// stubProgress is a placeholder Progress implementation.
+// ConsoleProgress implements Progress interface using Bubbles progress component.
 //
-// This stub exists to allow Progress method to satisfy the Renderer
-// interface before full progress bar functionality is implemented.
-// All methods are no-ops.
-type stubProgress struct{}
+// Renders a progress bar using ViewAs for standalone rendering without
+// Bubble Tea event loop. Updates are written in-place using \r prefix.
+type ConsoleProgress struct {
+	out     io.Writer
+	bar     progress.Model
+	label   string
+	total   int64
+	current int64
+	done    bool
+}
 
-// Increment is a no-op stub.
-func (p *stubProgress) Increment(n int64) {}
+// Increment updates the progress bar by the specified amount.
+//
+// Calculates the new percentage and renders the progress bar in-place
+// using \r (carriage return). Handles edge cases like zero total and
+// overflow gracefully. If a label was provided, it is displayed before
+// the progress bar using the Muted theme style.
+func (p *ConsoleProgress) Increment(n int64) {
+	p.current += n
 
-// Done is a no-op stub.
-func (p *stubProgress) Done() {}
+	var percent float64
+	if p.total > 0 {
+		percent = float64(p.current) / float64(p.total)
+		if percent > 1.0 {
+			percent = 1.0
+		}
+	} else {
+		percent = 1.0
+	}
+
+	output := "\r"
+	if p.label != "" {
+		output += ui.Theme.Muted.Render(p.label+": ")
+	}
+	output += p.bar.ViewAs(percent)
+
+	fmt.Fprint(p.out, output)
+}
+
+// Done completes the progress bar and adds a newline.
+//
+// Marks the progress as complete and writes a final newline to move
+// to the next line. Subsequent calls are idempotent (no additional output).
+func (p *ConsoleProgress) Done() {
+	if p.done {
+		return
+	}
+	p.done = true
+	fmt.Fprintln(p.out)
+}
