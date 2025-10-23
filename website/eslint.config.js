@@ -1,19 +1,20 @@
 const js = require('@eslint/js');
+const tseslint = require('typescript-eslint');
 const reactPlugin = require('eslint-plugin-react');
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsparser = require('@typescript-eslint/parser');
-const prettierConfig = require('eslint-config-prettier');
+const reactHooksPlugin = require('eslint-plugin-react-hooks');
+const prettierRecommended = require('eslint-plugin-prettier/recommended');
 
 module.exports = [
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
       react: reactPlugin,
-      '@typescript-eslint': tseslint,
+      'react-hooks': reactHooksPlugin,
     },
     languageOptions: {
-      parser: tsparser,
+      parser: tseslint.parser,
       ecmaVersion: 'latest',
       sourceType: 'module',
       parserOptions: {
@@ -34,7 +35,9 @@ module.exports = [
       },
     },
     rules: {
-      'react/react-in-jsx-scope': 'off',
+      ...reactPlugin.configs.recommended.rules,
+      ...reactPlugin.configs['jsx-runtime'].rules,
+      ...reactHooksPlugin.configs.recommended.rules,
       'react/prop-types': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
@@ -45,7 +48,13 @@ module.exports = [
     },
   },
   {
-    ignores: ['build/', '.docusaurus/', 'node_modules/', '*.config.js'],
+    files: ['*.config.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
   },
-  prettierConfig,
+  {
+    ignores: ['build/', '.docusaurus/', 'node_modules/'],
+  },
+  prettierRecommended,
 ];
