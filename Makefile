@@ -65,7 +65,7 @@ build: ## Build tracks CLI
 build-mcp: ## Build tracks-mcp server
 	@echo "Building tracks-mcp..."
 	@mkdir -p bin
-	@go build -o bin/tracks-mcp ./cmd/tracks-mcp
+	@go build $(LDFLAGS) -o bin/tracks-mcp ./cmd/tracks-mcp
 
 build-all: build build-mcp ## Build all binaries
 
