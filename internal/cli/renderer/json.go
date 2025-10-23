@@ -43,8 +43,8 @@ import (
 //	  ]
 //	}
 //
-// JSONRenderer is safe for concurrent use from multiple goroutines as long
-// as the underlying io.Writer is thread-safe.
+// JSONRenderer is not safe for concurrent use from multiple goroutines.
+// Each command should use a single JSONRenderer instance sequentially.
 type JSONRenderer struct {
 	out      io.Writer
 	data     *jsonOutput
@@ -53,8 +53,8 @@ type JSONRenderer struct {
 // jsonOutput holds all accumulated data for JSON output.
 type jsonOutput struct {
 	Title    string    `json:"title,omitempty"`
-	Sections []Section `json:"sections"`
-	Tables   []Table   `json:"tables"`
+	Sections []Section `json:"sections,omitempty"`
+	Tables   []Table   `json:"tables,omitempty"`
 }
 
 // NewJSONRenderer creates a new JSONRenderer that writes to the
@@ -68,11 +68,8 @@ type jsonOutput struct {
 //	renderer := NewJSONRenderer(os.Stdout)
 func NewJSONRenderer(out io.Writer) *JSONRenderer {
 	return &JSONRenderer{
-		out: out,
-		data: &jsonOutput{
-			Sections: []Section{},
-			Tables:   []Table{},
-		},
+		out:  out,
+		data: &jsonOutput{},
 	}
 }
 
