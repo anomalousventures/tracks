@@ -1,6 +1,12 @@
 # Makefile for Tracks Framework
 # This provides convenient commands for development and CI
 
+# Version information
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo "unknown")
+LDFLAGS = -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
+
 .PHONY: help lint lint-md lint-md-fix lint-go install-linters
 
 # Default target
@@ -53,11 +59,13 @@ test-all: test test-integration ## Run all tests
 
 build: ## Build tracks CLI
 	@echo "Building tracks..."
-	@go build -o bin/tracks ./cmd/tracks
+	@mkdir -p bin
+	@go build $(LDFLAGS) -o bin/tracks ./cmd/tracks
 
 build-mcp: ## Build tracks-mcp server
 	@echo "Building tracks-mcp..."
-	@go build -o bin/tracks-mcp ./cmd/tracks-mcp
+	@mkdir -p bin
+	@go build $(LDFLAGS) -o bin/tracks-mcp ./cmd/tracks-mcp
 
 build-all: build build-mcp ## Build all binaries
 
@@ -109,7 +117,7 @@ release: ## Create a new release (use VERSION=vX.Y.Z)
 
 dev: ## Run tracks in development mode
 	@echo "Starting development mode..."
-	@go run ./cmd/tracks
+	@go run $(LDFLAGS) ./cmd/tracks
 
 install: build ## Install tracks CLI to $GOPATH/bin
 	@echo "Installing tracks..."
