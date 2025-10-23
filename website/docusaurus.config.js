@@ -150,10 +150,10 @@ const config = {
       },
       algolia: {
         // The application ID provided by Algolia
-        appId: '9X6Z9ESPDG',
+        appId: 'KHXZYX55H6',
 
         // Public API key: it is safe to commit it
-        apiKey: '1ce459620d6184d4f4ba2c5902aa9979',
+        apiKey: 'YOUR_SEARCH_API_KEY',
 
         indexName: 'tracks',
 
@@ -166,8 +166,8 @@ const config = {
         // Optional: path for search page that enabled by default (`false` to disable it)
         searchPagePath: 'search',
 
-        // Set to false once you have Algolia configured
-        disabled: false,
+        // Disabled until Algolia DocSearch is fully configured
+        disabled: true,
       },
     }),
 };
