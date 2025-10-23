@@ -65,8 +65,19 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Build binaries
+      - name: Build binaries (Linux/macOS)
+        if: runner.os != 'Windows'
         run: make build build-mcp
+
+      - name: Build binaries (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $VERSION = if ($v = git --no-pager describe --tags --always --dirty 2>$null) { $v } else { "dev" }
+          $COMMIT = if ($c = git --no-pager rev-parse --short HEAD 2>$null) { $c } else { "none" }
+          $DATE = if ($d = git --no-pager log -1 --format=%cI 2>$null) { $d } else { "unknown" }
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          go build -ldflags="-X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o bin/tracks.exe ./cmd/tracks
+          go build -ldflags="-X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o bin/tracks-mcp.exe ./cmd/tracks-mcp
 
       - name: Verify binaries (Linux/macOS)
         if: runner.os != 'Windows'
@@ -74,15 +85,11 @@ jobs:
           ./bin/tracks --version
           ./bin/tracks-mcp --version
 
-      - name: List bin directory (Windows debug)
-        if: runner.os == 'Windows'
-        run: Get-ChildItem -Path . -Recurse -Include *.exe
-
       - name: Verify binaries (Windows)
         if: runner.os == 'Windows'
         run: |
-          .\bin\tracks.exe --version
-          .\bin\tracks-mcp.exe --version
+          ./bin/tracks.exe --version
+          ./bin/tracks-mcp.exe --version
 
   lint:
     name: Lint
