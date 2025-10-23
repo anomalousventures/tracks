@@ -2,9 +2,9 @@
 # This provides convenient commands for development and CI
 
 # Version information
-VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
-DATE := $(shell git log -1 --format=%cI 2>/dev/null || echo "unknown")
+VERSION := $(shell git --no-pager describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT := $(shell git --no-pager rev-parse --short HEAD 2>/dev/null || echo "none")
+DATE := $(shell git --no-pager log -1 --format=%cI 2>/dev/null || echo "unknown")
 LDFLAGS = -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
 
 .PHONY: help lint lint-md lint-md-fix lint-go lint-js lint-js-fix format format-check install-linters
