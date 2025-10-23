@@ -60,16 +60,18 @@ const config = {
   ],
 
   plugins: [
-    [
-      'posthog-docusaurus',
-      {
-        apiKey: process.env.POSTHOG_API_KEY || 'phc_I0WGu9ThjVUzPuV2nxx59GjEUl8bRD8zN1M14cGVACy',
-        appUrl: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
-        enableInDevelopment: false,
-        opt_out_capturing_by_default: false,
-        respect_dnt: true,
-      },
-    ],
+    ...(process.env.POSTHOG_API_KEY ? [
+      [
+        'posthog-docusaurus',
+        {
+          apiKey: process.env.POSTHOG_API_KEY,
+          appUrl: process.env.POSTHOG_HOST,
+          enableInDevelopment: false,
+          opt_out_capturing_by_default: false,
+          respect_dnt: true,
+        },
+      ],
+    ] : []),
   ],
 
   themeConfig:
