@@ -60,7 +60,7 @@ The following tasks will become GitHub issues, ordered by dependency:
 14. ✅ **Add Table rendering to ConsoleRenderer** ([#16](https://github.com/anomalousventures/tracks/issues/16) | [PR #36](https://github.com/anomalousventures/tracks/pull/36))
 15. ✅ **Add Progress bar rendering to ConsoleRenderer using Bubbles ViewAs** ([#17](https://github.com/anomalousventures/tracks/issues/17) | [PR #37](https://github.com/anomalousventures/tracks/pull/37))
 16. ✅ **Implement JSONRenderer with all Renderer methods** ([#18](https://github.com/anomalousventures/tracks/issues/18) | [PR #38](https://github.com/anomalousventures/tracks/pull/38))
-17. **Create Makefile targets for building CLI** ([#19](https://github.com/anomalousventures/tracks/issues/19))
+17. ✅ **Create Makefile targets for building CLI** ([#19](https://github.com/anomalousventures/tracks/issues/19) | [PR #39](https://github.com/anomalousventures/tracks/pull/39))
 18. **Add cross-platform build configuration (Linux, macOS, Windows)** ([#20](https://github.com/anomalousventures/tracks/issues/20))
 19. **Write unit tests for mode detection and flags** ([#21](https://github.com/anomalousventures/tracks/issues/21))
 20. **Write unit tests for Renderer implementations** ([#22](https://github.com/anomalousventures/tracks/issues/22))
