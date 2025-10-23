@@ -2,12 +2,12 @@
 # This provides convenient commands for development and CI
 
 # Version information
-VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
-DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo "unknown")
+VERSION := $(shell git --no-pager describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT := $(shell git --no-pager rev-parse --short HEAD 2>/dev/null || echo "none")
+DATE := $(shell git --no-pager log -1 --format=%cI 2>/dev/null || echo "unknown")
 LDFLAGS = -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
 
-.PHONY: help lint lint-md lint-md-fix lint-go install-linters
+.PHONY: help lint lint-md lint-md-fix lint-go lint-js lint-js-fix format format-check install-linters
 
 # Default target
 help: ## Show this help message
@@ -35,8 +35,26 @@ lint-go: ## Run golangci-lint
 	@echo "Running golangci-lint..."
 	@go tool golangci-lint run ./...
 
+# JavaScript linting
+lint-js: ## Run ESLint on JavaScript/TypeScript files
+	@echo "Running ESLint..."
+	@pnpm run --dir website lint:js
+
+lint-js-fix: ## Auto-fix ESLint issues where possible
+	@echo "Auto-fixing JavaScript issues..."
+	@pnpm run --dir website lint:js:fix
+
+# Formatting
+format: ## Format code with Prettier
+	@echo "Formatting code with Prettier..."
+	@pnpm run --dir website format
+
+format-check: ## Check code formatting with Prettier
+	@echo "Checking code formatting..."
+	@pnpm run --dir website format:check
+
 # Aggregate linting target
-lint: lint-md lint-go ## Run all linters
+lint: lint-md lint-go lint-js ## Run all linters
 
 # Go-related targets
 .PHONY: test test-coverage test-integration test-all build build-all
@@ -67,7 +85,42 @@ build-mcp: ## Build tracks-mcp server
 	@mkdir -p bin
 	@go build $(LDFLAGS) -o bin/tracks-mcp ./cmd/tracks-mcp
 
-build-all: build build-mcp ## Build all binaries
+build-all: build build-mcp ## Build all binaries for current platform
+
+# Cross-platform build targets
+.PHONY: build-linux build-linux-arm64 build-darwin build-darwin-arm64 build-windows build-all-platforms
+
+build-linux: ## Build for Linux amd64
+	@echo "Building for Linux (amd64)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-linux-amd64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-linux-amd64 ./cmd/tracks-mcp
+
+build-linux-arm64: ## Build for Linux arm64 (Raspberry Pi, WSL on ARM)
+	@echo "Building for Linux (arm64)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-linux-arm64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-mcp-linux-arm64 ./cmd/tracks-mcp
+
+build-darwin: ## Build for macOS amd64 (Intel)
+	@echo "Building for macOS (amd64/Intel)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-darwin-amd64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-darwin-amd64 ./cmd/tracks-mcp
+
+build-darwin-arm64: ## Build for macOS arm64 (Apple Silicon)
+	@echo "Building for macOS (arm64/Apple Silicon)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-darwin-arm64 ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/tracks-mcp-darwin-arm64 ./cmd/tracks-mcp
+
+build-windows: ## Build for Windows amd64
+	@echo "Building for Windows (amd64)..."
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-windows-amd64.exe ./cmd/tracks
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-windows-amd64.exe ./cmd/tracks-mcp
+
+build-all-platforms: build-linux build-linux-arm64 build-darwin build-darwin-arm64 build-windows ## Build for all platforms
 
 # Website targets
 .PHONY: website-dev website-build website-serve website-deploy
@@ -113,7 +166,7 @@ release: ## Create a new release (use VERSION=vX.Y.Z)
 	@echo "Release $(VERSION) created and pushed!"
 
 # Development targets
-.PHONY: dev clean install deps
+.PHONY: dev clean clean-platforms install deps
 
 dev: ## Run tracks in development mode
 	@echo "Starting development mode..."
@@ -128,7 +181,16 @@ deps: ## Download and tidy Go dependencies
 	@go mod download
 	@go mod tidy
 
-clean: ## Clean build artifacts
+clean-platforms: ## Clean cross-platform build artifacts only
+	@echo "Cleaning cross-platform binaries..."
+	@rm -f bin/tracks-linux-amd64 bin/tracks-mcp-linux-amd64
+	@rm -f bin/tracks-linux-arm64 bin/tracks-mcp-linux-arm64
+	@rm -f bin/tracks-darwin-amd64 bin/tracks-mcp-darwin-amd64
+	@rm -f bin/tracks-darwin-arm64 bin/tracks-mcp-darwin-arm64
+	@rm -f bin/tracks-windows-amd64.exe bin/tracks-mcp-windows-amd64.exe
+	@echo "Cross-platform binaries cleaned!"
+
+clean: ## Clean all build artifacts
 	@echo "Cleaning build artifacts..."
 	@rm -rf bin/
 	@rm -rf dist/

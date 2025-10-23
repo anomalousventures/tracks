@@ -14,8 +14,8 @@ const FeatureList: FeatureItem[] = [
     emoji: '🚀',
     description: (
       <>
-        Generate complete CRUD resources with a single command. Interactive TUI
-        for project setup. Live reload with Air. AI-powered development via MCP.
+        Generate complete CRUD resources with a single command. Interactive TUI for project setup.
+        Live reload with Air. AI-powered development via MCP.
       </>
     ),
   },
@@ -24,8 +24,8 @@ const FeatureList: FeatureItem[] = [
     emoji: '🔒',
     description: (
       <>
-        Type-safe templates with templ, type-safe SQL with SQLC. Catch errors
-        at compile time, not runtime. Production-ready code from day one.
+        Type-safe templates with templ, type-safe SQL with SQLC. Catch errors at compile time, not
+        runtime. Production-ready code from day one.
       </>
     ),
   },
@@ -34,18 +34,18 @@ const FeatureList: FeatureItem[] = [
     emoji: '🛡️',
     description: (
       <>
-        Built-in authentication (magic links, OTP, OAuth). RBAC authorization
-        with Casbin. Security headers configured by default. Input validation included.
+        Built-in authentication (magic links, OTP, OAuth). RBAC authorization with Casbin. Security
+        headers configured by default. Input validation included.
       </>
     ),
   },
 ];
 
-function Feature({title, emoji, description}: FeatureItem) {
+function Feature({ title, emoji, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        <span style={{fontSize: '4rem'}}>{emoji}</span>
+        <span style={{ fontSize: '4rem' }}>{emoji}</span>
       </div>
       <div className="text--center padding-horiz--md">
         <h3>{title}</h3>

@@ -59,12 +59,27 @@ const config = {
     ],
   ],
 
+  plugins: [
+    ...(process.env.POSTHOG_API_KEY
+      ? [
+          [
+            'posthog-docusaurus',
+            {
+              apiKey: process.env.POSTHOG_API_KEY,
+              appUrl: process.env.POSTHOG_HOST,
+              enableInDevelopment: false,
+              opt_out_capturing_by_default: false,
+              respect_dnt: true,
+            },
+          ],
+        ]
+      : []),
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      metadata: [
-        { name: 'algolia-site-verification', content: 'E19956C0D3CEBF80' },
-      ],
+      metadata: [{ name: 'algolia-site-verification', content: 'E19956C0D3CEBF80' }],
       image: 'img/tracks-social-card.png',
       navbar: {
         title: 'Tracks',

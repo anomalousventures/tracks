@@ -2,34 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache: true
 
       - name: Download dependencies
         run: go mod download
@@ -41,29 +39,70 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage.out
-          flags: unittests
+          flags: unittests-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+
+  build-platforms:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        go-version: ['1.25.3']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build binaries (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: make build build-mcp
+
+      - name: Build binaries (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $VERSION = if ($v = git --no-pager describe --tags --always --dirty 2>$null) { $v } else { "dev" }
+          $COMMIT = if ($c = git --no-pager rev-parse --short HEAD 2>$null) { $c } else { "none" }
+          $DATE = if ($d = git --no-pager log -1 --format=%cI 2>$null) { $d } else { "unknown" }
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          go build -ldflags="-X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o bin/tracks.exe ./cmd/tracks
+          go build -ldflags="-X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o bin/tracks-mcp.exe ./cmd/tracks-mcp
+
+      - name: Verify binaries (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          ./bin/tracks --version
+          ./bin/tracks-mcp --version
+
+      - name: Verify binaries (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          ./bin/tracks.exe --version
+          ./bin/tracks-mcp.exe --version
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.25.3'
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache: true
 
       - name: Download dependencies
         run: go mod download
@@ -76,10 +115,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@c5ba7f7862a0f64c1b1a05fbac13e0b8e86ba08c # v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -92,3 +131,28 @@ jobs:
 
       - name: Run markdown linter
         run: make lint-md
+
+  javascript-lint:
+    name: JavaScript Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@c5ba7f7862a0f64c1b1a05fbac13e0b8e86ba08c # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: make lint-js
+
+      - name: Check formatting
+        run: make format-check
