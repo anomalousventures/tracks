@@ -88,8 +88,8 @@ jobs:
       - name: Verify binaries (Windows)
         if: runner.os == 'Windows'
         run: |
-          .\bin\tracks.exe --version
-          .\bin\tracks-mcp.exe --version
+          & .\bin\tracks.exe --version
+          & .\bin\tracks-mcp.exe --version
 
   lint:
     name: Lint

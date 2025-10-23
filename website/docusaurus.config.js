@@ -63,9 +63,11 @@ const config = {
     [
       'posthog-docusaurus',
       {
-        apiKey: 'phc_I0WGu9ThjVUzPuV2nxx59GjEUl8bRD8zN1M14cGVACy',
-        appUrl: 'https://us.i.posthog.com',
+        apiKey: process.env.POSTHOG_API_KEY || 'phc_I0WGu9ThjVUzPuV2nxx59GjEUl8bRD8zN1M14cGVACy',
+        appUrl: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
         enableInDevelopment: false,
+        opt_out_capturing_by_default: false,
+        respect_dnt: true,
       },
     ],
   ],
