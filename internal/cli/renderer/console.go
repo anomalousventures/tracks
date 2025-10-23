@@ -185,10 +185,11 @@ func (r *ConsoleRenderer) Table(t Table) {
 //	progress.Increment(25)  // 100%
 //	progress.Done()         // Adds newline
 func (r *ConsoleRenderer) Progress(spec ProgressSpec) Progress {
-	bar := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
+	bar := progress.New(progress.WithScaledGradient("#7D56F4", "#04B575"))
 	return &ConsoleProgress{
 		out:   r.out,
 		bar:   bar,
+		label: spec.Label,
 		total: spec.Total,
 	}
 }
@@ -212,6 +213,7 @@ func (r *ConsoleRenderer) Flush() error {
 type ConsoleProgress struct {
 	out     io.Writer
 	bar     progress.Model
+	label   string
 	total   int64
 	current int64
 	done    bool
@@ -221,7 +223,8 @@ type ConsoleProgress struct {
 //
 // Calculates the new percentage and renders the progress bar in-place
 // using \r (carriage return). Handles edge cases like zero total and
-// overflow gracefully.
+// overflow gracefully. If a label was provided, it is displayed before
+// the progress bar using the Muted theme style.
 func (p *ConsoleProgress) Increment(n int64) {
 	p.current += n
 
@@ -235,7 +238,13 @@ func (p *ConsoleProgress) Increment(n int64) {
 		percent = 1.0
 	}
 
-	fmt.Fprint(p.out, "\r"+p.bar.ViewAs(percent))
+	output := "\r"
+	if p.label != "" {
+		output += ui.Theme.Muted.Render(p.label+": ")
+	}
+	output += p.bar.ViewAs(percent)
+
+	fmt.Fprint(p.out, output)
 }
 
 // Done completes the progress bar and adds a newline.

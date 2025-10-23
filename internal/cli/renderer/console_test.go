@@ -676,7 +676,7 @@ func TestConsoleProgressIncrement(t *testing.T) {
 	}
 
 	if !strings.Contains(output, "\r") {
-		t.Error("Progress output should contain \\r for in-place updates")
+		t.Error("Progress output should contain \"\r\" for in-place updates")
 	}
 }
 
@@ -718,15 +718,15 @@ func TestConsoleProgressInPlaceUpdates(t *testing.T) {
 	secondOutput := buf.String()
 
 	if !strings.Contains(firstOutput, "\r") {
-		t.Error("First increment should use \\r for in-place update")
+		t.Error("First increment should use \"\r\" for in-place update")
 	}
 
 	if !strings.Contains(secondOutput, "\r") {
-		t.Error("Second increment should use \\r for in-place update")
+		t.Error("Second increment should use \"\r\" for in-place update")
 	}
 
 	if len(secondOutput) <= len(firstOutput) {
-		t.Error("Second increment should append to output (multiple \\r lines)")
+		t.Error("Second increment should append to output (multiple \"\r\" lines)")
 	}
 }
 
@@ -749,7 +749,7 @@ func TestConsoleProgressMultipleIncrements(t *testing.T) {
 
 	rCount := strings.Count(output, "\r")
 	if rCount < 3 {
-		t.Errorf("Multiple increments should produce multiple \\r lines, got %d", rCount)
+		t.Errorf("Multiple increments should produce multiple \"\r\" lines, got %d", rCount)
 	}
 }
 
@@ -837,5 +837,51 @@ func TestConsoleProgressDoneMultipleTimes(t *testing.T) {
 
 	if secondNewlineCount > firstNewlineCount {
 		t.Error("Calling Done() multiple times should be idempotent (no additional newlines)")
+	}
+}
+
+func TestConsoleProgressDisplaysLabel(t *testing.T) {
+	var buf bytes.Buffer
+	renderer := NewConsoleRenderer(&buf)
+
+	spec := ProgressSpec{
+		Label: "Downloading",
+		Total: 100,
+	}
+
+	progress := renderer.Progress(spec)
+	progress.Increment(50)
+
+	output := buf.String()
+
+	if !strings.Contains(output, "Downloading") {
+		t.Error("Progress output should contain the label")
+	}
+
+	if !strings.Contains(output, ":") {
+		t.Error("Progress output should contain colon separator after label")
+	}
+}
+
+func TestConsoleProgressWithoutLabel(t *testing.T) {
+	var buf bytes.Buffer
+	renderer := NewConsoleRenderer(&buf)
+
+	spec := ProgressSpec{
+		Label: "",
+		Total: 100,
+	}
+
+	progress := renderer.Progress(spec)
+	progress.Increment(50)
+
+	output := buf.String()
+
+	if output == "" {
+		t.Error("Progress output should not be empty even without label")
+	}
+
+	if !strings.Contains(output, "\r") {
+		t.Error("Progress output should contain carriage return for in-place updates")
 	}
 }
