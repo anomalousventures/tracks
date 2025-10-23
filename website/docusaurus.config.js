@@ -59,6 +59,17 @@ const config = {
     ],
   ],
 
+  plugins: [
+    [
+      'posthog-docusaurus',
+      {
+        apiKey: 'phc_I0WGu9ThjVUzPuV2nxx59GjEUl8bRD8zN1M14cGVACy',
+        appUrl: 'https://us.i.posthog.com',
+        enableInDevelopment: false,
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
