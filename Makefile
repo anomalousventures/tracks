@@ -4,10 +4,10 @@
 # Version information
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
-DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo "unknown")
+DATE := $(shell git log -1 --format=%cI 2>/dev/null || echo "unknown")
 LDFLAGS = -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
 
-.PHONY: help lint lint-md lint-md-fix lint-go install-linters
+.PHONY: help lint lint-md lint-md-fix lint-go lint-js lint-js-fix format format-check install-linters
 
 # Default target
 help: ## Show this help message
@@ -35,8 +35,26 @@ lint-go: ## Run golangci-lint
 	@echo "Running golangci-lint..."
 	@go tool golangci-lint run ./...
 
+# JavaScript linting
+lint-js: ## Run ESLint on JavaScript/TypeScript files
+	@echo "Running ESLint..."
+	@pnpm run --dir website lint:js
+
+lint-js-fix: ## Auto-fix ESLint issues where possible
+	@echo "Auto-fixing JavaScript issues..."
+	@pnpm run --dir website lint:js:fix
+
+# Formatting
+format: ## Format code with Prettier
+	@echo "Formatting code with Prettier..."
+	@pnpm run --dir website format
+
+format-check: ## Check code formatting with Prettier
+	@echo "Checking code formatting..."
+	@pnpm run --dir website format:check
+
 # Aggregate linting target
-lint: lint-md lint-go ## Run all linters
+lint: lint-md lint-go lint-js ## Run all linters
 
 # Go-related targets
 .PHONY: test test-coverage test-integration test-all build build-all
