@@ -45,12 +45,7 @@ module.exports = [
     },
   },
   {
-    ignores: [
-      'build/',
-      '.docusaurus/',
-      'node_modules/',
-      '*.config.js',
-    ],
+    ignores: ['build/', '.docusaurus/', 'node_modules/', '*.config.js'],
   },
   prettierConfig,
 ];
