@@ -88,11 +88,15 @@ jobs:
           ./bin/tracks --version
           ./bin/tracks-mcp --version
 
+      - name: List bin directory (Windows debug)
+        if: runner.os == 'Windows'
+        run: Get-ChildItem -Path . -Recurse -Include *.exe
+
       - name: Verify binaries (Windows)
         if: runner.os == 'Windows'
         run: |
-          & ".\bin\tracks.exe" --version
-          & ".\bin\tracks-mcp.exe" --version
+          ./bin/tracks.exe --version
+          ./bin/tracks-mcp.exe --version
 
   lint:
     name: Lint
