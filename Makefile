@@ -148,7 +148,7 @@ release: ## Create a new release (use VERSION=vX.Y.Z)
 	@echo "Release $(VERSION) created and pushed!"
 
 # Development targets
-.PHONY: dev clean install deps
+.PHONY: dev clean clean-platforms install deps
 
 dev: ## Run tracks in development mode
 	@echo "Starting development mode..."
@@ -163,7 +163,16 @@ deps: ## Download and tidy Go dependencies
 	@go mod download
 	@go mod tidy
 
-clean: ## Clean build artifacts
+clean-platforms: ## Clean cross-platform build artifacts only
+	@echo "Cleaning cross-platform binaries..."
+	@rm -f bin/tracks-linux-amd64 bin/tracks-mcp-linux-amd64
+	@rm -f bin/tracks-linux-arm64 bin/tracks-mcp-linux-arm64
+	@rm -f bin/tracks-darwin-amd64 bin/tracks-mcp-darwin-amd64
+	@rm -f bin/tracks-darwin-arm64 bin/tracks-mcp-darwin-arm64
+	@rm -f bin/tracks-windows-amd64.exe bin/tracks-mcp-windows-amd64.exe
+	@echo "Cross-platform binaries cleaned!"
+
+clean: ## Clean all build artifacts
 	@echo "Cleaning build artifacts..."
 	@rm -rf bin/
 	@rm -rf dist/
