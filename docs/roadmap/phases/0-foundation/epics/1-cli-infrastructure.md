@@ -65,8 +65,8 @@ The following tasks will become GitHub issues, ordered by dependency:
 19. ✅ **Write unit tests for mode detection and flags** ([#21](https://github.com/anomalousventures/tracks/issues/21))
 20. ✅ **Write unit tests for Renderer implementations** ([#22](https://github.com/anomalousventures/tracks/issues/22))
 21. ✅ **Set up CLI integration test framework** ([#23](https://github.com/anomalousventures/tracks/issues/23) | [PR #41](https://github.com/anomalousventures/tracks/pull/41))
-22. **Wire up --json flag to output JSON for version and help commands** ([#42](https://github.com/anomalousventures/tracks/issues/42))
-23. **Document CLI development workflow and Renderer pattern** ([#24](https://github.com/anomalousventures/tracks/issues/24))
+22. ✅ **Wire up --json flag to output JSON for version and help commands** ([#42](https://github.com/anomalousventures/tracks/issues/42) | [PR #43](https://github.com/anomalousventures/tracks/pull/43))
+23. ✅ **Document CLI development workflow and Renderer pattern** ([#24](https://github.com/anomalousventures/tracks/issues/24))
 
 ## Dependencies
 
@@ -92,23 +92,23 @@ Note: Versions listed are current as of October 2025. Use `go get <package>@late
 
 ## Acceptance Criteria
 
-- [ ] `tracks` command builds successfully on Linux, macOS, and Windows
-- [ ] `tracks --version` displays correct version information
-- [ ] `tracks --help` shows usage information with examples
-- [ ] `tracks` with no arguments shows TUI placeholder message
-- [ ] Renderer interface defined and documented
-- [ ] UIMode detection works (TTY, CI, flags, env vars)
-- [ ] ConsoleRenderer works with Lip Gloss styling
-- [ ] Bubbles progress bar renders in console mode (standalone)
-- [ ] JSONRenderer outputs valid JSON
-- [ ] NO_COLOR env var disables colors
-- [ ] TRACKS_LOG_LEVEL env var controls verbosity
-- [ ] --json flag outputs JSON
-- [ ] --no-color flag disables colors
-- [ ] Theme defined once, used everywhere
-- [ ] Unit tests cover root command, version, and Renderer modes
-- [ ] CI pipeline can build the CLI binary
-- [ ] README documents Renderer pattern and output modes
+- [x] `tracks` command builds successfully on Linux, macOS, and Windows
+- [x] `tracks --version` displays correct version information
+- [x] `tracks --help` shows usage information with examples
+- [x] `tracks` with no arguments shows TUI placeholder message
+- [x] Renderer interface defined and documented
+- [x] UIMode detection works (TTY, CI, flags, env vars)
+- [x] ConsoleRenderer works with Lip Gloss styling
+- [x] Bubbles progress bar renders in console mode (standalone)
+- [x] JSONRenderer outputs valid JSON
+- [x] NO_COLOR env var disables colors
+- [x] TRACKS_LOG_LEVEL env var controls verbosity
+- [x] --json flag outputs JSON
+- [x] --no-color flag disables colors
+- [x] Theme defined once, used everywhere
+- [x] Unit tests cover root command, version, and Renderer modes
+- [x] CI pipeline can build the CLI binary
+- [x] README documents Renderer pattern and output modes
 
 ## Technical Notes
 
