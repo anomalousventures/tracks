@@ -130,6 +130,26 @@ func TestCLIColorOutput(t *testing.T) {
 	})
 }
 
+func TestCLIJSONOutput(t *testing.T) {
+	t.Run("json flag before command", func(t *testing.T) {
+		stdout, _ := RunCLIExpectSuccess(t, "--json", "version")
+
+		AssertJSONOutput(t, stdout)
+		AssertContains(t, stdout, "Tracks")
+		AssertContains(t, stdout, "Commit:")
+		AssertContains(t, stdout, "Built:")
+	})
+
+	t.Run("json flag after command", func(t *testing.T) {
+		stdout, _ := RunCLIExpectSuccess(t, "version", "--json")
+
+		AssertJSONOutput(t, stdout)
+		AssertContains(t, stdout, "Tracks")
+		AssertContains(t, stdout, "Commit:")
+		AssertContains(t, stdout, "Built:")
+	})
+}
+
 func TestCLIBinaryExists(t *testing.T) {
 	binaryPath := GetBinaryPath()
 	if binaryPath == "" {

@@ -7,6 +7,8 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/anomalousventures/tracks/internal/cli/renderer"
+	"github.com/anomalousventures/tracks/internal/cli/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -172,9 +174,32 @@ func versionCmd(build BuildInfo) *cobra.Command {
 		Short: "Print version information",
 		Long:  "Display the version number, git commit hash, and build date for this Tracks CLI binary.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "Tracks %s\n", build.getVersion())
-			fmt.Fprintf(cmd.OutOrStdout(), "Commit: %s\n", build.Commit)
-			fmt.Fprintf(cmd.OutOrStdout(), "Built: %s\n", build.Date)
+			cfg := GetConfig(cmd)
+
+			uiMode := ui.DetectMode(ui.UIConfig{
+				Mode:        ui.ModeAuto,
+				JSON:        cfg.JSON,
+				NoColor:     cfg.NoColor,
+				Interactive: cfg.Interactive,
+			})
+
+			var r renderer.Renderer
+			if uiMode == ui.ModeJSON {
+				r = renderer.NewJSONRenderer(cmd.OutOrStdout())
+			} else {
+				r = renderer.NewConsoleRenderer(cmd.OutOrStdout())
+			}
+
+			r.Title(fmt.Sprintf("Tracks %s", build.getVersion()))
+			r.Section(renderer.Section{
+				Title: "",
+				Body:  fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
+			})
+
+			if err := r.Flush(); err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
+				os.Exit(1)
+			}
 		},
 	}
 }
