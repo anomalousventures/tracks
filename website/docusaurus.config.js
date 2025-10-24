@@ -152,8 +152,8 @@ const config = {
         // The application ID provided by Algolia
         appId: 'KHXZYX55H6',
 
-        // Public API key: it is safe to commit it
-        apiKey: '',
+        // Public API key: it is safe to commit it (placeholder until DocSearch is configured)
+        apiKey: 'placeholder',
 
         indexName: 'tracks',
 

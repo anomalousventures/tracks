@@ -27,11 +27,30 @@ Tracks is in **Phase 0 (Foundation)** development. The CLI tool and project scaf
 
 - ✅ Project structure and monorepo setup
 - ✅ Documentation and roadmap
-- 🚧 CLI infrastructure (in progress)
+- ✅ CLI infrastructure (complete - v0.1.0 ready)
+  - Root command with version, help, and global flags
+  - Renderer pattern (Console, JSON, TUI-ready)
+  - Mode detection (TTY, CI, flags, env vars)
+  - Theme system with Lip Gloss styling
+  - Comprehensive test coverage (unit + integration)
+
+**Try it now:**
+
+```bash
+# Clone and build
+git clone https://github.com/anomalousventures/tracks.git
+cd tracks
+make build
+
+# Run CLI
+./bin/tracks version
+./bin/tracks --help
+./bin/tracks --json version  # Machine-readable output
+```
 
 **Coming next:**
 
-- Phase 0: CLI tool with `tracks new` command
+- Phase 0: Complete `tracks new` command implementation
 - Phase 1: Core web layer (routing, handlers, middleware)
 - Phase 2: Database layer (SQLC, migrations)
 - See [Roadmap](#roadmap) for details

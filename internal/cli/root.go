@@ -188,6 +188,12 @@ func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
 	if uiMode == ui.ModeJSON {
 		return renderer.NewJSONRenderer(cmd.OutOrStdout())
 	}
+
+	// Set NO_COLOR env var if --no-color flag is set, so Lip Gloss respects it
+	if cfg.NoColor {
+		os.Setenv("NO_COLOR", "1")
+	}
+
 	return renderer.NewConsoleRenderer(cmd.OutOrStdout())
 }
 
