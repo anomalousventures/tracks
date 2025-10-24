@@ -956,6 +956,22 @@ func TestTracksLogLevelEnvironmentVariable(t *testing.T) {
 	}
 }
 
+func setupTestCommand(t *testing.T, setupViper func(*viper.Viper)) *cobra.Command {
+	t.Helper()
+	var buf bytes.Buffer
+	cmd := &cobra.Command{
+		Use: "test",
+		Run: func(cmd *cobra.Command, args []string) {},
+	}
+	cmd.SetOut(&buf)
+
+	v := viper.New()
+	setupViper(v)
+	cmd.SetContext(WithViper(context.Background(), v))
+
+	return cmd
+}
+
 func TestNewRendererFromCommand(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1023,20 +1039,7 @@ func TestNewRendererFromCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-
-			cmd := &cobra.Command{
-				Use: "test",
-				Run: func(cmd *cobra.Command, args []string) {},
-			}
-			cmd.SetOut(&buf)
-
-			v := viper.New()
-			tt.setupViper(v)
-
-			ctx := WithViper(context.Background(), v)
-			cmd.SetContext(ctx)
-
+			cmd := setupTestCommand(t, tt.setupViper)
 			r := NewRendererFromCommand(cmd)
 
 			if r == nil {
