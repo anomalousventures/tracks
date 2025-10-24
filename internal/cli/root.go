@@ -88,10 +88,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 				Body:  "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
 			})
 
-			if err := r.Flush(); err != nil {
-				fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
-				os.Exit(1)
-			}
+			flushRenderer(cmd, r)
 		},
 	}
 
@@ -195,6 +192,14 @@ func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
 	return renderer.NewConsoleRenderer(cmd.OutOrStdout())
 }
 
+// flushRenderer flushes the renderer and handles errors by writing to stderr and exiting.
+func flushRenderer(cmd *cobra.Command, r renderer.Renderer) {
+	if err := r.Flush(); err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 func versionCmd(build BuildInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
@@ -209,10 +214,7 @@ func versionCmd(build BuildInfo) *cobra.Command {
 				Body:  fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
 			})
 
-			if err := r.Flush(); err != nil {
-				fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
-				os.Exit(1)
-			}
+			flushRenderer(cmd, r)
 		},
 	}
 }
@@ -254,10 +256,7 @@ The generated application is production-ready and follows idiomatic Go patterns.
 				Body:  "(Full implementation coming soon)",
 			})
 
-			if err := r.Flush(); err != nil {
-				fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
-				os.Exit(1)
-			}
+			flushRenderer(cmd, r)
 		},
 	}
 }
