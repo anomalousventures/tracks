@@ -81,21 +81,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg := GetConfig(cmd)
-
-			uiMode := ui.DetectMode(ui.UIConfig{
-				Mode:        ui.ModeAuto,
-				JSON:        cfg.JSON,
-				NoColor:     cfg.NoColor,
-				Interactive: cfg.Interactive,
-			})
-
-			var r renderer.Renderer
-			if uiMode == ui.ModeJSON {
-				r = renderer.NewJSONRenderer(cmd.OutOrStdout())
-			} else {
-				r = renderer.NewConsoleRenderer(cmd.OutOrStdout())
-			}
+			r := NewRendererFromCommand(cmd)
 
 			r.Section(renderer.Section{
 				Title: "",
@@ -192,27 +178,30 @@ func GetConfig(cmd *cobra.Command) Config {
 	}
 }
 
+// NewRendererFromCommand creates an appropriate renderer based on command configuration.
+func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
+	cfg := GetConfig(cmd)
+
+	uiMode := ui.DetectMode(ui.UIConfig{
+		Mode:        ui.ModeAuto,
+		JSON:        cfg.JSON,
+		NoColor:     cfg.NoColor,
+		Interactive: cfg.Interactive,
+	})
+
+	if uiMode == ui.ModeJSON {
+		return renderer.NewJSONRenderer(cmd.OutOrStdout())
+	}
+	return renderer.NewConsoleRenderer(cmd.OutOrStdout())
+}
+
 func versionCmd(build BuildInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
 		Long:  "Display the version number, git commit hash, and build date for this Tracks CLI binary.",
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg := GetConfig(cmd)
-
-			uiMode := ui.DetectMode(ui.UIConfig{
-				Mode:        ui.ModeAuto,
-				JSON:        cfg.JSON,
-				NoColor:     cfg.NoColor,
-				Interactive: cfg.Interactive,
-			})
-
-			var r renderer.Renderer
-			if uiMode == ui.ModeJSON {
-				r = renderer.NewJSONRenderer(cmd.OutOrStdout())
-			} else {
-				r = renderer.NewConsoleRenderer(cmd.OutOrStdout())
-			}
+			r := NewRendererFromCommand(cmd)
 
 			r.Title(fmt.Sprintf("Tracks %s", build.getVersion()))
 			r.Section(renderer.Section{
@@ -257,21 +246,7 @@ The generated application is production-ready and follows idiomatic Go patterns.
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			projectName := args[0]
-			cfg := GetConfig(cmd)
-
-			uiMode := ui.DetectMode(ui.UIConfig{
-				Mode:        ui.ModeAuto,
-				JSON:        cfg.JSON,
-				NoColor:     cfg.NoColor,
-				Interactive: cfg.Interactive,
-			})
-
-			var r renderer.Renderer
-			if uiMode == ui.ModeJSON {
-				r = renderer.NewJSONRenderer(cmd.OutOrStdout())
-			} else {
-				r = renderer.NewConsoleRenderer(cmd.OutOrStdout())
-			}
+			r := NewRendererFromCommand(cmd)
 
 			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
 			r.Section(renderer.Section{

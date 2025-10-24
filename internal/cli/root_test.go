@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anomalousventures/tracks/internal/cli/renderer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -950,6 +951,109 @@ func TestTracksLogLevelEnvironmentVariable(t *testing.T) {
 			config := GetConfig(rootCmd)
 			if config.LogLevel != tt.wantLogLevel {
 				t.Errorf("LogLevel = %q, want %q", config.LogLevel, tt.wantLogLevel)
+			}
+		})
+	}
+}
+
+func TestNewRendererFromCommand(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupViper   func(*viper.Viper)
+		wantJSON     bool
+		wantConsole  bool
+	}{
+		{
+			name:        "default config returns console renderer",
+			setupViper:  func(v *viper.Viper) {},
+			wantJSON:    false,
+			wantConsole: true,
+		},
+		{
+			name:        "json flag returns json renderer",
+			setupViper:  func(v *viper.Viper) { v.Set("json", true) },
+			wantJSON:    true,
+			wantConsole: false,
+		},
+		{
+			name: "no-color flag returns console renderer",
+			setupViper: func(v *viper.Viper) {
+				v.Set("no-color", true)
+			},
+			wantJSON:    false,
+			wantConsole: true,
+		},
+		{
+			name: "interactive flag returns console renderer",
+			setupViper: func(v *viper.Viper) {
+				v.Set("interactive", true)
+			},
+			wantJSON:    false,
+			wantConsole: true,
+		},
+		{
+			name: "json with no-color returns json renderer",
+			setupViper: func(v *viper.Viper) {
+				v.Set("json", true)
+				v.Set("no-color", true)
+			},
+			wantJSON:    true,
+			wantConsole: false,
+		},
+		{
+			name: "json with interactive returns json renderer",
+			setupViper: func(v *viper.Viper) {
+				v.Set("json", true)
+				v.Set("interactive", true)
+			},
+			wantJSON:    true,
+			wantConsole: false,
+		},
+		{
+			name: "all flags set returns json renderer",
+			setupViper: func(v *viper.Viper) {
+				v.Set("json", true)
+				v.Set("no-color", true)
+				v.Set("interactive", true)
+			},
+			wantJSON:    true,
+			wantConsole: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+
+			cmd := &cobra.Command{
+				Use: "test",
+				Run: func(cmd *cobra.Command, args []string) {},
+			}
+			cmd.SetOut(&buf)
+
+			v := viper.New()
+			tt.setupViper(v)
+
+			ctx := WithViper(context.Background(), v)
+			cmd.SetContext(ctx)
+
+			r := NewRendererFromCommand(cmd)
+
+			if r == nil {
+				t.Fatal("NewRendererFromCommand returned nil")
+			}
+
+			switch r.(type) {
+			case *renderer.JSONRenderer:
+				if !tt.wantJSON {
+					t.Errorf("got JSONRenderer, want ConsoleRenderer")
+				}
+			case *renderer.ConsoleRenderer:
+				if !tt.wantConsole {
+					t.Errorf("got ConsoleRenderer, want JSONRenderer")
+				}
+			default:
+				t.Errorf("unexpected renderer type: %T", r)
 			}
 		})
 	}
