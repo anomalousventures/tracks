@@ -7,6 +7,8 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/anomalousventures/tracks/internal/cli/renderer"
+	"github.com/anomalousventures/tracks/internal/cli/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -79,7 +81,13 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintln(cmd.OutOrStdout(), "Interactive TUI mode coming in Phase 4. Use --help for available commands.")
+			r := NewRendererFromCommand(cmd)
+
+			r.Section(renderer.Section{
+				Body: "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
+			})
+
+			flushRenderer(cmd, r)
 		},
 	}
 
@@ -166,15 +174,45 @@ func GetConfig(cmd *cobra.Command) Config {
 	}
 }
 
+// NewRendererFromCommand creates an appropriate renderer based on command configuration.
+func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
+	cfg := GetConfig(cmd)
+
+	uiMode := ui.DetectMode(ui.UIConfig{
+		Mode:        ui.ModeAuto,
+		JSON:        cfg.JSON,
+		NoColor:     cfg.NoColor,
+		Interactive: cfg.Interactive,
+	})
+
+	if uiMode == ui.ModeJSON {
+		return renderer.NewJSONRenderer(cmd.OutOrStdout())
+	}
+	return renderer.NewConsoleRenderer(cmd.OutOrStdout())
+}
+
+// flushRenderer flushes the renderer and handles errors by writing to stderr and exiting.
+func flushRenderer(cmd *cobra.Command, r renderer.Renderer) {
+	if err := r.Flush(); err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 func versionCmd(build BuildInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
 		Long:  "Display the version number, git commit hash, and build date for this Tracks CLI binary.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "Tracks %s\n", build.getVersion())
-			fmt.Fprintf(cmd.OutOrStdout(), "Commit: %s\n", build.Commit)
-			fmt.Fprintf(cmd.OutOrStdout(), "Built: %s\n", build.Date)
+			r := NewRendererFromCommand(cmd)
+
+			r.Title(fmt.Sprintf("Tracks %s", build.getVersion()))
+			r.Section(renderer.Section{
+				Body: fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
+			})
+
+			flushRenderer(cmd, r)
 		},
 	}
 }
@@ -208,8 +246,14 @@ The generated application is production-ready and follows idiomatic Go patterns.
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			projectName := args[0]
-			fmt.Fprintf(cmd.OutOrStdout(), "Creating new Tracks application: %s\n", projectName)
-			fmt.Fprintln(cmd.OutOrStdout(), "(Full implementation coming soon)")
+			r := NewRendererFromCommand(cmd)
+
+			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
+			r.Section(renderer.Section{
+				Body: "(Full implementation coming soon)",
+			})
+
+			flushRenderer(cmd, r)
 		},
 	}
 }

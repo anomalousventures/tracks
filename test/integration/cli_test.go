@@ -130,6 +130,41 @@ func TestCLIColorOutput(t *testing.T) {
 	})
 }
 
+func TestCLIJSONOutput(t *testing.T) {
+	t.Run("json flag before version command", func(t *testing.T) {
+		stdout, _ := RunCLIExpectSuccess(t, "--json", "version")
+
+		AssertJSONOutput(t, stdout)
+		AssertContains(t, stdout, "Tracks")
+		AssertContains(t, stdout, "Commit:")
+		AssertContains(t, stdout, "Built:")
+	})
+
+	t.Run("json flag after version command", func(t *testing.T) {
+		stdout, _ := RunCLIExpectSuccess(t, "version", "--json")
+
+		AssertJSONOutput(t, stdout)
+		AssertContains(t, stdout, "Tracks")
+		AssertContains(t, stdout, "Commit:")
+		AssertContains(t, stdout, "Built:")
+	})
+
+	t.Run("json flag with root command", func(t *testing.T) {
+		stdout, _ := RunCLIExpectSuccess(t, "--json")
+
+		AssertJSONOutput(t, stdout)
+		AssertContains(t, stdout, "Interactive TUI mode")
+	})
+
+	t.Run("json flag with new command", func(t *testing.T) {
+		stdout, _ := RunCLIExpectSuccess(t, "--json", "new", "testapp")
+
+		AssertJSONOutput(t, stdout)
+		AssertContains(t, stdout, "Creating new Tracks application")
+		AssertContains(t, stdout, "testapp")
+	})
+}
+
 func TestCLIBinaryExists(t *testing.T) {
 	binaryPath := GetBinaryPath()
 	if binaryPath == "" {
