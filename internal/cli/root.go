@@ -84,8 +84,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 			r := NewRendererFromCommand(cmd)
 
 			r.Section(renderer.Section{
-				Title: "",
-				Body:  "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
+				Body: "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
 			})
 
 			flushRenderer(cmd, r)
@@ -210,8 +209,7 @@ func versionCmd(build BuildInfo) *cobra.Command {
 
 			r.Title(fmt.Sprintf("Tracks %s", build.getVersion()))
 			r.Section(renderer.Section{
-				Title: "",
-				Body:  fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
+				Body: fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
 			})
 
 			flushRenderer(cmd, r)
@@ -252,8 +250,7 @@ The generated application is production-ready and follows idiomatic Go patterns.
 
 			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
 			r.Section(renderer.Section{
-				Title: "",
-				Body:  "(Full implementation coming soon)",
+				Body: "(Full implementation coming soon)",
 			})
 
 			flushRenderer(cmd, r)
