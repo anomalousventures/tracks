@@ -81,7 +81,31 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintln(cmd.OutOrStdout(), "Interactive TUI mode coming in Phase 4. Use --help for available commands.")
+			cfg := GetConfig(cmd)
+
+			uiMode := ui.DetectMode(ui.UIConfig{
+				Mode:        ui.ModeAuto,
+				JSON:        cfg.JSON,
+				NoColor:     cfg.NoColor,
+				Interactive: cfg.Interactive,
+			})
+
+			var r renderer.Renderer
+			if uiMode == ui.ModeJSON {
+				r = renderer.NewJSONRenderer(cmd.OutOrStdout())
+			} else {
+				r = renderer.NewConsoleRenderer(cmd.OutOrStdout())
+			}
+
+			r.Section(renderer.Section{
+				Title: "",
+				Body:  "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
+			})
+
+			if err := r.Flush(); err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
+				os.Exit(1)
+			}
 		},
 	}
 
@@ -233,8 +257,32 @@ The generated application is production-ready and follows idiomatic Go patterns.
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			projectName := args[0]
-			fmt.Fprintf(cmd.OutOrStdout(), "Creating new Tracks application: %s\n", projectName)
-			fmt.Fprintln(cmd.OutOrStdout(), "(Full implementation coming soon)")
+			cfg := GetConfig(cmd)
+
+			uiMode := ui.DetectMode(ui.UIConfig{
+				Mode:        ui.ModeAuto,
+				JSON:        cfg.JSON,
+				NoColor:     cfg.NoColor,
+				Interactive: cfg.Interactive,
+			})
+
+			var r renderer.Renderer
+			if uiMode == ui.ModeJSON {
+				r = renderer.NewJSONRenderer(cmd.OutOrStdout())
+			} else {
+				r = renderer.NewConsoleRenderer(cmd.OutOrStdout())
+			}
+
+			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
+			r.Section(renderer.Section{
+				Title: "",
+				Body:  "(Full implementation coming soon)",
+			})
+
+			if err := r.Flush(); err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
+				os.Exit(1)
+			}
 		},
 	}
 }
