@@ -45,9 +45,8 @@ func TestCLINoArgs(t *testing.T) {
 	stdout, stderr, exitCode, _ := RunCLI(t)
 
 	if exitCode != 0 {
-		t.Logf("Exit code: %d (expected 0)", exitCode)
-		t.Logf("Stdout: %s", stdout)
-		t.Logf("Stderr: %s", stderr)
+		t.Fatalf("Expected exit code 0, got %d\nStdout: %s\nStderr: %s",
+			exitCode, stdout, stderr)
 	}
 
 	output := stdout + stderr
@@ -55,22 +54,14 @@ func TestCLINoArgs(t *testing.T) {
 }
 
 func TestCLIInvalidCommand(t *testing.T) {
-	stdout, stderr, exitCode := RunCLIExpectFailure(t, "nonexistent")
-
-	if exitCode == 0 {
-		t.Fatalf("Expected non-zero exit code for invalid command, got 0")
-	}
+	stdout, stderr, _ := RunCLIExpectFailure(t, "nonexistent")
 
 	output := stdout + stderr
 	AssertContains(t, output, "unknown command")
 }
 
 func TestCLINewCommandMissingArg(t *testing.T) {
-	stdout, stderr, exitCode := RunCLIExpectFailure(t, "new")
-
-	if exitCode == 0 {
-		t.Fatalf("Expected non-zero exit code for missing project name, got 0")
-	}
+	stdout, stderr, _ := RunCLIExpectFailure(t, "new")
 
 	output := stdout + stderr
 	AssertContains(t, output, "project-name")
