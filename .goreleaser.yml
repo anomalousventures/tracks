@@ -141,19 +141,14 @@ docker_manifests:
       - 'ghcr.io/anomalousventures/tracks:latest-amd64'
       - 'ghcr.io/anomalousventures/tracks:latest-arm64'
 
-brews:
+homebrew_casks:
   - repository:
       owner: anomalousventures
       name: homebrew-tap
       token: "{{ .Env.GITHUB_TOKEN }}"
-    folder: Formula
     homepage: https://tracks.anomalousventures.com
-    description: A Rails-like web framework for Go
+    description: A batteries included toolkit for hypermedia servers
     license: MIT
-    test: |
-      system "#{bin}/tracks version"
-    install: |
-      bin.install "tracks"
 
 scoops:
   - repository:
@@ -161,8 +156,27 @@ scoops:
       name: scoop-bucket
       token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: https://tracks.anomalousventures.com
-    description: A Rails-like web framework for Go
+    description: A batteries included toolkit for hypermedia servers
     license: MIT
+
+nfpms:
+  - id: packages
+    package_name: tracks
+    vendor: Anomalous Ventures
+    homepage: https://tracks.anomalousventures.com
+    maintainer: Anomalous Ventures <info@anomalous.ventures>
+    description: A batteries included toolkit for hypermedia servers
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+    bindir: /usr/bin
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/tracks/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/tracks/README.md
 
 announce:
   skip: '{{gt .Patch 0}}'  # Skip patch releases
@@ -171,6 +185,7 @@ release:
   github:
     owner: anomalousventures
     name: tracks
+  draft: true
   prerelease: auto
   name_template: "Tracks {{.Version}}"
   header: |
