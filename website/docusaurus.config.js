@@ -153,7 +153,7 @@ const config = {
         appId: 'KHXZYX55H6',
 
         // Public API key: it is safe to commit it
-        apiKey: 'YOUR_SEARCH_API_KEY',
+        apiKey: '',
 
         indexName: 'tracks',
 

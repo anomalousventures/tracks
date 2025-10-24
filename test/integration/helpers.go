@@ -7,6 +7,7 @@ package integration
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,7 +19,10 @@ import (
 var binaryPath string
 
 func init() {
-	_, filename, _, _ := runtime.Caller(0)
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("failed to get caller information")
+	}
 	projectRoot := filepath.Join(filepath.Dir(filename), "..", "..")
 	binaryName := "tracks"
 	if runtime.GOOS == "windows" {
@@ -103,13 +107,12 @@ func AssertNotContains(t *testing.T, got, unwanted string) {
 	}
 }
 
-// AssertJSONOutput verifies that output is valid JSON by checking basic structure.
+// AssertJSONOutput verifies that output is valid JSON.
 func AssertJSONOutput(t *testing.T, output string) {
 	t.Helper()
 
-	trimmed := strings.TrimSpace(output)
-	if !strings.HasPrefix(trimmed, "{") || !strings.HasSuffix(trimmed, "}") {
-		t.Errorf("expected valid JSON output (starting with { and ending with })\nGot: %s", output)
+	if !json.Valid([]byte(output)) {
+		t.Errorf("expected valid JSON output\nGot: %s", output)
 	}
 }
 

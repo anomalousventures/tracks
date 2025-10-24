@@ -125,8 +125,7 @@ func TestCLIColorOutput(t *testing.T) {
 	t.Run("default has color codes", func(t *testing.T) {
 		stdout, _ := RunCLIExpectSuccess(t, "version")
 
-		output := stdout
-		if !strings.Contains(output, "\033[") && !strings.Contains(output, "Tracks") {
+		if !strings.Contains(stdout, "\033[") {
 			t.Skip("Terminal doesn't support color or colors disabled in CI")
 		}
 	})
