@@ -54,19 +54,6 @@ func TestCLINoArgs(t *testing.T) {
 	AssertContains(t, output, "Interactive TUI mode coming in Phase 4")
 }
 
-// TODO: Implement JSON output for version command
-// The version command doesn't use the Renderer pattern yet, so --json has no effect.
-// This test is commented out until JSON rendering is implemented for version.
-//
-// func TestCLIJSONVersion(t *testing.T) {
-// 	stdout, _ := RunCLIExpectSuccess(t, "--json", "version")
-//
-// 	AssertJSONOutput(t, stdout)
-// 	AssertContains(t, stdout, `"version"`)
-// 	AssertContains(t, stdout, `"commit"`)
-// 	AssertContains(t, stdout, `"date"`)
-// }
-
 func TestCLIInvalidCommand(t *testing.T) {
 	stdout, stderr, exitCode := RunCLIExpectFailure(t, "nonexistent")
 
@@ -133,30 +120,6 @@ func TestCLIVerboseAndQuietMutuallyExclusive(t *testing.T) {
 		t.Errorf("Expected error message about verbose and quiet being mutually exclusive\nGot: %s", output)
 	}
 }
-
-// TODO: Implement JSON output for all commands
-// Currently only the root help command might support JSON.
-// This test is disabled until JSON rendering is implemented for version and help commands.
-//
-// func TestCLIJSONOutput(t *testing.T) {
-// 	tests := []struct {
-// 		name string
-// 		args []string
-// 	}{
-// 		{"json version", []string{"--json", "version"}},
-// 		{"json help", []string{"--json", "--help"}},
-// 	}
-//
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			stdout, _ := RunCLIExpectSuccess(t, tt.args...)
-//
-// 			if !strings.HasPrefix(strings.TrimSpace(stdout), "{") {
-// 				t.Errorf("Expected JSON output (starting with {)\nGot: %s", stdout)
-// 			}
-// 		})
-// 	}
-// }
 
 func TestCLIColorOutput(t *testing.T) {
 	t.Run("default has color codes", func(t *testing.T) {
