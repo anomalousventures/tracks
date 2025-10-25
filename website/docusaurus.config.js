@@ -112,10 +112,6 @@ const config = {
                 label: 'Getting Started',
                 to: '/docs/intro',
               },
-              {
-                label: 'Tutorial',
-                to: '/docs/tutorial',
-              },
             ],
           },
           {
