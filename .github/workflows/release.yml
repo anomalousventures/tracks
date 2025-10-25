@@ -47,3 +47,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRACKS_RELEASER_TOKEN: ${{ secrets.TRACKS_RELEASER_TOKEN }}
