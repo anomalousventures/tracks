@@ -72,6 +72,7 @@ The CHANGELOG.md file must be updated BEFORE creating the release tag.
 **How:**
 
 1. Generate changelog from commits:
+
    ```bash
    go tool git-chglog -o CHANGELOG.md
    ```
@@ -83,11 +84,13 @@ The CHANGELOG.md file must be updated BEFORE creating the release tag.
    - See v0.1.0 in CHANGELOG.md for example format
 
 3. Fix any markdown linting issues:
+
    ```bash
    make lint-md
    ```
 
 4. Create PR for CHANGELOG:
+
    ```bash
    git checkout -b chore/changelog-v0.x.0
    git add CHANGELOG.md
@@ -99,12 +102,14 @@ The CHANGELOG.md file must be updated BEFORE creating the release tag.
 5. **Wait for PR approval and merge**
 
 6. Pull latest main:
+
    ```bash
    git checkout main
    git pull
    ```
 
 **Lessons Learned (v0.1.0):**
+
 - Attempt #1 failed: CHANGELOG.md was missing entirely
 - GoReleaser config line 69 includes CHANGELOG.md in archives
 - Always create CHANGELOG via PR BEFORE tagging
@@ -128,6 +133,7 @@ git push origin v0.x.0
 ```
 
 **Tag Format:**
+
 - Use semantic versioning: `v{MAJOR}.{MINOR}.{PATCH}`
 - Always prefix with `v`
 - Use annotated tags (with `-a` flag)
@@ -143,6 +149,7 @@ gh run watch <RUN_ID>
 ```
 
 **Expected Steps:**
+
 1. Checkout code
 2. Setup Go
 3. Run tests
@@ -167,6 +174,7 @@ gh run watch <RUN_ID>
 If workflow fails, see [Troubleshooting](#troubleshooting) section.
 
 If successful:
+
 ```bash
 # Verify draft release created
 gh release list --limit 1
@@ -189,6 +197,7 @@ gh release view v0.x.0 --json body --jq '.body' | head -100
 ```
 
 **Verify:**
+
 - ✅ Changelog appears once (not duplicated)
 - ✅ Release notes include intro message
 - ✅ Release notes include auto-generated changelog
@@ -211,12 +220,14 @@ Or publish via GitHub UI: https://github.com/anomalousventures/tracks/releases
 After publishing, verify all distribution channels work:
 
 **Homebrew:**
+
 ```bash
 brew install anomalousventures/tap/tracks
 tracks version
 ```
 
 **Scoop:**
+
 ```bash
 scoop bucket add anomalousventures https://github.com/anomalousventures/scoop-bucket
 scoop install tracks
@@ -224,12 +235,14 @@ tracks version
 ```
 
 **Docker:**
+
 ```bash
 docker pull ghcr.io/anomalousventures/tracks:0.x.0
 docker run ghcr.io/anomalousventures/tracks:0.x.0 version
 ```
 
 **go install:**
+
 ```bash
 go install github.com/anomalousventures/tracks/cmd/tracks@v0.x.0
 tracks version
@@ -242,13 +255,15 @@ tracks version
 #### Missing CHANGELOG.md
 
 **Error:**
-```
+
+```text
 Error: open CHANGELOG.md: no such file or directory
 ```
 
 **Cause:** CHANGELOG.md doesn't exist or wasn't committed before tag creation.
 
 **Fix:**
+
 1. Delete failed tag: `git tag -d v0.x.0 && git push origin :refs/tags/v0.x.0`
 2. Delete draft release: `gh release delete v0.x.0 --yes`
 3. Create CHANGELOG.md via PR (see Phase 1, Step 3)
@@ -260,13 +275,15 @@ Error: open CHANGELOG.md: no such file or directory
 #### Docker Multi-Arch Build Failure
 
 **Error:**
-```
+
+```text
 exec /bin/sh: exec format error
 ```
 
 **Cause:** Missing QEMU/Buildx setup for ARM64 builds on AMD64 runners.
 
 **Fix:** Verify `.github/workflows/release.yml` includes:
+
 ```yaml
 - name: Set up QEMU
   uses: docker/setup-qemu-action@v3.6.0
@@ -280,15 +297,18 @@ exec /bin/sh: exec format error
 #### Homebrew/Scoop Publishing Failure
 
 **Error:**
-```
+
+```text
 403 Resource not accessible by integration
 ```
 
 **Cause:** Using default `GITHUB_TOKEN` which can't write to separate repos.
 
 **Fix:**
+
 1. Verify `TRACKS_RELEASER_TOKEN` secret exists in repository settings
 2. Verify `.goreleaser.yml` uses the token:
+
    ```yaml
    homebrew_casks:
      - repository:
@@ -298,7 +318,9 @@ exec /bin/sh: exec format error
      - repository:
          token: "{{ .Env.TRACKS_RELEASER_TOKEN }}"
    ```
+
 3. Verify `.github/workflows/release.yml` passes the token:
+
    ```yaml
    env:
      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -314,6 +336,7 @@ exec /bin/sh: exec format error
 **Cause:** `.goreleaser.yml` header template includes `{{ .ReleaseNotes }}` which duplicates the auto-generated changelog.
 
 **Fix:** Remove `{{ .ReleaseNotes }}` from header template:
+
 ```yaml
 release:
   header: |
@@ -375,15 +398,18 @@ Tracks follows [Semantic Versioning 2.0.0](https://semver.org/):
 Each release produces:
 
 ### Binaries
+
 - `tracks` CLI tool (6 platforms: linux/darwin/windows × amd64/arm64)
 - `tracks-mcp` MCP server (6 platforms)
 
 ### Docker Images
+
 - `ghcr.io/anomalousventures/tracks:X.Y.Z` (version-specific)
 - `ghcr.io/anomalousventures/tracks:latest` (always newest)
 - Multi-arch manifests (AMD64 + ARM64)
 
 ### Packages
+
 - `.deb` (Debian/Ubuntu)
 - `.rpm` (RHEL/Fedora/CentOS)
 - `.apk` (Alpine)
@@ -391,6 +417,7 @@ Each release produces:
 - `.zip` (Windows archives)
 
 ### Distribution Channels
+
 - **Homebrew tap:** anomalousventures/homebrew-tap
 - **Scoop bucket:** anomalousventures/scoop-bucket
 - **go install:** `go install github.com/anomalousventures/tracks/cmd/tracks@vX.Y.Z`
@@ -401,12 +428,14 @@ Each release produces:
 Planned enhancements for the release process:
 
 ### v0.2.0 Roadmap
+
 - [ ] Shell script installer (`curl | sh` pattern)
 - [ ] Automated release notes with highlights extraction
 - [ ] Pre-release smoke tests (install and run basic commands)
 - [ ] Rollback automation for failed releases
 
 ### Documentation
+
 - [ ] Video walkthrough of release process
 - [ ] Release announcement templates (blog, social media)
 - [ ] User migration guides for breaking changes
@@ -430,6 +459,7 @@ The v0.1.0 release took **5 attempts** over several hours. Here's what we learne
 5. **Document everything** - Future releases should be quick with this guide
 
 **Release Timeline:**
+
 - Attempt #1: Missing CHANGELOG.md
 - Attempt #2: Docker multi-arch build failure (missing QEMU)
 - Attempt #3: Homebrew/Scoop 403 errors (wrong token)

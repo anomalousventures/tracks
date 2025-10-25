@@ -51,6 +51,7 @@ Quick reference for creating a new Tracks release. For detailed instructions, se
 See [docs/RELEASE_PROCESS.md#troubleshooting](../docs/RELEASE_PROCESS.md#troubleshooting) for recovery procedures.
 
 **Quick recovery:**
+
 ```bash
 # Delete failed release
 gh release delete v0.x.0 --yes

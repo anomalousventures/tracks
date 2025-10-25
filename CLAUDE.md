@@ -232,10 +232,11 @@ Quick reminders:
 
 ```bash
 make changelog              # Generate changelog from commits
-make release VERSION=v0.1.0 # Create and push release tag
+make release-prep           # Verify prerequisites and show next steps
+make release-tag VERSION=v0.1.0 # Create and push release tag
 ```
 
-Uses Conventional Commits, GoReleaser, and GitHub Actions.
+See [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for complete release workflow.
 
 ---
 
