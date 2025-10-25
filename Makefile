@@ -142,28 +142,96 @@ website-deploy: website-build ## Deploy website to production
 	@pnpm run website:deploy
 
 # Release targets
-.PHONY: changelog release-dry-run release
+.PHONY: changelog release-check release-prep release-tag release-rollback release-dry-run
 
 changelog: ## Generate changelog with git-chglog
 	@echo "Generating changelog..."
 	@go tool git-chglog -o CHANGELOG.md
+	@echo "✅ CHANGELOG.md generated"
+	@echo "⚠️  Review the changelog and create a PR to commit it before tagging!"
 
-release-dry-run: ## Test release process locally
-	@echo "Running GoReleaser in dry-run mode..."
-	@go tool goreleaser release --snapshot --clean --skip publish
-
-release: ## Create a new release (use VERSION=vX.Y.Z)
-	@if [ -z "$(VERSION)" ]; then \
-		echo "Error: VERSION is required. Usage: make release VERSION=v0.1.0"; \
+release-check: ## Verify prerequisites for release
+	@echo "Checking release prerequisites..."
+	@echo "Checking git status..."
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "❌ Working tree is dirty. Commit or stash changes first."; \
 		exit 1; \
 	fi
-	@echo "Creating release $(VERSION)..."
-	@go tool git-chglog -o CHANGELOG.md
-	@git add CHANGELOG.md
-	@git commit -m "chore: update changelog for $(VERSION)" || true
+	@echo "✅ Working tree is clean"
+	@echo "Checking branch..."
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then \
+		echo "❌ Not on main branch. Switch to main first."; \
+		exit 1; \
+	fi
+	@echo "✅ On main branch"
+	@echo "Checking if CHANGELOG.md exists..."
+	@if [ ! -f CHANGELOG.md ]; then \
+		echo "❌ CHANGELOG.md not found. Run 'make changelog' first."; \
+		exit 1; \
+	fi
+	@echo "✅ CHANGELOG.md exists"
+	@echo "Running tests..."
+	@$(MAKE) test
+	@echo "✅ Tests passed"
+	@echo "Running linters..."
+	@$(MAKE) lint
+	@echo "✅ Linters passed"
+	@echo ""
+	@echo "✅ All prerequisites passed! Ready to release."
+
+release-prep: release-check ## Prepare for release (run checks and show next steps)
+	@echo ""
+	@echo "════════════════════════════════════════════════════════════════"
+	@echo "  Release Preparation Complete"
+	@echo "════════════════════════════════════════════════════════════════"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Ensure CHANGELOG.md has been merged to main"
+	@echo "  2. Run: make release-tag VERSION=v0.x.0"
+	@echo "  3. Monitor workflow: gh run watch <RUN_ID>"
+	@echo "  4. Review draft release: gh release view v0.x.0"
+	@echo "  5. Publish: gh release edit v0.x.0 --draft=false"
+	@echo ""
+	@echo "See .github/RELEASE_CHECKLIST.md for full checklist"
+	@echo "════════════════════════════════════════════════════════════════"
+
+release-tag: ## Create and push release tag (use VERSION=vX.Y.Z)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Error: VERSION is required."; \
+		echo "Usage: make release-tag VERSION=v0.1.0"; \
+		exit 1; \
+	fi
+	@echo "Creating release tag $(VERSION)..."
 	@git tag -a $(VERSION) -m "Release $(VERSION)"
+	@echo "✅ Tag $(VERSION) created locally"
+	@echo "Pushing tag to origin..."
 	@git push origin $(VERSION)
-	@echo "Release $(VERSION) created and pushed!"
+	@echo "✅ Tag $(VERSION) pushed to origin"
+	@echo ""
+	@echo "🚀 Release workflow triggered!"
+	@echo "Monitor progress: gh run watch $$(gh run list --workflow=release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+
+release-rollback: ## Delete failed release and tag (use VERSION=vX.Y.Z)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Error: VERSION is required."; \
+		echo "Usage: make release-rollback VERSION=v0.1.0"; \
+		exit 1; \
+	fi
+	@echo "Rolling back release $(VERSION)..."
+	@echo "Deleting draft release..."
+	@gh release delete $(VERSION) --yes || echo "⚠️  Draft release not found or already deleted"
+	@echo "Deleting local tag..."
+	@git tag -d $(VERSION) || echo "⚠️  Local tag not found"
+	@echo "Deleting remote tag..."
+	@git push origin :refs/tags/$(VERSION) || echo "⚠️  Remote tag not found"
+	@echo "✅ Rollback complete for $(VERSION)"
+	@echo ""
+	@echo "Fix the issues, then retry with: make release-tag VERSION=$(VERSION)"
+
+release-dry-run: ## Test release process locally (doesn't publish)
+	@echo "Running GoReleaser in dry-run mode..."
+	@go tool goreleaser release --snapshot --clean --skip publish
+	@echo "✅ Dry-run complete. Check dist/ directory for artifacts."
 
 # Development targets
 .PHONY: dev clean clean-platforms install deps

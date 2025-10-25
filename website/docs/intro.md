@@ -20,7 +20,7 @@ See the [Roadmap](https://github.com/anomalousventures/tracks/blob/main/docs/roa
 
 ## What is Tracks?
 
-Tracks will be a command-line tool that generates and manages Go web applications. Built for developers who want the productivity of modern frameworks with the performance and simplicity of Go.
+Tracks is a command-line tool that generates and manages Go web applications. Built for developers who want the productivity of modern frameworks with the performance and simplicity of Go.
 
 The framework generates idiomatic Go code - the kind you'd write yourself. No magic, no reflection, just clean, testable, production-ready applications.
 
@@ -68,17 +68,17 @@ Tracks development is organized into 7 phases:
 
 ## Technology Stack
 
-**Router:** Chi - lightweight, idiomatic HTTP router
-**Templates:** templ - type-safe HTML templates compiled to Go
-**Database:** SQLC - generates type-safe Go from SQL queries
-**Migrations:** Goose - version-controlled database migrations
-**Auth:** Custom + OAuth providers (Google, GitHub, etc.)
-**Authorization:** Casbin - role-based access control
-**Frontend:** HTMX + Alpine.js + TailwindCSS (optional)
-**Observability:** OpenTelemetry - tracing, metrics, and logs
-**Logging:** zerolog - structured JSON logging
-**Testing:** Standard library + testify for assertions
-**CLI/TUI:** Cobra + Bubble Tea (Charm stack)
+- **Router:** Chi - lightweight, idiomatic HTTP router
+- **Templates:** templ - type-safe HTML templates compiled to Go
+- **Database:** SQLC - generates type-safe Go from SQL queries
+- **Migrations:** Goose - version-controlled database migrations
+- **Auth:** Custom + OAuth providers (Google, GitHub, etc.)
+- **Authorization:** Casbin - role-based access control
+- **Frontend:** HTMX + Alpine.js + TailwindCSS (optional)
+- **Observability:** OpenTelemetry - tracing, metrics, and logs
+- **Logging:** zerolog - structured JSON logging
+- **Testing:** Standard library + testify for assertions
+- **CLI/TUI:** Cobra + Bubble Tea (Charm stack)
 
 ## Philosophy
 
@@ -120,7 +120,7 @@ Sensible defaults with escape hatches:
 
 ## Project Status
 
-Tracks is in **pre-alpha development** (Phase 0). The API and generated code structure may change significantly before v1.0.
+Tracks is in active development (currently Phase 0). The API and generated code structure may change significantly before v1.0.
 
 **Not ready for production use.** Follow development progress via [GitHub Issues](https://github.com/anomalousventures/tracks/issues) and the [Roadmap](https://github.com/anomalousventures/tracks/blob/main/docs/roadmap/README.md).
 
@@ -132,11 +132,6 @@ Tracks is in **pre-alpha development** (Phase 0). The API and generated code str
 
 ## Next Steps
 
-Once Phase 0 is complete, you'll be able to:
-
-1. Install Tracks CLI
-2. Run `tracks new myapp` to generate a project
-3. Explore the generated code structure
-4. Read the [Architecture Guide](./core/architecture.md) (coming soon)
-
-For now, check out the [Roadmap](https://github.com/anomalousventures/tracks/blob/main/docs/roadmap/README.md) to see what's being built.
+- [Install the Tracks CLI](./cli/overview.md#installation)
+- Explore the [CLI Documentation](./cli/overview.md)
+- Check out the [Roadmap](https://github.com/anomalousventures/tracks/blob/main/docs/roadmap/README.md)
