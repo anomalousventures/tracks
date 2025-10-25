@@ -17,54 +17,8 @@ const sidebars = {
     'intro',
     {
       type: 'category',
-      label: 'Getting Started',
-      items: [
-        'getting-started/installation',
-        'getting-started/quick-start',
-        'getting-started/first-app',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Core Concepts',
-      items: [
-        'core/architecture',
-        'core/database',
-        'core/authentication',
-        'core/authorization',
-        'core/templates',
-        'core/routing',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Code Generation',
-      items: [
-        'generation/overview',
-        'generation/resources',
-        'generation/handlers',
-        'generation/services',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Testing',
-      items: [
-        'testing/overview',
-        'testing/unit-tests',
-        'testing/integration-tests',
-        'testing/e2e-tests',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Deployment',
-      items: [
-        'deployment/overview',
-        'deployment/docker',
-        'deployment/kubernetes',
-        'deployment/fly-io',
-      ],
+      label: 'CLI',
+      items: ['cli/overview', 'cli/commands', 'cli/output-modes'],
     },
   ],
 };

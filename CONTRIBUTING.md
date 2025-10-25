@@ -330,7 +330,7 @@ make test-coverage
 
 ## Release Process
 
-See [RELEASING.md](./docs/RELEASING.md) for details on:
+See [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for details on:
 
 - Versioning strategy (Semantic Versioning)
 - Tag creation and management
