@@ -193,10 +193,6 @@ release:
 
     Welcome to this new release of Tracks!
 
-    ### Highlights
-
-    {{ .ReleaseNotes }}
-
   footer: |
     ## Install or Upgrade
 
