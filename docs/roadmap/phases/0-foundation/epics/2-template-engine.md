@@ -38,50 +38,50 @@ The following tasks will become GitHub issues, ordered by dependency:
 
 ### Phase 1: Define Interfaces & Types
 
-1. **Define TemplateRenderer interface and core rendering types**
-2. **Define TemplateData struct with variable schema**
-3. **Define template error types and validation interfaces**
+1. **Define TemplateRenderer interface and core rendering types** [#54](https://github.com/anomalousventures/tracks/issues/54)
+2. **Define TemplateData struct with variable schema** [#55](https://github.com/anomalousventures/tracks/issues/55)
+3. **Define template error types and validation interfaces** [#56](https://github.com/anomalousventures/tracks/issues/56)
 
 ### Phase 2: Embed System Setup
 
-1. **Create template directory structure in internal/templates/**
-2. **Set up embed.go with embed directive for template files**
-3. **Write unit tests for embedded FS file reading**
-4. **Verify embed system works across platforms (Windows/Unix paths)**
+1. **Create template directory structure in internal/templates/** [#57](https://github.com/anomalousventures/tracks/issues/57)
+2. **Set up embed.go with embed directive for template files** [#58](https://github.com/anomalousventures/tracks/issues/58)
+3. **Write unit tests for embedded FS file reading** [#59](https://github.com/anomalousventures/tracks/issues/59)
+4. **Verify embed system works across platforms (Windows/Unix paths)** [#60](https://github.com/anomalousventures/tracks/issues/60)
 
 ### Phase 3: Basic Rendering Engine
 
-1. **Implement basic template file reader from embed.FS**
-2. **Implement simple variable substitution using text/template**
-3. **Write unit tests for variable substitution with various data types**
-4. **Add cross-platform path handling (filepath.Join, FromSlash)**
-5. **Write unit tests for path normalization on Windows/Unix**
+1. **Implement basic template file reader from embed.FS** [#61](https://github.com/anomalousventures/tracks/issues/61)
+2. **Implement simple variable substitution using text/template** [#62](https://github.com/anomalousventures/tracks/issues/62)
+3. **Write unit tests for variable substitution with various data types** [#63](https://github.com/anomalousventures/tracks/issues/63)
+4. **Add cross-platform path handling (filepath.Join, FromSlash)** [#64](https://github.com/anomalousventures/tracks/issues/64)
+5. **Write unit tests for path normalization on Windows/Unix** [#65](https://github.com/anomalousventures/tracks/issues/65)
 
 ### Phase 4: Template Creation with Tests
 
-1. **Create go.mod.tmpl template**
-2. **Write unit tests for go.mod template rendering**
-3. **Create .gitignore.tmpl template**
-4. **Write unit tests for .gitignore rendering**
-5. **Create cmd/server/main.go.tmpl template**
-6. **Write unit tests for cmd/server/main.go rendering with different module names**
-7. **Create tracks.yaml.tmpl configuration template**
-8. **Write unit tests for tracks.yaml with different DB drivers**
-9. **Create .env.example.tmpl template**
-10. **Write unit tests for .env.example rendering**
-11. **Create README.md.tmpl template**
-12. **Write unit tests for README.md rendering**
+1. **Create go.mod.tmpl template** [#66](https://github.com/anomalousventures/tracks/issues/66)
+2. **Write unit tests for go.mod template rendering** [#67](https://github.com/anomalousventures/tracks/issues/67)
+3. **Create .gitignore.tmpl template** [#68](https://github.com/anomalousventures/tracks/issues/68)
+4. **Write unit tests for .gitignore rendering** [#69](https://github.com/anomalousventures/tracks/issues/69)
+5. **Create cmd/server/main.go.tmpl template** [#70](https://github.com/anomalousventures/tracks/issues/70)
+6. **Write unit tests for cmd/server/main.go rendering with different module names** [#71](https://github.com/anomalousventures/tracks/issues/71)
+7. **Create tracks.yaml.tmpl configuration template** [#72](https://github.com/anomalousventures/tracks/issues/72)
+8. **Write unit tests for tracks.yaml with different DB drivers** [#73](https://github.com/anomalousventures/tracks/issues/73)
+9. **Create .env.example.tmpl template** [#74](https://github.com/anomalousventures/tracks/issues/74)
+10. **Write unit tests for .env.example rendering** [#75](https://github.com/anomalousventures/tracks/issues/75)
+11. **Create README.md.tmpl template** [#76](https://github.com/anomalousventures/tracks/issues/76)
+12. **Write unit tests for README.md rendering** [#77](https://github.com/anomalousventures/tracks/issues/77)
 
 ### Phase 5: Validation & Integration
 
-1. **Implement template validation (missing variables, syntax errors)**
-2. **Write unit tests for validation error handling**
-3. **Create integration test framework that renders all templates together**
-4. **Add cross-platform integration tests (verify on Linux, macOS, Windows paths)**
+1. **Implement template validation (missing variables, syntax errors)** [#78](https://github.com/anomalousventures/tracks/issues/78)
+2. **Write unit tests for validation error handling** [#79](https://github.com/anomalousventures/tracks/issues/79)
+3. **Create integration test framework that renders all templates together** [#80](https://github.com/anomalousventures/tracks/issues/80)
+4. **Add cross-platform integration tests (verify on Linux, macOS, Windows paths)** [#81](https://github.com/anomalousventures/tracks/issues/81)
 
 ### Phase 6: Documentation
 
-1. **Document template system architecture, variable schema, and extension guide**
+1. **Document template system architecture, variable schema, and extension guide** [#82](https://github.com/anomalousventures/tracks/issues/82)
 
 ## Dependencies
 
