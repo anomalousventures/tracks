@@ -71,7 +71,7 @@ func TestCrossPlatformPaths(t *testing.T) {
 // TestPathSeparators verifies that embed.FS always uses forward slashes
 func TestPathSeparators(t *testing.T) {
 	forwardSlashPath := "project/cmd/server/test.tmpl"
-	backslashPath := filepath.FromSlash("project\\cmd\\server\\test.tmpl")
+	backslashPath := filepath.FromSlash("project/cmd/server/test.tmpl")
 
 	data, err := fs.ReadFile(FS, forwardSlashPath)
 	require.NoError(t, err, "forward slash path should work")
