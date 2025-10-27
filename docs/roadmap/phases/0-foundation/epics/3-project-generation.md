@@ -77,6 +77,8 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Phase 4: Directory & File Generation
 
+**Note:** Tasks in this phase create **template files** that the `tracks` generator uses to produce user projects. The "unit tests" here test the template rendering logic in the tracks codebase itself, not the generated code. Generated projects will include their own test files (main_test.go, health_test.go) created from these templates.
+
 1. **Create directory structure (cmd/server, internal/interfaces, internal/domain/health, internal/infra/http, internal/routes, db)** (#109)
 2. **Write unit tests for directory creation** (#110)
 3. **Create go.mod template** (#111)
@@ -122,6 +124,8 @@ The following tasks will become GitHub issues, organized by phase:
 4. **Write unit tests for output rendering** (#142)
 
 ### Phase 8: Integration & Runtime Verification
+
+**Note:** These integration tests verify generated projects compile, run, and respond to HTTP requests without requiring database connectivity. The health check endpoint is database-free by design. Database integration testing (migrations, SQLC, queries) will be covered in Epic 4: Generated Project Tooling.
 
 1. **Create integration test that generates full project** (#143)
 2. **Integration test: verify `go mod download` succeeds** (#144)
