@@ -49,88 +49,88 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Phase 1: Interfaces & Types
 
-1. **Define ProjectGenerator interface**
-2. **Define ProjectConfig struct with all options (project name, module, db driver, git)**
-3. **Define Validator interface for validation logic**
-4. **Define error types for generation failures**
-5. **Write unit tests for type definitions**
+1. **Define ProjectGenerator interface** (#90)
+2. **Define ProjectConfig struct with all options (project name, module, db driver, git)** (#91)
+3. **Define Validator interface for validation logic** (#92)
+4. **Define error types for generation failures** (#93)
+5. **Write unit tests for type definitions** (#94)
 
 ### Phase 2: Validation Logic
 
-1. **Implement project name validation (lowercase, alphanumeric, hyphens/underscores, no spaces)**
-2. **Write unit tests for project name validation edge cases**
-3. **Implement module name validation (valid Go import path)**
-4. **Write unit tests for module name validation**
-5. **Implement directory existence validation**
-6. **Write unit tests for directory validation (exists, empty, permissions)**
-7. **Implement database driver validation (go-libsql, sqlite3, postgres)**
-8. **Write unit tests for driver validation**
+1. **Implement project name validation (lowercase, alphanumeric, hyphens/underscores, no spaces)** (#95)
+2. **Write unit tests for project name validation edge cases** (#96)
+3. **Implement module name validation (valid Go import path)** (#97)
+4. **Write unit tests for module name validation** (#98)
+5. **Implement directory existence validation** (#99)
+6. **Write unit tests for directory validation (exists, empty, permissions)** (#100)
+7. **Implement database driver validation (go-libsql, sqlite3, postgres)** (#101)
+8. **Write unit tests for driver validation** (#102)
 
 ### Phase 3: Command Implementation
 
-1. **Implement `tracks new` Cobra command structure**
-2. **Wire up --db flag with validation**
-3. **Wire up --module flag with validation**
-4. **Wire up --no-git flag**
-5. **Write unit tests for command flag parsing**
-6. **Write unit tests for flag validation integration**
+1. **Implement `tracks new` Cobra command structure** (#103)
+2. **Wire up --db flag with validation** (#104)
+3. **Wire up --module flag with validation** (#105)
+4. **Wire up --no-git flag** (#106)
+5. **Write unit tests for command flag parsing** (#107)
+6. **Write unit tests for flag validation integration** (#108)
 
 ### Phase 4: Directory & File Generation
 
-1. **Create directory structure (cmd/server, internal/interfaces, internal/domain/health, internal/infra/http, internal/routes, db)**
-2. **Write unit tests for directory creation**
-3. **Create go.mod template**
-4. **Write unit tests for go.mod**
-5. **Create tracks.yaml template**
-6. **Write unit tests for tracks.yaml**
-7. **Create .gitignore template**
-8. **Write unit tests for .gitignore**
-9. **Create .env.example template**
-10. **Write unit tests for .env.example**
-11. **Create interfaces template (internal/interfaces/health.go.tmpl)**
-12. **Write unit tests for interfaces template**
-13. **Create health service template (internal/domain/health/service.go.tmpl)**
-14. **Write unit tests for health service template**
-15. **Create routes constants template (internal/routes/routes.go.tmpl)**
-16. **Write unit tests for routes constants template**
-17. **Create handler template (internal/infra/http/handlers/health.go.tmpl)**
-18. **Write unit tests for handler template**
-19. **Create .mockery.yaml template**
-20. **Write unit tests for .mockery.yaml template**
+1. **Create directory structure (cmd/server, internal/interfaces, internal/domain/health, internal/infra/http, internal/routes, db)** (#109)
+2. **Write unit tests for directory creation** (#110)
+3. **Create go.mod template** (#111)
+4. **Write unit tests for go.mod** (#112)
+5. **Create tracks.yaml template** (#113)
+6. **Write unit tests for tracks.yaml** (#114)
+7. **Create .gitignore template** (#115)
+8. **Write unit tests for .gitignore** (#116)
+9. **Create .env.example template** (#117)
+10. **Write unit tests for .env.example** (#118)
+11. **Create interfaces template (internal/interfaces/health.go.tmpl)** (#119)
+12. **Write unit tests for interfaces template** (#120)
+13. **Create health service template (internal/domain/health/service.go.tmpl)** (#121)
+14. **Write unit tests for health service template** (#122)
+15. **Create routes constants template (internal/routes/routes.go.tmpl)** (#123)
+16. **Write unit tests for routes constants template** (#124)
+17. **Create handler template (internal/infra/http/handlers/health.go.tmpl)** (#125)
+18. **Write unit tests for handler template** (#126)
+19. **Create .mockery.yaml template** (#127)
+20. **Write unit tests for .mockery.yaml template** (#128)
 
 ### Phase 5: Server & Main Files
 
-1. **Create server.go template with dependency injection pattern**
-2. **Create routes.go template with marker comments**
-3. **Write unit tests for server and routes templates**
-4. **Create main.go template with run() pattern and markers**
-5. **Write unit tests for main.go template**
-6. **Create db/db.go template with connection logic**
+1. **Create server.go template with dependency injection pattern** (#129)
+2. **Create routes.go template with marker comments** (#130)
+3. **Write unit tests for server and routes templates** (#131)
+4. **Create main.go template with run() pattern and markers** (#132)
+5. **Write unit tests for main.go template** (#133)
+6. **Create db/db.go template with connection logic** (#134)
 
 ### Phase 6: Database & Config Files
 
-1. **Create sqlc.yaml template (output: db/generated)**
-2. **Create README.md template**
-3. **Write unit tests for config file templates**
-4. **Create Makefile template with mocks target**
+1. **Create sqlc.yaml template (output: db/generated)** (#135)
+2. **Create README.md template** (#136)
+3. **Write unit tests for config file templates** (#137)
+4. **Create Makefile template with mocks target** (#138)
 
 ### Phase 7: Git Initialization & Output
 
-1. **Implement git initialization logic (respecting --no-git)**
-2. **Write unit tests for git init with and without flag**
-3. **Implement post-generation success output with next steps**
-4. **Write unit tests for output rendering**
+1. **Implement git initialization logic (respecting --no-git)** (#139)
+2. **Write unit tests for git init with and without flag** (#140)
+3. **Implement post-generation success output with next steps** (#141)
+4. **Write unit tests for output rendering** (#142)
 
 ### Phase 8: Integration & Runtime Verification
 
-1. **Create integration test that generates full project**
-2. **Integration test: verify `go mod download` succeeds**
-3. **Integration test: verify `go test ./...` passes on generated project**
-4. **Integration test: verify `go build ./cmd/server` succeeds**
-5. **Integration test: run server binary and verify it starts**
-6. **Integration test: hit health check endpoint, verify 200 OK response**
-7. **Add cross-platform integration tests (Linux, macOS, Windows)**
-8. **Document `tracks new` command and all flags**
+1. **Create integration test that generates full project** (#143)
+2. **Integration test: verify `go mod download` succeeds** (#144)
+3. **Integration test: verify `go test ./...` passes on generated project** (#145)
+4. **Integration test: verify `go build ./cmd/server` succeeds** (#146)
+5. **Integration test: run server binary and verify it starts** (#147)
+6. **Integration test: hit health check endpoint, verify 200 OK response** (#148)
+7. **Add cross-platform integration tests (Linux, macOS, Windows)** (#149)
+8. **Document `tracks new` command and all flags** (#150)
 
 ## Dependencies
 
