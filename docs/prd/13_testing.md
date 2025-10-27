@@ -578,17 +578,92 @@ func BenchmarkUserService_Create(b *testing.B) {
 }
 ```
 
-## Mock Generation
+## Mock Generation with Mockery
+
+### Interface Location Pattern
+
+**Critical**: All interfaces MUST be in `internal/interfaces/` to avoid import cycles.
 
 ```go
-// mocks/generate.go
-//go:generate mockery --all --output . --outpkg mocks
+// internal/interfaces/post.go
+package interfaces
 
-package mocks
+import "context"
 
-// Generate mocks with:
-// go generate ./test/mocks
+type PostService interface {
+    Create(ctx context.Context, dto CreatePostDTO) (*Post, error)
+    GetBySlug(ctx context.Context, slug string) (*Post, error)
+}
+
+type PostRepository interface {
+    Create(ctx context.Context, post *Post) error
+    GetBySlug(ctx context.Context, slug string) (*Post, error)
+}
 ```
+
+### Mockery Configuration
+
+**File: `.mockery.yaml`**
+
+```yaml
+with-expecter: true
+dir: "internal/interfaces"
+output: "test/mocks/{{.InterfaceName}}.go"
+outpkg: mocks
+all: true  # Auto-discover all interfaces
+```
+
+### Generating Mocks
+
+```bash
+# Generate all mocks
+mockery
+
+# Or via Makefile
+make mocks
+
+# After tracks generate resource, regenerate mocks
+tracks generate resource post ...
+mockery  # Auto-discovers new PostService, PostRepository interfaces
+```
+
+### Using Mocks in Tests
+
+```go
+// internal/domain/posts/service_test.go
+package posts_test
+
+import (
+    "context"
+    "testing"
+
+    "github.com/stretchr/testify/mock"
+    "myapp/internal/domain/posts"
+    "myapp/test/mocks"
+)
+
+func TestPostService_Create(t *testing.T) {
+    mockRepo := mocks.NewPostRepository(t)
+    svc := posts.NewService(mockRepo)
+
+    mockRepo.EXPECT().
+        Create(mock.Anything, mock.Anything).
+        Return(nil).
+        Once()
+
+    // Test logic
+    result, err := svc.Create(context.Background(), dto)
+    assert.NoError(t, err)
+    assert.NotNil(t, result)
+}
+```
+
+**No Import Cycles:**
+
+- ✅ `interfaces` → (no internal imports)
+- ✅ `domain/posts` → `interfaces`
+- ✅ `mocks` → `interfaces`
+- ✅ `posts_test` → `domain/posts`, `mocks`, `interfaces`
 
 ## Testing Best Practices
 

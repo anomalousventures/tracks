@@ -77,36 +77,42 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Phase 4: Directory & File Generation
 
-1. **Implement directory tree creation with proper structure**
+1. **Create directory structure (cmd/server, internal/interfaces, internal/domain/health, internal/infra/http, internal/routes, db)**
 2. **Write unit tests for directory creation**
-3. **Implement go.mod generation using template system**
-4. **Write unit tests for go.mod with different module names**
-5. **Implement tracks.yaml generation**
-6. **Write unit tests for tracks.yaml with different drivers**
-7. **Implement .gitignore generation**
+3. **Create go.mod template**
+4. **Write unit tests for go.mod**
+5. **Create tracks.yaml template**
+6. **Write unit tests for tracks.yaml**
+7. **Create .gitignore template**
 8. **Write unit tests for .gitignore**
-9. **Implement .env.example generation with security warnings**
+9. **Create .env.example template**
 10. **Write unit tests for .env.example**
-11. **Create health check handler template (internal/handlers/health.go.tmpl)**
-12. **Write unit tests for health handler template**
-13. **Create health check test template (internal/handlers/health_test.go.tmpl)**
-14. **Write unit tests for health test template**
-15. **Create server test template (cmd/server/main_test.go.tmpl)**
-16. **Write unit tests for server test template**
+11. **Create interfaces template (internal/interfaces/health.go.tmpl)**
+12. **Write unit tests for interfaces template**
+13. **Create health service template (internal/domain/health/service.go.tmpl)**
+14. **Write unit tests for health service template**
+15. **Create routes constants template (internal/routes/routes.go.tmpl)**
+16. **Write unit tests for routes constants template**
+17. **Create handler template (internal/infra/http/handlers/health.go.tmpl)**
+18. **Write unit tests for handler template**
+19. **Create .mockery.yaml template**
+20. **Write unit tests for .mockery.yaml template**
 
-### Phase 5: README & Main File
+### Phase 5: Server & Main Files
 
-1. **Implement README.md generation with project name**
-2. **Write unit tests for README.md**
-3. **Implement cmd/server/main.go generation**
-4. **Write unit tests for cmd/server/main.go**
+1. **Create server.go template with dependency injection pattern**
+2. **Create routes.go template with marker comments**
+3. **Write unit tests for server and routes templates**
+4. **Create main.go template with run() pattern and markers**
+5. **Write unit tests for main.go template**
+6. **Create db/db.go template with connection logic**
 
-### Phase 6: Health Check Integration
+### Phase 6: Database & Config Files
 
-1. **Wire health check handler into main.go template**
-2. **Update main.go to include health endpoint route**
-3. **Write unit tests for health check integration**
-4. **Update integration test to verify generated tests pass**
+1. **Create sqlc.yaml template (output: db/generated)**
+2. **Create README.md template**
+3. **Write unit tests for config file templates**
+4. **Create Makefile template with mocks target**
 
 ### Phase 7: Git Initialization & Output
 
@@ -201,26 +207,46 @@ func init() {
 
 ### Directory Structure to Generate
 
-Based on Core Architecture PRD:
-
 ```text
 myapp/
-├── cmd/
-│   └── server/
-│       └── main.go
+├── cmd/server/
+│   ├── main.go              # run() pattern with markers
+│   └── main_test.go         # Tests run() with random ports
 ├── internal/
-│   ├── config/
-│   ├── handlers/
-│   ├── services/
-│   └── middleware/
-├── .env.example
-├── .gitignore
+│   ├── interfaces/
+│   │   └── health.go        # HealthService interface
+│   ├── domain/health/
+│   │   └── service.go       # Implements interfaces.HealthService
+│   ├── infra/http/
+│   │   ├── server.go        # Server struct with DI
+│   │   ├── routes.go        # Route registration with markers
+│   │   └── handlers/
+│   │       └── health.go    # Handler methods on server
+│   └── routes/
+│       └── routes.go        # const APIHealth = "/api/health"
+├── db/
+│   ├── db.go                # Connection logic
+│   ├── migrations/          # Empty (for future)
+│   ├── queries/             # Empty (for future)
+│   └── generated/           # Empty (for future SQLC)
+├── test/mocks/              # Empty (mockery generates here)
 ├── go.mod
 ├── tracks.yaml
+├── .mockery.yaml            # Mockery configuration
+├── sqlc.yaml                # SQLC configuration
+├── .gitignore
+├── .env.example
+├── Makefile                 # Includes 'make mocks' target
 └── README.md
 ```
 
-Initially keep it minimal - just the essential structure. Full structure comes with later phases.
+**Key Points:**
+
+- Minimal but architecturally correct structure
+- Supports incremental generation via markers
+- No import cycles (interfaces package isolated)
+- Database package ready for SQLC/Goose
+- Mockery configured to auto-discover interfaces
 
 ### Security: Environment Variables
 
@@ -287,120 +313,157 @@ templatePath := filepath.FromSlash("internal/templates/project")
 
 Never construct paths with string concatenation or hardcoded slashes. The `filepath` package handles platform-specific separators (\ on Windows, / on Unix).
 
-### Test Generation
+## Architecture Patterns
 
-Generated projects must include tests to ensure they work out of the box. This builds user confidence and prevents broken scaffolds.
+### Package Structure
 
-#### Health Check Handler
+```text
+internal/
+├── interfaces/         # All interfaces (zero dependencies)
+│   ├── health.go      # HealthService interface
+│   └── common.go      # Shared interfaces
+├── domain/            # Business logic by feature
+│   └── health/
+│       └── service.go # Implements interfaces.HealthService
+├── infra/http/
+│   ├── server.go      # Server struct
+│   ├── routes.go      # Route registration with markers
+│   └── handlers/
+│       └── health.go  # Handler methods
+└── routes/
+    └── routes.go      # Route constants
 
-Create a simple health check endpoint that returns JSON:
-
-```go
-// internal/handlers/health.go.tmpl
-package handlers
-
-import (
-    "encoding/json"
-    "net/http"
-)
-
-type HealthResponse struct {
-    Status string `json:"status"`
-}
-
-func Health(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(HealthResponse{Status: "ok"})
-}
+db/
+├── db.go              # Connection logic
+├── migrations/        # Goose migrations
+├── queries/           # SQL source files
+└── generated/         # SQLC output
 ```
 
-#### Health Check Tests
+### Interface-First Pattern
+
+All interfaces defined in `internal/interfaces/` to prevent import cycles with mockery.
 
 ```go
-// internal/handlers/health_test.go.tmpl
-package handlers
-
-import (
-    "net/http"
-    "net/http/httptest"
-    "testing"
-)
-
-func TestHealth(t *testing.T) {
-    req := httptest.NewRequest(http.MethodGet, "/health", nil)
-    w := httptest.NewRecorder()
-
-    Health(w, req)
-
-    if w.Code != http.StatusOK {
-        t.Errorf("expected status 200, got %d", w.Code)
-    }
-
-    if ct := w.Header().Get("Content-Type"); ct != "application/json" {
-        t.Errorf("expected Content-Type application/json, got %s", ct)
-    }
-}
-```
-
-#### Server Start Tests
-
-```go
-// cmd/server/main_test.go.tmpl
-package main
+// internal/interfaces/health.go
+package interfaces
 
 import (
     "context"
-    "fmt"
-    "net/http"
-    "testing"
     "time"
 )
 
-func waitForServer(url string, timeout time.Duration) error {
-    deadline := time.Now().Add(timeout)
-    for time.Now().Before(deadline) {
-        resp, err := http.Get(url)
-        if err == nil {
-            resp.Body.Close()
-            return nil
-        }
-        time.Sleep(50 * time.Millisecond)
-    }
-    return fmt.Errorf("server not ready after %v", timeout)
+type HealthService interface {
+    Check(ctx context.Context) HealthStatus
 }
 
-func TestServerStarts(t *testing.T) {
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
-
-    serverAddr := "127.0.0.1:8080"
-    go func() {
-        startServer(ctx, serverAddr)
-    }()
-
-    healthURL := fmt.Sprintf("http://%s/health", serverAddr)
-    err := waitForServer(healthURL, 2*time.Second)
-    if err != nil {
-        t.Fatalf("server did not start: %v", err)
-    }
-
-    resp, err := http.Get(healthURL)
-    if err != nil {
-        t.Fatalf("health check failed: %v", err)
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode != http.StatusOK {
-        t.Errorf("expected status 200, got %d", resp.StatusCode)
-    }
-
-    cancel()
-    time.Sleep(100 * time.Millisecond)
+type HealthStatus struct {
+    Status    string    `json:"status"`
+    Timestamp time.Time `json:"timestamp"`
 }
 ```
 
-**Note:** The `startServer(ctx, serverAddr)` function would be the actual server initialization code from the generated `cmd/server/main.go`, refactored to accept a context for graceful shutdown and an address for testing. For production tests, use random ports with `net.Listen("127.0.0.1:0")` to avoid port conflicts.
+### Main.go Pattern (Mat Ryer)
+
+```go
+// cmd/server/main.go
+func main() {
+    if err := run(); err != nil {
+        fmt.Fprintf(os.Stderr, "error: %v\n", err)
+        os.Exit(1)
+    }
+}
+
+func run() error {
+    cfg, err := config.Load()
+    if err != nil {
+        return fmt.Errorf("load config: %w", err)
+    }
+
+    // TRACKS:DB:BEGIN
+    database, err := db.New(cfg.DatabaseURL)
+    if err != nil {
+        return fmt.Errorf("connect db: %w", err)
+    }
+    defer database.Close()
+    // TRACKS:DB:END
+
+    // TRACKS:SERVICES:BEGIN
+    healthService := health.NewService()
+    // TRACKS:SERVICES:END
+
+    srv := http.NewServer(cfg).
+        WithHealthService(healthService).
+        RegisterRoutes()
+
+    return srv.ListenAndServe()
+}
+```
+
+### Incremental Generation Markers
+
+**Purpose**: Allow `tracks generate resource` to safely update existing files.
+
+**Marker Pattern**:
+
+```go
+// TRACKS:SECTION_NAME:BEGIN
+// Generated code goes here
+// TRACKS:SECTION_NAME:END
+```
+
+**Sections in main.go**:
+
+- `DB` - Database connection
+- `REPOSITORIES` - Repository instantiation
+- `SERVICES` - Service instantiation
+
+**Sections in routes.go**:
+
+- `API_ROUTES` - /api/* routes (JSON only)
+- `WEB_ROUTES` - Public HTML routes
+- `PROTECTED_ROUTES` - Auth-required routes
+
+### Database Package
+
+```go
+// db/db.go
+package db
+
+import "database/sql"
+
+func New(dsn string) (*sql.DB, error) {
+    db, err := sql.Open("libsql", dsn)
+    if err != nil {
+        return nil, err
+    }
+    return db, db.Ping()
+}
+```
+
+**SQLC Configuration** (sqlc.yaml):
+
+```yaml
+version: "2"
+sql:
+  - schema: "db/migrations"
+    queries: "db/queries"
+    engine: "sqlite"
+    gen:
+      go:
+        package: "generated"
+        out: "db/generated"
+```
+
+**Mockery Configuration** (.mockery.yaml):
+
+```yaml
+with-expecter: true
+dir: "internal/interfaces"
+output: "test/mocks/{{.InterfaceName}}.go"
+outpkg: mocks
+all: true  # Auto-discover all interfaces
+```
 
 ### Integration Test Requirements
 

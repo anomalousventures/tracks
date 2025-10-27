@@ -98,115 +98,184 @@ func PostURL(slug string) templ.SafeURL {
 
 ## Router Setup
 
-⚠️ **CRITICAL: Middleware Order**
-The order of middleware registration matters! The nonce middleware MUST be registered before SecureHeaders so that the CSP can include the nonce value.
+The server uses a struct-based pattern with dependency injection and builder methods for testability.
+
+### Server Structure (internal/infra/http/server.go)
 
 ```go
-// internal/http/server.go
-func NewServer(cfg config.Config, services *app.Services) *Server {
-    r := chi.NewRouter()
+package http
 
+import (
+    "context"
+    "net/http"
+    "github.com/go-chi/chi/v5"
+    "myapp/internal/interfaces"
+)
+
+type Server struct {
+    router chi.Router
+    config *Config
+
+    // Injected services
+    healthService interfaces.HealthService
+    postService   interfaces.PostService
+}
+
+func NewServer(cfg *Config) *Server {
+    return &Server{
+        router: chi.NewRouter(),
+        config: cfg,
+    }
+}
+
+// Dependency injection methods
+func (s *Server) WithHealthService(svc interfaces.HealthService) *Server {
+    s.healthService = svc
+    return s
+}
+
+func (s *Server) WithPostService(svc interfaces.PostService) *Server {
+    s.postService = svc
+    return s
+}
+
+// Called after all dependencies injected
+func (s *Server) RegisterRoutes() *Server {
+    s.routes()
+    return s
+}
+
+func (s *Server) ListenAndServe() error {
+    srv := &http.Server{
+        Addr:         s.config.Port,
+        Handler:      s.router,
+        ReadTimeout:  15 * time.Second,
+        WriteTimeout: 15 * time.Second,
+        IdleTimeout:  60 * time.Second,
+    }
+
+    go func() {
+        if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            log.Fatal("Server failed:", err)
+        }
+    }()
+
+    // Graceful shutdown
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
+
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    return srv.Shutdown(ctx)
+}
+```
+
+### Routes Registration (internal/infra/http/routes.go)
+
+⚠️ **CRITICAL: Middleware Order** - The order of middleware registration matters!
+
+All routes in a single file with **markers for incremental generation**:
+
+```go
+package http
+
+import (
+    "myapp/internal/routes"
+)
+
+func (s *Server) routes() {
     // Core middleware (order matters!)
-    r.Use(middleware.RequestID)
-    r.Use(middleware.RealIP)
-    r.Use(middleware.Logger)
-    r.Use(middleware.Recoverer)
+    s.router.Use(middleware.RequestID)
+    s.router.Use(middleware.RealIP)
+    s.router.Use(middleware.Logger)
+    s.router.Use(middleware.Recoverer)
 
     // OpenTelemetry
-    r.Use(otelchi.Middleware("tracks-app",
-        otelchi.WithChiRoutes(r),
+    s.router.Use(otelchi.Middleware("tracks-app",
+        otelchi.WithChiRoutes(s.router),
         otelchi.WithRequestMethodInSpanName(true),
     ))
 
     // Rate limiting
-    r.Use(httprate.LimitByIP(100, time.Minute))
+    s.router.Use(httprate.LimitByIP(100, time.Minute))
 
-    // ⚠️ CRITICAL: Security middleware order matters!
-    r.Use(middleware.WithNonce())      // Must precede SecureHeaders so CSP can include nonce
-    r.Use(middleware.SecureHeaders())  // CSP, HSTS, referrer-policy, etc.
+    // ⚠️ CRITICAL: Security middleware order!
+    s.router.Use(middleware.WithNonce())      // Must precede SecureHeaders
+    s.router.Use(middleware.SecureHeaders())  // CSP, HSTS, referrer-policy
 
     // Application middleware
-    r.Use(middleware.Session())
-    r.Use(middleware.I18n(i18n.Bundle))
-    r.Use(middleware.CacheHeaders())   // Caching policy
-    r.Use(middleware.Compress(5))
+    s.router.Use(middleware.Session())
+    s.router.Use(middleware.I18n(i18n.Bundle))
+    s.router.Use(middleware.CacheHeaders())
+    s.router.Use(middleware.Compress(5))
 
-    // Observability
-    r.Use(middleware.Metrics())
-    r.Use(middleware.Tracing())
+    // API routes (JSON only)
+    // TRACKS:API_ROUTES:BEGIN
+    s.router.Get(routes.APIHealth, s.handleHealthCheck())
+    // TRACKS:API_ROUTES:END
 
-    // Static assets (immutable with hash)
-    r.Handle(routes.Assets, http.StripPrefix("/assets", assets.Handler()))
+    // Public web routes (HTML)
+    // TRACKS:WEB_ROUTES:BEGIN
+    s.router.Get(routes.Home, s.handleHome())
+    s.router.Get(routes.About, s.handleAbout())
+    // TRACKS:WEB_ROUTES:END
 
-    // Public routes with verb-specific handlers
-    r.Get(routes.Home, homeHandler.Index)
-    r.Get(routes.About, homeHandler.About)
-
-    // Authentication - different handlers for GET/POST
-    r.Get(routes.Login, authHandler.ShowLoginForm)
-    r.Post(routes.Login, authHandler.ProcessLogin)
-
-    r.Get(routes.Register, authHandler.ShowRegisterForm)
-    r.Post(routes.Register, authHandler.ProcessRegister)
-
-    r.Get(routes.VerifyOTP, authHandler.ShowOTPForm)
-    r.Post(routes.VerifyOTP, authHandler.ProcessOTP)
-
-    // Public profiles (with username, not UUID)
-    r.Get(routes.UserProfile, profileHandler.ShowPublic)
-
-    // Public content (with slug, not UUID)
-    r.Get(routes.PostView, postHandler.Show)
-
-    // Search/discovery
-    r.Get(routes.Search, searchHandler.Search)
-    r.Get(routes.Explore, exploreHandler.Browse)
-
-    // Protected routes
-    r.Group(func(r chi.Router) {
+    // Protected routes (requires auth)
+    s.router.Group(func(r chi.Router) {
         r.Use(middleware.RequireAuth)
 
-        // Dashboard
-        r.Get(routes.Dashboard, dashboardHandler.Show)
-
-        // Profile management (current user)
-        r.Get(routes.EditProfile, profileHandler.EditOwn)
-        r.Post(routes.EditProfile, profileHandler.UpdateOwn)
-
-        // Content creation
-        r.Get(routes.PostNew, postHandler.ShowCreateForm)
-        r.Post(routes.CreatePost, postHandler.Create)
-
-        // Content editing (ownership checked in handler)
-        r.Get(routes.PostEdit, postHandler.ShowEditForm)
-        r.Post(routes.UpdatePost, postHandler.Update)
-        r.Post(routes.DeletePost, postHandler.Delete)
-
-        // Social actions (POST only)
-        r.Post(routes.FollowUser, socialHandler.Follow)
-        r.Post(routes.UnfollowUser, socialHandler.Unfollow)
-
-        // Logout
-        r.Post(routes.Logout, authHandler.Logout)
-    })
-
-    // API routes (JSON responses only)
-    r.Route("/api", func(api chi.Router) {
-        api.Use(middleware.ContentTypeJSON)
-        api.Get("/health", healthHandler.Check)
-        api.Handle("/metrics", promhttp.Handler())
+        // TRACKS:PROTECTED_ROUTES:BEGIN
+        r.Get(routes.Dashboard, s.handleDashboard())
+        // TRACKS:PROTECTED_ROUTES:END
     })
 
     // SEO routes (plaintext/XML, not under /api)
-    r.Get("/robots.txt", seoHandler.Robots)
-    r.Get("/sitemap.xml", seoHandler.Sitemap)
-    r.Get("/LLMs.txt", seoHandler.LLMsTxt) // Optional AI-friendly resource
+    s.router.Get("/robots.txt", s.handleRobots())
+    s.router.Get("/sitemap.xml", s.handleSitemap())
+}
+```
 
-    return &Server{
-        Router:   r,
-        Config:   cfg,
-        Services: services,
+### Main Wiring (cmd/server/main.go)
+
+```go
+func main() {
+    if err := run(); err != nil {
+        fmt.Fprintf(os.Stderr, "error: %v\n", err)
+        os.Exit(1)
     }
+}
+
+func run() error {
+    cfg, err := config.Load()
+    if err != nil {
+        return fmt.Errorf("load config: %w", err)
+    }
+
+    // TRACKS:DB:BEGIN
+    database, err := db.New(cfg.DatabaseURL)
+    if err != nil {
+        return fmt.Errorf("connect db: %w", err)
+    }
+    defer database.Close()
+    // TRACKS:DB:END
+
+    // TRACKS:REPOSITORIES:BEGIN
+    postRepo := posts.NewRepository(database)
+    // TRACKS:REPOSITORIES:END
+
+    // TRACKS:SERVICES:BEGIN
+    healthService := health.NewService()
+    postService := posts.NewService(postRepo)
+    // TRACKS:SERVICES:END
+
+    srv := http.NewServer(cfg).
+        WithHealthService(healthService).
+        WithPostService(postService).
+        RegisterRoutes()
+
+    return srv.ListenAndServe()
 }
 ```
 
