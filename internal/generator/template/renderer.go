@@ -88,7 +88,19 @@ func (r *TemplateRenderer) RenderToFile(templateName string, data TemplateData, 
 }
 
 // Validate checks if a template exists and has valid syntax.
-// This is a stub implementation that will be completed in a later task.
+// Returns nil if the template is valid, TemplateError if file doesn't exist,
+// or ValidationError if the template has syntax errors.
 func (r *TemplateRenderer) Validate(name string) error {
-	return &TemplateError{Template: name, Err: fs.ErrNotExist}
+	embedPath := path.Join("project", name)
+	content, err := fs.ReadFile(r.fs, embedPath)
+	if err != nil {
+		return &TemplateError{Template: name, Err: err}
+	}
+
+	_, err = template.New(name).Parse(string(content))
+	if err != nil {
+		return &ValidationError{Template: name, Message: err.Error()}
+	}
+
+	return nil
 }

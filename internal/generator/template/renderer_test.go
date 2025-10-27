@@ -2,6 +2,7 @@ package template
 
 import (
 	"embed"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -401,4 +402,110 @@ func TestRenderLineEndings(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, strings.Contains(result, "\n"), "should contain newlines")
+}
+
+// TestValidate tests template validation functionality
+func TestValidate(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	tests := []struct {
+		name         string
+		templateName string
+		wantErr      bool
+		errType      interface{}
+	}{
+		{
+			name:         "valid template - go.mod",
+			templateName: "go.mod.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - .gitignore",
+			templateName: ".gitignore.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - main.go",
+			templateName: "cmd/server/main.go.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - tracks.yaml",
+			templateName: "tracks.yaml.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - .env.example",
+			templateName: ".env.example.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - README.md",
+			templateName: "README.md.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "non-existent template",
+			templateName: "nonexistent.tmpl",
+			wantErr:      true,
+			errType:      &TemplateError{},
+		},
+		{
+			name:         "invalid path",
+			templateName: "../../../etc/passwd",
+			wantErr:      true,
+			errType:      &TemplateError{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := renderer.Validate(tt.templateName)
+			if tt.wantErr {
+				require.Error(t, err, "Validate should return error")
+				if tt.errType != nil {
+					assert.IsType(t, tt.errType, err, "error should be correct type")
+				}
+				var te *TemplateError
+				var ve *ValidationError
+				if errors.As(err, &te) {
+					assert.Contains(t, te.Error(), tt.templateName, "error should include template name")
+				} else if errors.As(err, &ve) {
+					assert.Contains(t, ve.Error(), tt.templateName, "error should include template name")
+				}
+			} else {
+				require.NoError(t, err, "Validate should not return error for valid template")
+			}
+		})
+	}
+}
+
+// TestValidateErrorMessages tests that validation errors contain helpful information
+func TestValidateErrorMessages(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	tests := []struct {
+		name            string
+		templateName    string
+		wantErrContains string
+	}{
+		{
+			name:            "non-existent template includes name",
+			templateName:    "missing.tmpl",
+			wantErrContains: "missing.tmpl",
+		},
+		{
+			name:            "invalid path includes name",
+			templateName:    "invalid/path.tmpl",
+			wantErrContains: "invalid/path.tmpl",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := renderer.Validate(tt.templateName)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantErrContains)
+		})
+	}
 }
