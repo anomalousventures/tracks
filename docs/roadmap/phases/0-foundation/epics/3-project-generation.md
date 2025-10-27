@@ -57,72 +57,74 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Phase 2: Validation Logic
 
-1. **Implement project name validation (lowercase, alphanumeric, hyphens/underscores, no spaces)** [Task #6]
-2. **Write unit tests for project name validation edge cases** [Task #7]
-3. **Implement module name validation (valid Go import path)** [Task #8]
-4. **Write unit tests for module name validation** [Task #9]
-5. **Implement directory existence validation** [Task #10]
-6. **Write unit tests for directory validation (exists, empty, permissions)** [Task #11]
-7. **Implement database driver validation (go-libsql, sqlite3, postgres)** [Task #12]
-8. **Write unit tests for driver validation** [Task #13]
+1. **Implement project name validation (lowercase, alphanumeric, hyphens/underscores, no spaces)**
+2. **Write unit tests for project name validation edge cases**
+3. **Implement module name validation (valid Go import path)**
+4. **Write unit tests for module name validation**
+5. **Implement directory existence validation**
+6. **Write unit tests for directory validation (exists, empty, permissions)**
+7. **Implement database driver validation (go-libsql, sqlite3, postgres)**
+8. **Write unit tests for driver validation**
 
 ### Phase 3: Command Implementation
 
-1. **Implement `tracks new` Cobra command structure** [Task #14]
-2. **Wire up --db flag with validation** [Task #15]
-3. **Wire up --module flag with validation** [Task #16]
-4. **Wire up --no-git flag** [Task #17]
-5. **Write unit tests for command flag parsing** [Task #18]
-6. **Write unit tests for flag validation integration** [Task #19]
+1. **Implement `tracks new` Cobra command structure**
+2. **Wire up --db flag with validation**
+3. **Wire up --module flag with validation**
+4. **Wire up --no-git flag**
+5. **Write unit tests for command flag parsing**
+6. **Write unit tests for flag validation integration**
 
 ### Phase 4: Directory & File Generation
 
-1. **Implement directory tree creation with proper structure** [Task #20]
-2. **Write unit tests for directory creation** [Task #21]
-3. **Implement go.mod generation using template system** [Task #22]
-4. **Write unit tests for go.mod with different module names** [Task #23]
-5. **Implement tracks.yaml generation** [Task #24]
-6. **Write unit tests for tracks.yaml with different drivers** [Task #25]
-7. **Implement .gitignore generation** [Task #26]
-8. **Write unit tests for .gitignore** [Task #27]
-9. **Implement .env.example generation with security warnings** [Task #28]
-10. **Write unit tests for .env.example** [Task #29]
+1. **Implement directory tree creation with proper structure**
+2. **Write unit tests for directory creation**
+3. **Implement go.mod generation using template system**
+4. **Write unit tests for go.mod with different module names**
+5. **Implement tracks.yaml generation**
+6. **Write unit tests for tracks.yaml with different drivers**
+7. **Implement .gitignore generation**
+8. **Write unit tests for .gitignore**
+9. **Implement .env.example generation with security warnings**
+10. **Write unit tests for .env.example**
+11. **Create health check handler template (internal/handlers/health.go.tmpl)**
+12. **Write unit tests for health handler template**
+13. **Create health check test template (internal/handlers/health_test.go.tmpl)**
+14. **Write unit tests for health test template**
+15. **Create server test template (cmd/server/main_test.go.tmpl)**
+16. **Write unit tests for server test template**
 
 ### Phase 5: README & Main File
 
-1. **Implement README.md generation with project name** [Task #30]
-2. **Write unit tests for README.md** [Task #31]
-3. **Implement cmd/server/main.go generation** [Task #32]
-4. **Write unit tests for cmd/server/main.go** [Task #33]
+1. **Implement README.md generation with project name**
+2. **Write unit tests for README.md**
+3. **Implement cmd/server/main.go generation**
+4. **Write unit tests for cmd/server/main.go**
 
-### Phase 6: Test Generation & Health Check
+### Phase 6: Health Check Integration
 
-1. **Create health check handler template (internal/handlers/health.go.tmpl)** [Task #34]
-2. **Write unit tests for health handler template** [Task #35]
-3. **Create cmd/server/main_test.go template with server start test** [Task #36]
-4. **Write unit tests for main_test.go template** [Task #37]
-5. **Create internal/handlers/health_test.go template** [Task #38]
-6. **Write unit tests for health_test.go template** [Task #39]
-7. **Wire health check handler into main.go template** [Task #40]
-8. **Update integration test to verify generated tests pass** [Task #41]
+1. **Wire health check handler into main.go template**
+2. **Update main.go to include health endpoint route**
+3. **Write unit tests for health check integration**
+4. **Update integration test to verify generated tests pass**
 
 ### Phase 7: Git Initialization & Output
 
-1. **Implement git initialization logic (respecting --no-git)** [Task #42]
-2. **Write unit tests for git init with and without flag** [Task #43]
-3. **Implement post-generation success output with next steps** [Task #44]
-4. **Write unit tests for output rendering** [Task #45]
+1. **Implement git initialization logic (respecting --no-git)**
+2. **Write unit tests for git init with and without flag**
+3. **Implement post-generation success output with next steps**
+4. **Write unit tests for output rendering**
 
 ### Phase 8: Integration & Runtime Verification
 
-1. **Create integration test that generates full project** [Task #46]
-2. **Integration test: verify `go mod download` succeeds** [Task #47]
-3. **Integration test: verify `go test ./...` passes on generated project** [Task #48]
-4. **Integration test: verify `go build ./cmd/server` succeeds** [Task #49]
-5. **Integration test: run server binary and verify it starts** [Task #50]
-6. **Integration test: hit health check endpoint, verify 200 OK response** [Task #51]
-7. **Add cross-platform integration tests (Linux, macOS, Windows)** [Task #52]
-8. **Document `tracks new` command and all flags** [Task #53]
+1. **Create integration test that generates full project**
+2. **Integration test: verify `go mod download` succeeds**
+3. **Integration test: verify `go test ./...` passes on generated project**
+4. **Integration test: verify `go build ./cmd/server` succeeds**
+5. **Integration test: run server binary and verify it starts**
+6. **Integration test: hit health check endpoint, verify 200 OK response**
+7. **Add cross-platform integration tests (Linux, macOS, Windows)**
+8. **Document `tracks new` command and all flags**
 
 ## Dependencies
 
@@ -348,30 +350,57 @@ func TestHealth(t *testing.T) {
 package main
 
 import (
+    "context"
+    "fmt"
     "net/http"
     "testing"
     "time"
 )
 
+func waitForServer(url string, timeout time.Duration) error {
+    deadline := time.Now().Add(timeout)
+    for time.Now().Before(deadline) {
+        resp, err := http.Get(url)
+        if err == nil {
+            resp.Body.Close()
+            return nil
+        }
+        time.Sleep(50 * time.Millisecond)
+    }
+    return fmt.Errorf("server not ready after %v", timeout)
+}
+
 func TestServerStarts(t *testing.T) {
-    // Start server in goroutine
-    go main()
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
 
-    // Give server time to start
-    time.Sleep(100 * time.Millisecond)
+    serverAddr := "127.0.0.1:8080"
+    go func() {
+        startServer(ctx, serverAddr)
+    }()
 
-    // Hit health endpoint
-    resp, err := http.Get("http://localhost:8080/health")
+    healthURL := fmt.Sprintf("http://%s/health", serverAddr)
+    err := waitForServer(healthURL, 2*time.Second)
     if err != nil {
         t.Fatalf("server did not start: %v", err)
+    }
+
+    resp, err := http.Get(healthURL)
+    if err != nil {
+        t.Fatalf("health check failed: %v", err)
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != http.StatusOK {
         t.Errorf("expected status 200, got %d", resp.StatusCode)
     }
+
+    cancel()
+    time.Sleep(100 * time.Millisecond)
 }
 ```
+
+**Note:** The `startServer(ctx, serverAddr)` function would be the actual server initialization code from the generated `cmd/server/main.go`, refactored to accept a context for graceful shutdown and an address for testing. For production tests, use random ports with `net.Listen("127.0.0.1:0")` to avoid port conflicts.
 
 ### Integration Test Requirements
 
@@ -390,6 +419,20 @@ This ensures every generated project is immediately usable and confidence-inspir
 ## Testing Strategy
 
 Following Epic 1 and Epic 2's incremental testing approach:
+
+**Pattern:** Interface Definition → Implementation → Unit Test → Integration Test
+
+Each component follows this cycle:
+
+```text
+1. Define Interface (Phase 1)
+   ↓
+2. Implement Component (Phase 2-7)
+   ↓
+3. Write Unit Tests (immediately after implementation)
+   ↓
+4. Integration Tests (Phase 8 - verify all pieces work together)
+```
 
 ### Unit Tests (Phases 1-7)
 
