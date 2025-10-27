@@ -79,7 +79,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      metadata: [{ name: 'algolia-site-verification', content: 'E19956C0D3CEBF80' }],
+      metadata: [{ name: 'algolia-site-verification', content: '5A7D15497F3BCFD7' }],
       image: 'img/tracks-social-card.png',
       navbar: {
         title: 'Tracks',
