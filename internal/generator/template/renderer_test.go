@@ -2,6 +2,7 @@ package template
 
 import (
 	"embed"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,7 +19,6 @@ func TestRendererInterface(t *testing.T) {
 	var _ Renderer = (*TemplateRenderer)(nil)
 }
 
-// TestNewRenderer tests the NewRenderer constructor function
 func TestNewRenderer(t *testing.T) {
 	var testFS embed.FS
 	renderer := NewRenderer(testFS)
@@ -74,7 +74,6 @@ func TestRendererInterfaceMethods(t *testing.T) {
 	}
 }
 
-// TestRenderWithRealTemplates tests rendering with actual embedded templates
 func TestRenderWithRealTemplates(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -128,7 +127,6 @@ func TestRenderWithRealTemplates(t *testing.T) {
 	}
 }
 
-// TestRenderErrors tests error handling in Render method
 func TestRenderErrors(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -161,7 +159,6 @@ func TestRenderErrors(t *testing.T) {
 	}
 }
 
-// TestRenderWithEmptyData tests rendering with empty TemplateData
 func TestRenderWithEmptyData(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -172,7 +169,6 @@ func TestRenderWithEmptyData(t *testing.T) {
 	assert.Contains(t, result, "Project: ")
 }
 
-// TestRenderWithSpecialCharacters tests rendering with special characters in data
 func TestRenderWithSpecialCharacters(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -189,7 +185,6 @@ func TestRenderWithSpecialCharacters(t *testing.T) {
 	assert.Contains(t, result, "Project: my-app_v2")
 }
 
-// TestRenderToFileBasic tests basic file writing functionality
 func TestRenderToFileBasic(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -208,7 +203,6 @@ func TestRenderToFileBasic(t *testing.T) {
 	assert.Contains(t, string(content), "Module: github.com/test/app")
 }
 
-// TestRenderToFileCreatesDirectories tests that parent directories are created
 func TestRenderToFileCreatesDirectories(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -228,7 +222,6 @@ func TestRenderToFileCreatesDirectories(t *testing.T) {
 	require.NoError(t, err, "parent directory should exist")
 }
 
-// TestRenderToFileCrossPlatform tests cross-platform path handling
 func TestRenderToFileCrossPlatform(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -269,7 +262,6 @@ func TestRenderToFileCrossPlatform(t *testing.T) {
 	}
 }
 
-// TestRenderToFileOverwrites tests that existing files are overwritten
 func TestRenderToFileOverwrites(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -289,7 +281,6 @@ func TestRenderToFileOverwrites(t *testing.T) {
 	assert.NotContains(t, string(content), "old content")
 }
 
-// TestRenderToFilePermissions tests file permissions
 func TestRenderToFilePermissions(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -318,7 +309,6 @@ func TestRenderToFilePermissions(t *testing.T) {
 	}
 }
 
-// TestRenderToFileError tests error handling in RenderToFile
 func TestRenderToFileError(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -343,7 +333,6 @@ func TestRenderToFileError(t *testing.T) {
 	}
 }
 
-// TestRenderToFileInvalidPath tests handling of invalid output paths
 func TestRenderToFileInvalidPath(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -352,7 +341,6 @@ func TestRenderToFileInvalidPath(t *testing.T) {
 	require.Error(t, err)
 }
 
-// TestRenderConsistency tests that Render and RenderToFile produce consistent results
 func TestRenderConsistency(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -375,7 +363,6 @@ func TestRenderConsistency(t *testing.T) {
 	assert.Equal(t, renderResult, string(fileContent), "Render and RenderToFile should produce identical output")
 }
 
-// TestRenderMultipleVariables tests templates with multiple variable substitutions
 func TestRenderMultipleVariables(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -393,7 +380,6 @@ func TestRenderMultipleVariables(t *testing.T) {
 	assert.Contains(t, result, "var")
 }
 
-// TestRenderLineEndings tests that line endings are preserved
 func TestRenderLineEndings(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -401,4 +387,108 @@ func TestRenderLineEndings(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, strings.Contains(result, "\n"), "should contain newlines")
+}
+
+func TestValidate(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	tests := []struct {
+		name         string
+		templateName string
+		wantErr      bool
+		errType      interface{}
+	}{
+		{
+			name:         "valid template - go.mod",
+			templateName: "go.mod.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - .gitignore",
+			templateName: ".gitignore.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - main.go",
+			templateName: "cmd/server/main.go.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - tracks.yaml",
+			templateName: "tracks.yaml.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - .env.example",
+			templateName: ".env.example.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "valid template - README.md",
+			templateName: "README.md.tmpl",
+			wantErr:      false,
+		},
+		{
+			name:         "non-existent template",
+			templateName: "nonexistent.tmpl",
+			wantErr:      true,
+			errType:      &TemplateError{},
+		},
+		{
+			name:         "invalid path",
+			templateName: "../../../etc/passwd",
+			wantErr:      true,
+			errType:      &TemplateError{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := renderer.Validate(tt.templateName)
+			if tt.wantErr {
+				require.Error(t, err, "Validate should return error")
+				if tt.errType != nil {
+					assert.IsType(t, tt.errType, err, "error should be correct type")
+				}
+				var te *TemplateError
+				var ve *ValidationError
+				if errors.As(err, &te) {
+					assert.Contains(t, te.Error(), tt.templateName, "error should include template name")
+				} else if errors.As(err, &ve) {
+					assert.Contains(t, ve.Error(), tt.templateName, "error should include template name")
+				}
+			} else {
+				require.NoError(t, err, "Validate should not return error for valid template")
+			}
+		})
+	}
+}
+
+func TestValidateErrorMessages(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	tests := []struct {
+		name            string
+		templateName    string
+		wantErrContains string
+	}{
+		{
+			name:            "non-existent template includes name",
+			templateName:    "missing.tmpl",
+			wantErrContains: "missing.tmpl",
+		},
+		{
+			name:            "invalid path includes name",
+			templateName:    "invalid/path.tmpl",
+			wantErrContains: "invalid/path.tmpl",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := renderer.Validate(tt.templateName)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantErrContains)
+		})
+	}
 }

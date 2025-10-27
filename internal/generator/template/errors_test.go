@@ -11,7 +11,6 @@ func TestTemplateErrorImplementsError(t *testing.T) {
 	var _ error = (*TemplateError)(nil)
 }
 
-// TestTemplateErrorMessage tests the Error() method formatting
 func TestTemplateErrorMessage(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -50,7 +49,6 @@ func TestTemplateErrorMessage(t *testing.T) {
 	}
 }
 
-// TestTemplateErrorUnwrap tests the Unwrap method
 func TestTemplateErrorUnwrap(t *testing.T) {
 	originalErr := errors.New("original error")
 	templateErr := &TemplateError{
@@ -73,7 +71,6 @@ func TestValidationErrorImplementsError(t *testing.T) {
 	var _ error = (*ValidationError)(nil)
 }
 
-// TestValidationErrorMessage tests the Error() method formatting
 func TestValidationErrorMessage(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -116,7 +113,6 @@ func TestValidationErrorMessage(t *testing.T) {
 	}
 }
 
-// TestValidationErrorWithoutField tests error message when Field is empty
 func TestValidationErrorWithoutField(t *testing.T) {
 	err := &ValidationError{
 		Template: "test.tmpl",
