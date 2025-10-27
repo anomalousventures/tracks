@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"text/template"
 )
@@ -46,8 +47,8 @@ func NewRenderer(fs embed.FS) Renderer {
 // It reads the template from the embedded FS, parses it using text/template,
 // executes it with the provided data, and returns the rendered string.
 func (r *TemplateRenderer) Render(name string, data TemplateData) (string, error) {
-	path := filepath.Join("project", name)
-	content, err := fs.ReadFile(r.fs, path)
+	embedPath := path.Join("project", name)
+	content, err := fs.ReadFile(r.fs, embedPath)
 	if err != nil {
 		return "", &TemplateError{Template: name, Err: err}
 	}
