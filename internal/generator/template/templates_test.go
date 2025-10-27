@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestGoModTemplate tests rendering of go.mod.tmpl
 func TestGoModTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -55,7 +54,6 @@ func TestGoModTemplate(t *testing.T) {
 	}
 }
 
-// TestGitignoreTemplate tests rendering of .gitignore.tmpl
 func TestGitignoreTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -84,7 +82,6 @@ func TestGitignoreTemplate(t *testing.T) {
 	}
 }
 
-// TestMainGoTemplate tests rendering of cmd/server/main.go.tmpl
 func TestMainGoTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -130,7 +127,6 @@ func TestMainGoTemplate(t *testing.T) {
 	}
 }
 
-// TestTracksYamlTemplate tests rendering of tracks.yaml.tmpl with different DB drivers
 func TestTracksYamlTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -163,7 +159,6 @@ func TestTracksYamlTemplate(t *testing.T) {
 	}
 }
 
-// TestEnvExampleTemplate tests rendering of .env.example.tmpl
 func TestEnvExampleTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -188,7 +183,6 @@ func TestEnvExampleTemplate(t *testing.T) {
 	assert.Contains(t, result, "8080")
 }
 
-// TestReadmeTemplate tests rendering of README.md.tmpl
 func TestReadmeTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -237,7 +231,6 @@ func TestReadmeTemplate(t *testing.T) {
 	}
 }
 
-// TestAllTemplatesRenderWithFullData tests all templates with complete TemplateData
 func TestAllTemplatesRenderWithFullData(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -270,7 +263,6 @@ func TestAllTemplatesRenderWithFullData(t *testing.T) {
 	}
 }
 
-// TestTemplatesWithEmptyData tests graceful handling of minimal TemplateData
 func TestTemplatesWithEmptyData(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 

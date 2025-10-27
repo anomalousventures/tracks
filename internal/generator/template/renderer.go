@@ -37,15 +37,10 @@ type TemplateRenderer struct {
 	fs embed.FS
 }
 
-// NewRenderer creates a new TemplateRenderer that reads templates from the given embed.FS.
-// The embedded filesystem should contain template files with .tmpl extension.
 func NewRenderer(fs embed.FS) Renderer {
 	return &TemplateRenderer{fs: fs}
 }
 
-// Render renders a template by name with the given data and returns the result as a string.
-// It reads the template from the embedded FS, parses it using text/template,
-// executes it with the provided data, and returns the rendered string.
 func (r *TemplateRenderer) Render(name string, data TemplateData) (string, error) {
 	embedPath := path.Join("project", name)
 	content, err := fs.ReadFile(r.fs, embedPath)
@@ -66,9 +61,6 @@ func (r *TemplateRenderer) Render(name string, data TemplateData) (string, error
 	return buf.String(), nil
 }
 
-// RenderToFile renders a template and writes it to the specified output path.
-// It creates parent directories if they don't exist and writes the rendered content to the file.
-// Uses cross-platform path handling with filepath package.
 func (r *TemplateRenderer) RenderToFile(templateName string, data TemplateData, outputPath string) error {
 	content, err := r.Render(templateName, data)
 	if err != nil {
@@ -87,9 +79,6 @@ func (r *TemplateRenderer) RenderToFile(templateName string, data TemplateData, 
 	return nil
 }
 
-// Validate checks if a template exists and has valid syntax.
-// Returns nil if the template is valid, TemplateError if file doesn't exist,
-// or ValidationError if the template has syntax errors.
 func (r *TemplateRenderer) Validate(name string) error {
 	embedPath := path.Join("project", name)
 	content, err := fs.ReadFile(r.fs, embedPath)

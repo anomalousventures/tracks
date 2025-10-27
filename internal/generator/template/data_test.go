@@ -2,7 +2,6 @@ package template
 
 import "testing"
 
-// TestTemplateDataStruct tests that TemplateData can be initialized and accessed
 func TestTemplateDataStruct(t *testing.T) {
 	data := TemplateData{
 		ModuleName:  "github.com/user/myapp",
@@ -33,7 +32,6 @@ func TestTemplateDataStruct(t *testing.T) {
 	}
 }
 
-// TestTemplateDataZeroValue tests the zero value of TemplateData
 func TestTemplateDataZeroValue(t *testing.T) {
 	var data TemplateData
 
@@ -58,7 +56,6 @@ func TestTemplateDataZeroValue(t *testing.T) {
 	}
 }
 
-// TestTemplateDataPartialInitialization tests partial struct initialization
 func TestTemplateDataPartialInitialization(t *testing.T) {
 	data := TemplateData{
 		ModuleName: "github.com/user/app",

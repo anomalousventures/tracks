@@ -14,14 +14,12 @@ func TestFSNotNil(t *testing.T) {
 	assert.NotNil(t, FS, "FS should not be nil")
 }
 
-// TestReadProjectDir tests reading the project directory
 func TestReadProjectDir(t *testing.T) {
 	entries, err := fs.ReadDir(FS, "project")
 	require.NoError(t, err, "should be able to read project directory")
 	assert.NotEmpty(t, entries, "project directory should not be empty")
 }
 
-// TestReadNestedDir tests reading nested directories (cmd/server)
 func TestReadNestedDir(t *testing.T) {
 	entries, err := fs.ReadDir(FS, "project/cmd")
 	require.NoError(t, err, "should be able to read project/cmd directory")
@@ -32,7 +30,6 @@ func TestReadNestedDir(t *testing.T) {
 	assert.NotEmpty(t, entries, "server directory should not be empty")
 }
 
-// TestReadTemplateFile tests reading a template file from the root
 func TestReadTemplateFile(t *testing.T) {
 	data, err := fs.ReadFile(FS, "project/test.tmpl")
 	require.NoError(t, err, "should be able to read test.tmpl")
@@ -40,7 +37,6 @@ func TestReadTemplateFile(t *testing.T) {
 	assert.Contains(t, string(data), "Test template", "file should contain expected content")
 }
 
-// TestReadNestedTemplateFile tests reading a template from a nested path
 func TestReadNestedTemplateFile(t *testing.T) {
 	data, err := fs.ReadFile(FS, "project/cmd/server/test.tmpl")
 	require.NoError(t, err, "should be able to read nested test.tmpl")
@@ -83,7 +79,6 @@ func TestPathSeparators(t *testing.T) {
 	}
 }
 
-// TestWalkEmbeddedFiles tests walking through all embedded files
 func TestWalkEmbeddedFiles(t *testing.T) {
 	var templateCount int
 	err := fs.WalkDir(FS, "project", func(path string, d fs.DirEntry, err error) error {
@@ -100,7 +95,6 @@ func TestWalkEmbeddedFiles(t *testing.T) {
 	assert.GreaterOrEqual(t, templateCount, 2, "should find at least 2 test template files")
 }
 
-// TestGlobPattern tests finding files using glob patterns
 func TestGlobPattern(t *testing.T) {
 	matches, err := fs.Glob(FS, "project/*.tmpl")
 	require.NoError(t, err, "should be able to use glob patterns")

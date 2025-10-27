@@ -19,7 +19,6 @@ func TestRendererInterface(t *testing.T) {
 	var _ Renderer = (*TemplateRenderer)(nil)
 }
 
-// TestNewRenderer tests the NewRenderer constructor function
 func TestNewRenderer(t *testing.T) {
 	var testFS embed.FS
 	renderer := NewRenderer(testFS)
@@ -75,7 +74,6 @@ func TestRendererInterfaceMethods(t *testing.T) {
 	}
 }
 
-// TestRenderWithRealTemplates tests rendering with actual embedded templates
 func TestRenderWithRealTemplates(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -129,7 +127,6 @@ func TestRenderWithRealTemplates(t *testing.T) {
 	}
 }
 
-// TestRenderErrors tests error handling in Render method
 func TestRenderErrors(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -162,7 +159,6 @@ func TestRenderErrors(t *testing.T) {
 	}
 }
 
-// TestRenderWithEmptyData tests rendering with empty TemplateData
 func TestRenderWithEmptyData(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -173,7 +169,6 @@ func TestRenderWithEmptyData(t *testing.T) {
 	assert.Contains(t, result, "Project: ")
 }
 
-// TestRenderWithSpecialCharacters tests rendering with special characters in data
 func TestRenderWithSpecialCharacters(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -190,7 +185,6 @@ func TestRenderWithSpecialCharacters(t *testing.T) {
 	assert.Contains(t, result, "Project: my-app_v2")
 }
 
-// TestRenderToFileBasic tests basic file writing functionality
 func TestRenderToFileBasic(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -209,7 +203,6 @@ func TestRenderToFileBasic(t *testing.T) {
 	assert.Contains(t, string(content), "Module: github.com/test/app")
 }
 
-// TestRenderToFileCreatesDirectories tests that parent directories are created
 func TestRenderToFileCreatesDirectories(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -229,7 +222,6 @@ func TestRenderToFileCreatesDirectories(t *testing.T) {
 	require.NoError(t, err, "parent directory should exist")
 }
 
-// TestRenderToFileCrossPlatform tests cross-platform path handling
 func TestRenderToFileCrossPlatform(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -270,7 +262,6 @@ func TestRenderToFileCrossPlatform(t *testing.T) {
 	}
 }
 
-// TestRenderToFileOverwrites tests that existing files are overwritten
 func TestRenderToFileOverwrites(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -290,7 +281,6 @@ func TestRenderToFileOverwrites(t *testing.T) {
 	assert.NotContains(t, string(content), "old content")
 }
 
-// TestRenderToFilePermissions tests file permissions
 func TestRenderToFilePermissions(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -319,7 +309,6 @@ func TestRenderToFilePermissions(t *testing.T) {
 	}
 }
 
-// TestRenderToFileError tests error handling in RenderToFile
 func TestRenderToFileError(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -344,7 +333,6 @@ func TestRenderToFileError(t *testing.T) {
 	}
 }
 
-// TestRenderToFileInvalidPath tests handling of invalid output paths
 func TestRenderToFileInvalidPath(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -353,7 +341,6 @@ func TestRenderToFileInvalidPath(t *testing.T) {
 	require.Error(t, err)
 }
 
-// TestRenderConsistency tests that Render and RenderToFile produce consistent results
 func TestRenderConsistency(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	tmpDir := t.TempDir()
@@ -376,7 +363,6 @@ func TestRenderConsistency(t *testing.T) {
 	assert.Equal(t, renderResult, string(fileContent), "Render and RenderToFile should produce identical output")
 }
 
-// TestRenderMultipleVariables tests templates with multiple variable substitutions
 func TestRenderMultipleVariables(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -394,7 +380,6 @@ func TestRenderMultipleVariables(t *testing.T) {
 	assert.Contains(t, result, "var")
 }
 
-// TestRenderLineEndings tests that line endings are preserved
 func TestRenderLineEndings(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -404,7 +389,6 @@ func TestRenderLineEndings(t *testing.T) {
 	assert.True(t, strings.Contains(result, "\n"), "should contain newlines")
 }
 
-// TestValidate tests template validation functionality
 func TestValidate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -480,7 +464,6 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-// TestValidateErrorMessages tests that validation errors contain helpful information
 func TestValidateErrorMessages(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 

@@ -11,7 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestRenderAllTemplates tests rendering all production templates together
+var productionTemplates = []string{
+	"go.mod.tmpl",
+	".gitignore.tmpl",
+	"cmd/server/main.go.tmpl",
+	"tracks.yaml.tmpl",
+	".env.example.tmpl",
+	"README.md.tmpl",
+}
+
 func TestRenderAllTemplates(t *testing.T) {
 	tmpDir := t.TempDir()
 	renderer := NewRenderer(templates.FS)
@@ -108,7 +116,6 @@ func TestRenderAllTemplates(t *testing.T) {
 	})
 }
 
-// TestRenderAllTemplatesWithDifferentDrivers tests rendering with different database drivers
 func TestRenderAllTemplatesWithDifferentDrivers(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -137,7 +144,6 @@ func TestRenderAllTemplatesWithDifferentDrivers(t *testing.T) {
 	}
 }
 
-// TestRenderAllTemplatesConsistency tests that all templates render consistently
 func TestRenderAllTemplatesConsistency(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
@@ -152,16 +158,7 @@ func TestRenderAllTemplatesConsistency(t *testing.T) {
 	tmpDir1 := t.TempDir()
 	tmpDir2 := t.TempDir()
 
-	templates := []string{
-		"go.mod.tmpl",
-		".gitignore.tmpl",
-		"cmd/server/main.go.tmpl",
-		"tracks.yaml.tmpl",
-		".env.example.tmpl",
-		"README.md.tmpl",
-	}
-
-	for _, tmpl := range templates {
+	for _, tmpl := range productionTemplates {
 		outputName := strings.TrimSuffix(tmpl, ".tmpl")
 		path1 := filepath.Join(tmpDir1, outputName)
 		path2 := filepath.Join(tmpDir2, outputName)
@@ -182,7 +179,6 @@ func TestRenderAllTemplatesConsistency(t *testing.T) {
 	}
 }
 
-// TestCrossPlatformIntegration tests cross-platform path handling
 func TestCrossPlatformIntegration(t *testing.T) {
 	tmpDir := t.TempDir()
 	renderer := NewRenderer(templates.FS)
