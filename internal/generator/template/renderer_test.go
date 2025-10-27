@@ -4,6 +4,7 @@ import (
 	"embed"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -304,7 +305,17 @@ func TestRenderToFilePermissions(t *testing.T) {
 
 	mode := info.Mode()
 	assert.True(t, mode.IsRegular(), "should be a regular file")
-	assert.Equal(t, os.FileMode(0644), mode.Perm(), "file permissions should be 0644")
+
+	// Verify cross-platform permission properties
+	perm := mode.Perm()
+	assert.NotEqual(t, os.FileMode(0), perm&0400, "file should be readable by owner")
+	assert.NotEqual(t, os.FileMode(0), perm&0200, "file should be writable by owner")
+	assert.Equal(t, os.FileMode(0), perm&0111, "file should not be executable")
+
+	// On Unix, verify exact permissions
+	if runtime.GOOS != "windows" {
+		assert.Equal(t, os.FileMode(0644), perm, "file permissions should be 0644")
+	}
 }
 
 // TestRenderToFileError tests error handling in RenderToFile
