@@ -81,6 +81,7 @@ func TestValidateModulePath(t *testing.T) {
 		{"invalid no path", "github.com", true},
 		{"invalid spaces", "github.com/user /project", true},
 		{"invalid special chars", "github.com/user/project!", true},
+		{"invalid too long", "github.com/" + strings.Repeat("a", 301), true},
 	}
 
 	testStringValidator(t, tests, v.ValidateModulePath, "ValidateModulePath", "module_path")

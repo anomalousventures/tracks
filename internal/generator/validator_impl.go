@@ -1,35 +1,49 @@
 package generator
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/anomalousventures/tracks/internal/cli"
 	"github.com/go-playground/validator/v10"
 )
 
+const (
+	maxProjectNameLength = 100
+	maxModulePathLength  = 300
+)
+
+var (
+	projectNameRegex = regexp.MustCompile(`^[a-z0-9_-]+$`)
+	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
+)
+
+// validatorImpl implements the Validator interface using go-playground/validator.
 type validatorImpl struct {
 	validate *validator.Validate
 }
 
+// NewValidator creates a new Validator with custom validation rules.
 func NewValidator() Validator {
 	v := validator.New()
 
 	if err := v.RegisterValidation("project_name", func(fl validator.FieldLevel) bool {
 		name := fl.Field().String()
-		if len(name) == 0 || len(name) > 100 {
+		if len(name) == 0 || len(name) > maxProjectNameLength {
 			return false
 		}
-		return regexp.MustCompile(`^[a-z0-9_-]+$`).MatchString(name)
+		return projectNameRegex.MatchString(name)
 	}); err != nil {
 		panic(fmt.Sprintf("failed to register project_name validator: %v", err))
 	}
 
 	if err := v.RegisterValidation("module_path", func(fl validator.FieldLevel) bool {
 		path := fl.Field().String()
-		if path == "" || len(path) > 300 {
+		if path == "" || len(path) > maxModulePathLength {
 			return false
 		}
 
@@ -41,8 +55,7 @@ func NewValidator() Validator {
 			return false
 		}
 
-		validChars := regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
-		return validChars.MatchString(path)
+		return modulePathRegex.MatchString(path)
 	}); err != nil {
 		panic(fmt.Sprintf("failed to register module_path validator: %v", err))
 	}
@@ -50,6 +63,8 @@ func NewValidator() Validator {
 	return &validatorImpl{validate: v}
 }
 
+// ValidateProjectName validates that a project name follows the required format:
+// lowercase alphanumeric with hyphens and underscores, max 100 characters.
 func (v *validatorImpl) ValidateProjectName(name string) error {
 	cfg := ProjectConfig{
 		ProjectName:    name,
@@ -59,11 +74,11 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 	}
 
 	if err := v.validate.StructPartial(cfg, "ProjectName"); err != nil {
-		if len(name) > 100 {
+		if len(name) > maxProjectNameLength {
 			return &ValidationError{
 				Field:   "project_name",
 				Value:   name,
-				Message: "must be 100 characters or less",
+				Message: fmt.Sprintf("must be %d characters or less", maxProjectNameLength),
 				Err:     ErrInvalidProjectName,
 			}
 		}
@@ -78,6 +93,8 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 	return nil
 }
 
+// ValidateModulePath validates that a module path is a valid Go import path.
+// Must contain domain and path, cannot start/end with slash, max 300 characters.
 func (v *validatorImpl) ValidateModulePath(path string) error {
 	cfg := ProjectConfig{
 		ProjectName:    "placeholder",
@@ -92,6 +109,14 @@ func (v *validatorImpl) ValidateModulePath(path string) error {
 				Field:   "module_path",
 				Value:   path,
 				Message: "cannot be empty",
+				Err:     ErrInvalidModulePath,
+			}
+		}
+		if len(path) > maxModulePathLength {
+			return &ValidationError{
+				Field:   "module_path",
+				Value:   path,
+				Message: fmt.Sprintf("must be %d characters or less", maxModulePathLength),
 				Err:     ErrInvalidModulePath,
 			}
 		}
@@ -122,6 +147,9 @@ func (v *validatorImpl) ValidateModulePath(path string) error {
 	return nil
 }
 
+// ValidateDirectory checks if the target directory is valid for project creation.
+// The directory must either not exist, or exist and be empty. The parent directory
+// must exist and be writable.
 func (v *validatorImpl) ValidateDirectory(path string) error {
 	info, err := os.Stat(path)
 	if err == nil {
@@ -174,11 +202,20 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 			Err:     ErrDirectoryNotWritable,
 		}
 	}
-	os.Remove(testFile)
+
+	if err := os.Remove(testFile); err != nil {
+		logger := cli.GetLogger(context.Background())
+		logger.Warn().
+			Err(err).
+			Str("path", testFile).
+			Msg("failed to cleanup validation test file")
+	}
 
 	return nil
 }
 
+// ValidateDatabaseDriver checks if the database driver is supported.
+// Valid drivers: go-libsql, sqlite3, postgres (case-sensitive).
 func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
 	cfg := ProjectConfig{
 		ProjectName:    "placeholder",
