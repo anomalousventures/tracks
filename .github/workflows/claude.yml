@@ -36,9 +36,23 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Allow Claude to read CI results
+          # Allow Claude to read CI results and create PRs
           additional_permissions: |
             actions: read
+            Bash(gh pr create:*)
+            Bash(gh pr view:*)
+            Bash(gh issue view:*)
+            Bash(grep:*)
+            Bash(sed:*)
+            Bash(mkdir:*)
+            Bash(find:*)
+            Bash(mv:*)
+            Bash(cp:*)
+            Bash(rm:*)
+            Bash(cat:*)
+            Bash(ls:*)
+            Bash(go:*)
+            Bash(make:*)
 
           # No prompt specified - uses Interactive Mode
           # In Interactive Mode, Claude automatically:
