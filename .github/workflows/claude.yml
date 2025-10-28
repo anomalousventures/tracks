@@ -12,6 +12,7 @@ on:
 
 jobs:
   claude:
+    # Trigger when @claude is mentioned
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
@@ -19,203 +20,27 @@ jobs:
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Changed to write for branch creation and commits
-      pull-requests: write  # Changed to write for PR creation
-      issues: read
-      id-token: write
-      actions: read
+      contents: write        # For commits and branch creation
+      pull-requests: write   # For PR creation
+      issues: read           # For reading issue context
+      id-token: write        # For OAuth authentication
+      actions: read          # For CI/CD integration
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0  # Changed to full history for proper git operations
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25.3'
-          cache: true
-
-      - name: Check Issue Dependencies
-        if: github.event_name == 'issues' || github.event_name == 'issue_comment'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          ISSUE_NUM="${{ github.event.issue.number }}"
-          echo "Checking dependencies for issue #$ISSUE_NUM..."
-
-          # Get issue body
-          ISSUE_BODY=$(gh issue view "$ISSUE_NUM" --json body -q .body)
-
-          # Check if issue has Dependencies field
-          if echo "$ISSUE_BODY" | grep -q "Dependencies:"; then
-            echo "Found dependencies section, checking prerequisites..."
-
-            # Extract dependency issue numbers (handles formats like "#123", "Task 4", etc.)
-            DEPS=$(echo "$ISSUE_BODY" | sed -n '/Dependencies:/,/^$/p' | grep -oE '#[0-9]+' | tr -d '#' | sort -u)
-
-            if [ -n "$DEPS" ]; then
-              for DEP in $DEPS; do
-                echo "Checking dependency #$DEP..."
-                STATE=$(gh issue view "$DEP" --json state -q .state 2>/dev/null || echo "NOT_FOUND")
-
-                if [ "$STATE" = "NOT_FOUND" ]; then
-                  echo "⚠️  Dependency issue #$DEP not found"
-                  continue
-                fi
-
-                if [ "$STATE" != "CLOSED" ]; then
-                  echo "❌ Dependency issue #$DEP is $STATE (must be CLOSED)"
-                  echo ""
-                  echo "This issue cannot be started until #$DEP is complete."
-                  echo "Please wait for #$DEP to be closed before tagging @claude."
-                  exit 1
-                fi
-
-                echo "✅ Dependency #$DEP is closed"
-              done
-
-              echo ""
-              echo "✅ All dependencies satisfied!"
-            else
-              echo "No dependency issue numbers found in Dependencies section"
-            fi
-          else
-            echo "No dependencies section found - proceeding without dependency check"
-          fi
-
       - name: Run Claude Code
-        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
+          # Allow Claude to read CI results
           additional_permissions: |
             actions: read
 
-          prompt: |
-            You are implementing this GitHub issue for the Tracks project.
-
-            ## CRITICAL REQUIREMENTS - READ FIRST
-
-            1. **Read Project Documentation:**
-               - Read CLAUDE.md completely - contains ALL project architecture patterns and requirements
-               - Read CONTRIBUTING.md - contains development standards and workflows
-               - Read the FULL issue description - contains acceptance criteria and implementation details
-               - If the issue references ADRs (Architecture Decision Records in docs/adr/), read those files
-               - Follow the EXACT patterns and examples shown in the issue
-
-            2. **Quality Gates - MUST PASS BEFORE COMMITTING:**
-               - Run `make lint` - MUST pass with ZERO errors
-               - Run `make test` - MUST pass with ZERO failures
-               - If either command fails, you MUST fix ALL issues before proceeding
-               - Do NOT commit code that fails linting or testing
-
-            3. **Code Quality Standards:**
-               - Follow dependency injection patterns (see ADR-001 if it exists)
-               - Place interfaces in consumer packages, not provider packages (see ADR-002 if it exists)
-               - Use context propagation for request-scoped values like loggers (see ADR-003 if it exists)
-               - Write unit tests with mocks for all new code
-               - Use table-driven tests where appropriate
-               - No commented-out code
-               - No TODO comments without associated issue numbers
-               - Follow error wrapping with fmt.Errorf("context: %w", err)
-               - Use filepath package for cross-platform path handling
-
-            4. **Git Workflow:**
-               - Branch naming: Use format `epic-X.Y/issue-NNN-short-description`
-                 Example: `epic-0.5/issue-155-create-commands-directory`
-               - Commit messages: Follow Conventional Commits format (see CONTRIBUTING.md)
-                 Examples: "feat: add NewCommand struct with DI", "fix: resolve import cycle in cli package"
-               - Keep commits focused and atomic
-
-            5. **Pull Request Requirements:**
-               - Create ONE pull request when implementation is complete
-               - PR title: Use the same Conventional Commits format as commit (this becomes the squash merge message)
-               - PR description: Follow the template in .github/pull_request_template.md
-               - PR body MUST include: "Closes #<issue_number>" to auto-close the issue
-               - Reference any related issues or ADRs in the PR description
-               - Explain what changed and why (focus on the "why")
-
-            ## WORKFLOW
-
-            1. Read all required documentation (CLAUDE.md, issue description, any referenced ADRs)
-            2. Understand the acceptance criteria completely
-            3. Implement the solution following project patterns
-            4. Write tests for new code
-            5. Run `make lint` and fix any issues
-            6. Run `make test` and fix any failures
-            7. Create a focused commit with Conventional Commits message
-            8. Push branch and create pull request
-            9. Ensure PR references the issue with "Closes #N"
-
-            ## IMPORTANT NOTES
-
-            - This is a real project with production standards
-            - Quality is more important than speed
-            - When in doubt, follow the patterns in CLAUDE.md
-            - If acceptance criteria are unclear, ask questions in a comment
-            - Do NOT skip the lint and test steps - they are mandatory
-
-            Please proceed with implementing the issue following these guidelines.
-
-      - name: Verify Implementation
-        if: always() && steps.claude.outcome != 'skipped'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          ISSUE_NUM="${{ github.event.issue.number }}"
-          echo "Verifying Claude's implementation for issue #$ISSUE_NUM..."
-
-          # Give Claude a moment to create the PR
-          sleep 10
-
-          # Find PR created for this issue
-          PR_NUM=$(gh pr list --search "issue-$ISSUE_NUM in:title" --json number --limit 1 -q '.[0].number' 2>/dev/null || echo "")
-
-          if [ -z "$PR_NUM" ]; then
-            # Try alternative search by branch name
-            PR_NUM=$(gh pr list --search "epic-0.5/issue-$ISSUE_NUM" --json number --limit 1 -q '.[0].number' 2>/dev/null || echo "")
-          fi
-
-          if [ -z "$PR_NUM" ]; then
-            echo "ℹ️  No PR found yet for issue #$ISSUE_NUM"
-            echo "This is normal if Claude is still working or encountered issues."
-            exit 0
-          fi
-
-          echo "✅ Found PR #$PR_NUM"
-
-          # Check if PR references the issue
-          PR_BODY=$(gh pr view "$PR_NUM" --json body -q .body)
-          if ! echo "$PR_BODY" | grep -qiE "(close[sd]?|fix(es|ed)?|resolve[sd]?) #$ISSUE_NUM"; then
-            echo "⚠️  PR #$PR_NUM does not properly reference issue #$ISSUE_NUM"
-            gh pr comment "$PR_NUM" --body "⚠️ **Missing Issue Reference**
-
-This PR should include \`Closes #$ISSUE_NUM\` in the description to automatically close the issue when merged.
-
-Please update the PR description."
-          else
-            echo "✅ PR properly references issue #$ISSUE_NUM"
-          fi
-
-          # Check PR status
-          PR_STATE=$(gh pr view "$PR_NUM" --json state -q .state)
-          echo "PR state: $PR_STATE"
-
-          # Check if there are any failing checks
-          CHECKS=$(gh pr checks "$PR_NUM" --json name,state,conclusion 2>/dev/null || echo "[]")
-          FAILED_CHECKS=$(echo "$CHECKS" | jq -r '.[] | select(.conclusion == "failure") | .name' | wc -l)
-
-          if [ "$FAILED_CHECKS" -gt 0 ]; then
-            echo "⚠️  PR has $FAILED_CHECKS failing checks"
-            echo "Failed checks:"
-            echo "$CHECKS" | jq -r '.[] | select(.conclusion == "failure") | "  - \(.name)"'
-          else
-            echo "✅ No failing checks detected"
-          fi
-
-          echo ""
-          echo "Implementation verification complete!"
-          echo "PR: https://github.com/${{ github.repository }}/pull/$PR_NUM"
-
+          # No prompt specified - uses Interactive Mode
+          # In Interactive Mode, Claude automatically:
+          # - Reads CLAUDE.md and CONTRIBUTING.md for project patterns
+          # - Reads issue descriptions and acceptance criteria
+          # - Checks issue dependencies naturally
+          # - Follows quality gates (make lint, make test from CLAUDE.md)
+          # - Creates branches with proper naming
+          # - Creates PRs with proper references (Closes #N)
+          # - Provides progress updates via tracking comments
