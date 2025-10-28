@@ -3,13 +3,18 @@ package commands
 import (
 	"fmt"
 
-	"github.com/anomalousventures/tracks/internal/cli"
 	"github.com/anomalousventures/tracks/internal/cli/renderer"
 	"github.com/spf13/cobra"
 )
 
+// RendererFactory creates a renderer from a cobra command.
+type RendererFactory func(*cobra.Command) renderer.Renderer
+
+// RendererFlusher flushes a renderer and handles errors.
+type RendererFlusher func(*cobra.Command, renderer.Renderer)
+
 // NewCmd creates the 'new' command for creating new Tracks applications.
-func NewCmd() *cobra.Command {
+func NewCmd(newRenderer RendererFactory, flushRenderer RendererFlusher) *cobra.Command {
 	return &cobra.Command{
 		Use:   "new [project-name]",
 		Short: "Create a new Tracks application",
@@ -38,14 +43,14 @@ The generated application is production-ready and follows idiomatic Go patterns.
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			projectName := args[0]
-			r := cli.NewRendererFromCommand(cmd)
+			r := newRenderer(cmd)
 
 			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
 			r.Section(renderer.Section{
 				Body: "(Full implementation coming soon)",
 			})
 
-			cli.FlushRenderer(cmd, r)
+			flushRenderer(cmd, r)
 		},
 	}
 }

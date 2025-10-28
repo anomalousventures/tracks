@@ -99,7 +99,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode (suppress non-error output)")
 
 	rootCmd.AddCommand(versionCmd(build))
-	rootCmd.AddCommand(commands.NewCmd())
+	rootCmd.AddCommand(commands.NewCmd(NewRendererFromCommand, FlushRenderer))
 
 	return rootCmd
 }
