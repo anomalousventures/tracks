@@ -1,0 +1,200 @@
+package generator
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
+)
+
+type validatorImpl struct {
+	validate *validator.Validate
+}
+
+func NewValidator() Validator {
+	v := validator.New()
+
+	if err := v.RegisterValidation("project_name", func(fl validator.FieldLevel) bool {
+		name := fl.Field().String()
+		if len(name) == 0 || len(name) > 100 {
+			return false
+		}
+		return regexp.MustCompile(`^[a-z0-9_-]+$`).MatchString(name)
+	}); err != nil {
+		panic(fmt.Sprintf("failed to register project_name validator: %v", err))
+	}
+
+	if err := v.RegisterValidation("module_path", func(fl validator.FieldLevel) bool {
+		path := fl.Field().String()
+		if path == "" || len(path) > 300 {
+			return false
+		}
+
+		if strings.HasPrefix(path, "/") || strings.HasSuffix(path, "/") {
+			return false
+		}
+
+		if !strings.Contains(path, "/") {
+			return false
+		}
+
+		validChars := regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
+		return validChars.MatchString(path)
+	}); err != nil {
+		panic(fmt.Sprintf("failed to register module_path validator: %v", err))
+	}
+
+	return &validatorImpl{validate: v}
+}
+
+func (v *validatorImpl) ValidateProjectName(name string) error {
+	cfg := ProjectConfig{
+		ProjectName:    name,
+		ModulePath:     "placeholder",
+		DatabaseDriver: "go-libsql",
+		OutputPath:     "placeholder",
+	}
+
+	if err := v.validate.StructPartial(cfg, "ProjectName"); err != nil {
+		if len(name) > 100 {
+			return &ValidationError{
+				Field:   "project_name",
+				Value:   name,
+				Message: "must be 100 characters or less",
+				Err:     ErrInvalidProjectName,
+			}
+		}
+		return &ValidationError{
+			Field:   "project_name",
+			Value:   name,
+			Message: "must be lowercase alphanumeric with hyphens/underscores",
+			Err:     ErrInvalidProjectName,
+		}
+	}
+
+	return nil
+}
+
+func (v *validatorImpl) ValidateModulePath(path string) error {
+	cfg := ProjectConfig{
+		ProjectName:    "placeholder",
+		ModulePath:     path,
+		DatabaseDriver: "go-libsql",
+		OutputPath:     "placeholder",
+	}
+
+	if err := v.validate.StructPartial(cfg, "ModulePath"); err != nil {
+		if path == "" {
+			return &ValidationError{
+				Field:   "module_path",
+				Value:   path,
+				Message: "cannot be empty",
+				Err:     ErrInvalidModulePath,
+			}
+		}
+		if !strings.Contains(path, "/") {
+			return &ValidationError{
+				Field:   "module_path",
+				Value:   path,
+				Message: "must contain domain and path (e.g., github.com/user/project)",
+				Err:     ErrInvalidModulePath,
+			}
+		}
+		if strings.HasPrefix(path, "/") || strings.HasSuffix(path, "/") {
+			return &ValidationError{
+				Field:   "module_path",
+				Value:   path,
+				Message: "cannot start or end with slash",
+				Err:     ErrInvalidModulePath,
+			}
+		}
+		return &ValidationError{
+			Field:   "module_path",
+			Value:   path,
+			Message: "must be valid Go import path",
+			Err:     ErrInvalidModulePath,
+		}
+	}
+
+	return nil
+}
+
+func (v *validatorImpl) ValidateDirectory(path string) error {
+	info, err := os.Stat(path)
+	if err == nil {
+		if !info.IsDir() {
+			return &ValidationError{
+				Field:   "output_path",
+				Value:   path,
+				Message: "path exists but is not a directory",
+				Err:     ErrDirectoryExists,
+			}
+		}
+
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return fmt.Errorf("read directory: %w", err)
+		}
+
+		if len(entries) > 0 {
+			return &ValidationError{
+				Field:   "output_path",
+				Value:   path,
+				Message: "directory must be empty",
+				Err:     ErrDirectoryExists,
+			}
+		}
+
+		return nil
+	}
+
+	if !os.IsNotExist(err) {
+		return fmt.Errorf("check directory: %w", err)
+	}
+
+	parent := filepath.Dir(path)
+	if _, err := os.Stat(parent); os.IsNotExist(err) {
+		return &ValidationError{
+			Field:   "output_path",
+			Value:   path,
+			Message: "parent directory does not exist",
+			Err:     ErrDirectoryNotWritable,
+		}
+	}
+
+	testFile := filepath.Join(parent, ".tracks_write_test")
+	if err := os.WriteFile(testFile, []byte{}, 0644); err != nil {
+		return &ValidationError{
+			Field:   "output_path",
+			Value:   path,
+			Message: "parent directory is not writable",
+			Err:     ErrDirectoryNotWritable,
+		}
+	}
+	os.Remove(testFile)
+
+	return nil
+}
+
+func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
+	cfg := ProjectConfig{
+		ProjectName:    "placeholder",
+		ModulePath:     "placeholder",
+		DatabaseDriver: driver,
+		OutputPath:     "placeholder",
+	}
+
+	if err := v.validate.StructPartial(cfg, "DatabaseDriver"); err != nil {
+		return &ValidationError{
+			Field:   "database_driver",
+			Value:   driver,
+			Message: "must be one of: go-libsql, sqlite3, postgres",
+			Err:     ErrInvalidDatabaseDriver,
+		}
+	}
+
+	return nil
+}
