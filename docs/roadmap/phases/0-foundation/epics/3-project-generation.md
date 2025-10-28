@@ -206,6 +206,7 @@ package commands
 import (
     "context"
     "github.com/anomalousventures/tracks/internal/cli/interfaces"
+    "github.com/anomalousventures/tracks/internal/generator"
     "github.com/spf13/cobra"
 )
 
@@ -241,7 +242,7 @@ func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
     projectName := args[0]
 
     // Use injected validator
-    if err := c.validator.ValidateProjectName(projectName); err != nil {
+    if err := c.validator.ValidateProjectName(ctx, projectName); err != nil {
         return err
     }
 
@@ -251,7 +252,7 @@ func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
     noGit, _ := cmd.Flags().GetBool("no-git")
 
     // Validate driver
-    if err := c.validator.ValidateDatabaseDriver(dbDriver); err != nil {
+    if err := c.validator.ValidateDatabaseDriver(ctx, dbDriver); err != nil {
         return err
     }
 
