@@ -20,13 +20,16 @@ This phase establishes the basic CLI tool and project scaffolding capabilities. 
 
 ## Epic Breakdown
 
-This phase has been broken down into 5 epics for implementation:
+This phase has been broken down into 6 epics for implementation:
 
 1. ✅ [Epic 1: CLI Infrastructure](./epics/1-cli-infrastructure.md) - Foundation CLI with Cobra, version tracking, help system (COMPLETE)
-2. [Epic 2: Template Engine & Embedding](./epics/2-template-engine.md) - Go embed system, template rendering, variable substitution
-3. [Epic 3: Project Generation](./epics/3-project-generation.md) - `tracks new` command, directory structure, config generation
-4. [Epic 4: Generated Project Tooling](./epics/4-generated-tooling.md) - Makefile, Air config, linting, Docker, CI/CD
-5. [Epic 5: Documentation & Installation](./epics/5-documentation.md) - README templates, Docusaurus updates, guides
+2. ✅ [Epic 2: Template Engine & Embedding](./epics/2-template-engine.md) - Go embed system, template rendering, variable substitution (COMPLETE)
+3. 🚨 **[Epic 0.5: Architecture Alignment](./epics/0.5-architecture-alignment.md) - CRITICAL STOP-THE-LINE EPIC** - Fix architectural issues before continuing Epic 3 (IN PROGRESS)
+4. [Epic 3: Project Generation](./epics/3-project-generation.md) - `tracks new` command, directory structure, config generation (Phases 1-2 COMPLETE, Phase 3+ BLOCKED by Epic 0.5)
+5. [Epic 4: Generated Project Tooling](./epics/4-generated-tooling.md) - Makefile, Air config, linting, Docker, CI/CD
+6. [Epic 5: Documentation & Installation](./epics/5-documentation.md) - README templates, Docusaurus updates, guides
+
+**⚠️ Current Focus:** Epic 0.5 is a stop-the-line architectural refactoring that addresses critical issues identified during Epic 3 Phases 1-2. This epic supercedes all other work until complete to prevent compounding technical debt and ensure the CLI follows the same clean architecture principles as generated applications.
 
 Each epic contains detailed task breakdowns that will become GitHub issues.
 
@@ -168,7 +171,7 @@ This section tracks changes made to the original plan.
 
 | Date | Change | Reason |
 |------|--------|--------|
-| - | - | No changes yet |
+| 2025-01-27 | Added Epic 0.5: Architecture Alignment as critical stop-the-line epic between Epic 2 and Epic 3 | During Epic 3 Phases 1-2 implementation, identified critical architectural issues (import cycles, interface anti-patterns, no DI pattern, documentation contradictions) that would block Epic 3 Phase 3+ and create significant technical debt. Fix now costs 2 days vs 5+ days later with rework. |
 
 ## Notes
 

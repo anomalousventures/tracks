@@ -68,12 +68,14 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Phase 3: Command Implementation
 
-1. **Implement `tracks new` Cobra command structure** (#103)
-2. **Wire up --db flag with validation** (#104)
-3. **Wire up --module flag with validation** (#105)
-4. **Wire up --no-git flag** (#106)
-5. **Write unit tests for command flag parsing** (#107)
-6. **Write unit tests for flag validation integration** (#108)
+**Note:** After Epic 0.5, commands use dependency injection pattern. The `NewCommand` struct receives validator and generator via constructor.
+
+1. **Implement NewCommand struct with DI fields (validator, generator)** (#103)
+2. **Implement NewNewCommand constructor and Command() method** (#104)
+3. **Wire up --db flag with validation via injected validator** (#105)
+4. **Wire up --module flag with validation via injected validator** (#106)
+5. **Wire up --no-git flag** (#107)
+6. **Write unit tests for NewCommand with mocked dependencies** (#108)
 
 ### Phase 4: Directory & File Generation
 
@@ -142,6 +144,7 @@ The following tasks will become GitHub issues, organized by phase:
 
 - Epic 1 (CLI Infrastructure) - need command framework
 - Epic 2 (Template Engine) - need templates to render
+- **Epic 0.5 (Architecture Alignment) - REQUIRED** - establishes DI pattern, command structure, and interfaces
 - Go module system understanding
 
 ### Blocks
@@ -194,18 +197,95 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Command Structure
 
+Following Epic 0.5's dependency injection pattern:
+
 ```go
-var newCmd = &cobra.Command{
-    Use:   "new [project]",
-    Short: "Create a new Tracks application",
-    Args:  cobra.ExactArgs(1),
-    RunE:  runNew,
+// internal/cli/commands/new.go
+package commands
+
+import (
+    "context"
+    "github.com/anomalousventures/tracks/internal/cli/interfaces"
+    "github.com/spf13/cobra"
+)
+
+type NewCommand struct {
+    validator interfaces.Validator
+    generator interfaces.ProjectGenerator
 }
 
-func init() {
-    newCmd.Flags().String("db", "go-libsql", "Database driver (go-libsql, sqlite3, postgres)")
-    newCmd.Flags().String("module", "", "Custom module name (default: project name)")
-    newCmd.Flags().Bool("no-git", false, "Skip git initialization")
+func NewNewCommand(v interfaces.Validator, g interfaces.ProjectGenerator) *NewCommand {
+    return &NewCommand{
+        validator: v,
+        generator: g,
+    }
+}
+
+func (c *NewCommand) Command() *cobra.Command {
+    cmd := &cobra.Command{
+        Use:   "new [project]",
+        Short: "Create a new Tracks application",
+        Args:  cobra.ExactArgs(1),
+        RunE:  c.run,
+    }
+
+    cmd.Flags().String("db", "go-libsql", "Database driver (go-libsql, sqlite3, postgres)")
+    cmd.Flags().String("module", "", "Custom module name (default: project name)")
+    cmd.Flags().Bool("no-git", false, "Skip git initialization")
+
+    return cmd
+}
+
+func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
+    ctx := cmd.Context()
+    projectName := args[0]
+
+    // Use injected validator
+    if err := c.validator.ValidateProjectName(projectName); err != nil {
+        return err
+    }
+
+    // Get flags
+    dbDriver, _ := cmd.Flags().GetString("db")
+    modulePath, _ := cmd.Flags().GetString("module")
+    noGit, _ := cmd.Flags().GetBool("no-git")
+
+    // Validate driver
+    if err := c.validator.ValidateDatabaseDriver(dbDriver); err != nil {
+        return err
+    }
+
+    // Build config and generate
+    cfg := generator.ProjectConfig{
+        ProjectName:    projectName,
+        ModulePath:     modulePath,
+        DatabaseDriver: dbDriver,
+        OutputPath:     projectName,
+        InitGit:        !noGit,
+    }
+
+    return c.generator.Generate(ctx, cfg)
+}
+```
+
+**Wiring in root.go:**
+
+```go
+// internal/cli/root.go
+func NewRootCmd(build BuildInfo) *cobra.Command {
+    // ... root setup ...
+
+    // Create dependencies
+    logger := cli.NewLogger("off")
+    validator := validation.NewValidator(logger)
+    gen := generator.NewGenerator()
+
+    // Create command with DI
+    newCommand := commands.NewNewCommand(validator, gen)
+
+    rootCmd.AddCommand(newCommand.Command())
+
+    return rootCmd
 }
 ```
 

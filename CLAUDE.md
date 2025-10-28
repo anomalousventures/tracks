@@ -87,21 +87,42 @@ Tracks generates applications with clean layered architecture:
 
 ### CLI Tool Architecture (tracks itself)
 
-The tracks CLI tool uses different patterns than generated applications:
+The tracks CLI tool follows the same clean architecture principles as generated applications, with some CLI-specific patterns.
 
-**Output System:**
+**Core Principles:**
 
-- **Renderer Pattern** - Separates business logic from output formatting
-- **UIMode Detection** - Auto-detects console, JSON, or TUI mode
-- **Charm Stack** - Lip Gloss for styling, Bubbles for components, Bubble Tea for TUI
-- **NO structured logging** - CLI uses human-friendly output, not zerolog
+1. **Dependency Injection** - Commands receive dependencies via constructors
+2. **Interface-First** - Interfaces defined in consumer packages (`internal/cli/interfaces/`)
+3. **Context Propagation** - Logger and request-scoped values passed via context
+4. **Separation of Concerns** - Clear boundaries between commands, validation, generation
+
+**Dual-Output Strategy:**
+
+- **Renderer** (stdout) - User-facing output using Lip Gloss/Bubbles (human-friendly)
+- **Logger** (stderr) - Developer/debug logging using zerolog (controlled by `TRACKS_LOG_LEVEL`)
+
+This separation keeps user experience clean while enabling debugging.
+
+**Package Structure:**
+
+```text
+internal/cli/
+├── commands/          # Command implementations (NewCommand, VersionCommand, etc.)
+├── interfaces/        # Interfaces consumed by CLI (Validator, ProjectGenerator)
+├── renderer/          # Output formatting (Console, JSON, TUI)
+├── ui/                # Mode detection, theming
+├── logger.go          # zerolog setup for developer logging
+└── root.go            # Root command setup, DI wiring
+```
 
 **Key Files:**
 
+- `internal/cli/commands/*.go` - Individual command implementations
+- `internal/cli/interfaces/*.go` - Interfaces for external dependencies
 - `internal/cli/ui/mode.go` - Mode detection (TTY, CI, flags)
-- `internal/cli/ui/theme.go` - Lip Gloss styles (used in console and TUI)
+- `internal/cli/ui/theme.go` - Lip Gloss styles
 - `internal/cli/renderer/` - Renderer implementations (Console, JSON, TUI)
-- `internal/cli/commands/` - Cobra command definitions
+- `internal/cli/logger.go` - zerolog configuration
 
 ## Code Generation Principles
 
