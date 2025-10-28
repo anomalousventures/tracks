@@ -36,25 +36,6 @@ func TestProjectConfig_Fields(t *testing.T) {
 	}
 }
 
-func TestProjectConfig_BooleanField(t *testing.T) {
-	tests := []struct {
-		name    string
-		initGit bool
-	}{
-		{"git enabled", true},
-		{"git disabled", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := ProjectConfig{InitGit: tt.initGit}
-			if cfg.InitGit != tt.initGit {
-				t.Errorf("InitGit = %v, want %v", cfg.InitGit, tt.initGit)
-			}
-		})
-	}
-}
-
 func TestProjectConfig_ZeroValue(t *testing.T) {
 	var cfg ProjectConfig
 
