@@ -4,11 +4,11 @@ package generator
 type ProjectConfig struct {
 	// ProjectName is the name of the project.
 	// Must be lowercase, alphanumeric with hyphens/underscores allowed, no spaces.
-	ProjectName string `json:"project_name" validate:"required"`
+	ProjectName string `json:"project_name" validate:"required,project_name"`
 
 	// ModulePath is the Go module import path (e.g., github.com/user/project).
 	// Must be a valid Go import path.
-	ModulePath string `json:"module_path" validate:"required"`
+	ModulePath string `json:"module_path" validate:"required,module_path"`
 
 	// DatabaseDriver is the database driver to use.
 	// Valid values: go-libsql, sqlite3, postgres
