@@ -1,7 +1,7 @@
 # ADR-003: Context Propagation Pattern for Request-Scoped Values
 
 **Status:** Accepted
-**Date:** 2025-01-27
+**Date:** 2025-10-27
 **Context:** Epic 0.5 - Architecture Alignment
 
 ## Context
@@ -109,6 +109,10 @@ type Validator struct {
 // ❌ WRONG: Context stored
 type Validator struct {
     ctx context.Context  // Never do this!
+    // Reason: Contexts are request-scoped and should flow through the call chain.
+    // Storing context in a struct breaks cancellation propagation, creates confusing
+    // lifetimes (which request does this context belong to?), and violates Go best practices.
+    // Pass context as first parameter instead.
 }
 ```
 

@@ -1,7 +1,7 @@
 # ADR-002: Interface Placement in Consumer Packages
 
 **Status:** Accepted
-**Date:** 2025-01-27
+**Date:** 2025-10-27
 **Context:** Epic 0.5 - Architecture Alignment
 
 ## Context
