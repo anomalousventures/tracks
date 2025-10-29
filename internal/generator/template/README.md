@@ -8,7 +8,7 @@ The template package provides a rendering engine for generating project files fr
 
 The template system consists of three main parts:
 
-1. **Renderer Interface** - Defines operations for rendering templates
+1. **TemplateRenderer Interface** - Defines operations for rendering templates (defined in `internal/generator/interfaces`)
 2. **TemplateData** - Schema for variables available to all templates
 3. **Embedded Templates** - `.tmpl` files bundled via `embed.FS`
 
@@ -358,25 +358,35 @@ type TemplateData struct {
 
 ### Custom Renderer Implementations
 
-The `Renderer` interface allows custom implementations:
+The `interfaces.TemplateRenderer` interface allows custom implementations.
+
+The interface is defined in `internal/generator/interfaces` following ADR-002
+(Interface Placement in Consumer Packages):
 
 ```go
-type Renderer interface {
-    Render(name string, data TemplateData) (string, error)
-    RenderToFile(templateName string, data TemplateData, outputPath string) error
+// From internal/generator/interfaces/template_renderer.go
+type TemplateRenderer interface {
+    Render(name string, data any) (string, error)
+    RenderToFile(templateName string, data any, outputPath string) error
     Validate(name string) error
 }
 ```
 
+**Note:** The data parameter uses `any` for flexibility, but implementations
+typically expect `template.TemplateData`. See the interface documentation
+for the design rationale.
+
 Example custom renderer:
 
 ```go
+import "github.com/anomalousventures/tracks/internal/generator/interfaces"
+
 type CachingRenderer struct {
-    base  Renderer
+    base  interfaces.TemplateRenderer
     cache map[string]string
 }
 
-func (r *CachingRenderer) Render(name string, data TemplateData) (string, error) {
+func (r *CachingRenderer) Render(name string, data any) (string, error) {
     if cached, ok := r.cache[name]; ok {
         return cached, nil
     }
@@ -394,9 +404,16 @@ func (r *CachingRenderer) Render(name string, data TemplateData) (string, error)
 View full API documentation:
 
 ```bash
+# Template implementation package
 go doc github.com/anomalousventures/tracks/internal/generator/template
-go doc github.com/anomalousventures/tracks/internal/generator/template.Renderer
+go doc github.com/anomalousventures/tracks/internal/generator/template.NewRenderer
 go doc github.com/anomalousventures/tracks/internal/generator/template.TemplateData
+
+# TemplateRenderer interface (defined in interfaces package per ADR-002)
+go doc github.com/anomalousventures/tracks/internal/generator/interfaces.TemplateRenderer
 ```
 
-Or visit: https://pkg.go.dev/github.com/anomalousventures/tracks/internal/generator/template
+Or visit:
+
+- https://pkg.go.dev/github.com/anomalousventures/tracks/internal/generator/template
+- https://pkg.go.dev/github.com/anomalousventures/tracks/internal/generator/interfaces

@@ -9,14 +9,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anomalousventures/tracks/internal/generator/interfaces"
 	"github.com/anomalousventures/tracks/internal/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestRendererInterface verifies that TemplateRenderer implements the Renderer interface
+// TestRendererInterface verifies that templateRenderer implements the interfaces.TemplateRenderer interface
 func TestRendererInterface(t *testing.T) {
-	var _ Renderer = (*TemplateRenderer)(nil)
+	var _ interfaces.TemplateRenderer = (*templateRenderer)(nil)
 }
 
 func TestNewRenderer(t *testing.T) {
@@ -27,13 +28,13 @@ func TestNewRenderer(t *testing.T) {
 		t.Fatal("NewRenderer returned nil")
 	}
 
-	tr, ok := renderer.(*TemplateRenderer)
+	tr, ok := renderer.(*templateRenderer)
 	if !ok {
-		t.Fatal("NewRenderer did not return a *TemplateRenderer")
+		t.Fatal("NewRenderer did not return a *templateRenderer")
 	}
 
 	if tr.fs != testFS {
-		t.Error("TemplateRenderer.fs not set correctly")
+		t.Error("templateRenderer.fs not set correctly")
 	}
 }
 
