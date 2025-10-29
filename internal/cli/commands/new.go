@@ -13,8 +13,22 @@ type RendererFactory func(*cobra.Command) renderer.Renderer
 // RendererFlusher flushes a renderer and handles errors.
 type RendererFlusher func(*cobra.Command, renderer.Renderer)
 
-// NewCmd creates the 'new' command for creating new Tracks applications.
-func NewCmd(newRenderer RendererFactory, flushRenderer RendererFlusher) *cobra.Command {
+// NewCommand represents the 'new' command for creating Tracks applications.
+type NewCommand struct {
+	newRenderer   RendererFactory
+	flushRenderer RendererFlusher
+}
+
+// NewNewCommand creates a new instance of the 'new' command with injected dependencies.
+func NewNewCommand(newRenderer RendererFactory, flushRenderer RendererFlusher) *NewCommand {
+	return &NewCommand{
+		newRenderer:   newRenderer,
+		flushRenderer: flushRenderer,
+	}
+}
+
+// Command returns the cobra.Command for the 'new' subcommand.
+func (c *NewCommand) Command() *cobra.Command {
 	return &cobra.Command{
 		Use:   "new [project-name]",
 		Short: "Create a new Tracks application",
@@ -41,16 +55,19 @@ The generated application is production-ready and follows idiomatic Go patterns.
   # Future: Skip git initialization
   tracks new myapp --no-git`,
 		Args: cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			projectName := args[0]
-			r := newRenderer(cmd)
-
-			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
-			r.Section(renderer.Section{
-				Body: "(Full implementation coming soon)",
-			})
-
-			flushRenderer(cmd, r)
-		},
+		RunE: c.run,
 	}
+}
+
+func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
+	projectName := args[0]
+	r := c.newRenderer(cmd)
+
+	r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
+	r.Section(renderer.Section{
+		Body: "(Full implementation coming soon)",
+	})
+
+	c.flushRenderer(cmd, r)
+	return nil
 }
