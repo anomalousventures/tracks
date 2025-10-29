@@ -7,22 +7,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// BuildInfo provides version metadata for the CLI.
-type BuildInfo interface {
-	GetVersion() string
-	GetCommit() string
-	GetDate() string
-}
-
 // VersionCommand represents the 'version' command for displaying version information.
 type VersionCommand struct {
-	build         BuildInfo
+	build         interfaces.BuildInfo
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
 }
 
 // NewVersionCommand creates a new instance of the 'version' command with injected dependencies.
-func NewVersionCommand(build BuildInfo, newRenderer RendererFactory, flushRenderer RendererFlusher) *VersionCommand {
+func NewVersionCommand(build interfaces.BuildInfo, newRenderer RendererFactory, flushRenderer RendererFlusher) *VersionCommand {
 	return &VersionCommand{
 		build:         build,
 		newRenderer:   newRenderer,

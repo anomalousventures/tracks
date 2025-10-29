@@ -16,6 +16,7 @@ import (
 )
 
 // BuildInfo contains version metadata for the CLI.
+// It implements the interfaces.BuildInfo interface.
 type BuildInfo struct {
 	Version string
 	Commit  string

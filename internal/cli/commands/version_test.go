@@ -32,7 +32,7 @@ func (m *mockBuildInfo) GetDate() string {
 
 // setupVersionTestCommand creates a VersionCommand with default mocks and returns the cobra command
 // configured with output buffers. Use this for tests that don't need to inspect mock calls.
-func setupVersionTestCommand(build BuildInfo) *cobra.Command {
+func setupVersionTestCommand(build interfaces.BuildInfo) *cobra.Command {
 	factory := func(*cobra.Command) interfaces.Renderer {
 		return &mockRenderer{}
 	}
@@ -46,7 +46,7 @@ func setupVersionTestCommand(build BuildInfo) *cobra.Command {
 
 // setupVersionTestCommandWithMock returns command and mock for inspection.
 // Use this when you need to verify renderer method calls.
-func setupVersionTestCommandWithMock(build BuildInfo) (*cobra.Command, *mockRenderer) {
+func setupVersionTestCommandWithMock(build interfaces.BuildInfo) (*cobra.Command, *mockRenderer) {
 	mock := &mockRenderer{}
 	factory := func(*cobra.Command) interfaces.Renderer {
 		return mock
@@ -207,7 +207,7 @@ func TestVersionCommand_Run(t *testing.T) {
 func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
 	tests := []struct {
 		name          string
-		build         BuildInfo
+		build         interfaces.BuildInfo
 		wantTitle     string
 		wantBodyParts []string
 	}{
