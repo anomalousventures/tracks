@@ -9,39 +9,27 @@ import (
 	"path"
 	"path/filepath"
 	"text/template"
+
+	"github.com/anomalousventures/tracks/internal/generator/interfaces"
 )
 
-// Renderer handles template rendering with variable substitution.
-// It provides methods to render templates from an embedded filesystem,
-// write rendered templates to files, and validate template syntax.
-type Renderer interface {
-	// Render renders a template by name with the given data and returns the result as a string.
-	// The template name should include the .tmpl extension (e.g., "go.mod.tmpl").
-	// Returns an error if the template does not exist or cannot be parsed/executed.
-	Render(name string, data TemplateData) (string, error)
-
-	// RenderToFile renders a template and writes it to the specified output path.
-	// The output path should NOT include the .tmpl extension (e.g., "project/go.mod").
-	// Parent directories will be created automatically if they don't exist.
-	// Returns an error if rendering fails or the file cannot be written.
-	RenderToFile(templateName string, data TemplateData, outputPath string) error
-
-	// Validate checks if a template exists and has valid syntax.
-	// Returns nil if the template is valid, or an error describing the problem.
-	Validate(name string) error
-}
-
-// TemplateRenderer implements Renderer using Go's embed.FS.
+// templateRenderer implements interfaces.TemplateRenderer using Go's embed.FS.
 // It reads templates from an embedded filesystem and renders them using text/template.
-type TemplateRenderer struct {
+//
+// This implementation follows ADR-002 by implementing an interface defined by the consumer
+// (generator package) rather than defining its own interface. This allows the generator
+// to depend on abstractions rather than concrete implementations.
+type templateRenderer struct {
 	fs embed.FS
 }
 
-func NewRenderer(fs embed.FS) Renderer {
-	return &TemplateRenderer{fs: fs}
+// NewRenderer creates a new template renderer that implements interfaces.TemplateRenderer.
+// The provided embed.FS should contain template files in a "project" subdirectory.
+func NewRenderer(fs embed.FS) interfaces.TemplateRenderer {
+	return &templateRenderer{fs: fs}
 }
 
-func (r *TemplateRenderer) Render(name string, data TemplateData) (string, error) {
+func (r *templateRenderer) Render(name string, data any) (string, error) {
 	embedPath := path.Join("project", name)
 	content, err := fs.ReadFile(r.fs, embedPath)
 	if err != nil {
@@ -61,7 +49,7 @@ func (r *TemplateRenderer) Render(name string, data TemplateData) (string, error
 	return buf.String(), nil
 }
 
-func (r *TemplateRenderer) RenderToFile(templateName string, data TemplateData, outputPath string) error {
+func (r *templateRenderer) RenderToFile(templateName string, data any, outputPath string) error {
 	content, err := r.Render(templateName, data)
 	if err != nil {
 		return err
@@ -79,7 +67,7 @@ func (r *TemplateRenderer) RenderToFile(templateName string, data TemplateData, 
 	return nil
 }
 
-func (r *TemplateRenderer) Validate(name string) error {
+func (r *templateRenderer) Validate(name string) error {
 	embedPath := path.Join("project", name)
 	content, err := fs.ReadFile(r.fs, embedPath)
 	if err != nil {
