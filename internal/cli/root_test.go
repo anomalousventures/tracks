@@ -420,9 +420,9 @@ func TestGetVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.build.getVersion()
+			got := tt.build.GetVersion()
 			if got != tt.want {
-				t.Errorf("getVersion() = %v, want %v", got, tt.want)
+				t.Errorf("GetVersion() = %v, want %v", got, tt.want)
 			}
 		})
 	}
