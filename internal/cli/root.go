@@ -15,8 +15,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// BuildInfo contains version metadata for the CLI.
-// It implements the interfaces.BuildInfo interface.
 type BuildInfo struct {
 	Version string
 	Commit  string
@@ -211,9 +209,6 @@ func FlushRenderer(cmd *cobra.Command, r interfaces.Renderer) {
 	}
 }
 
-// GetVersion returns the version string for the CLI.
-// It returns the Version field if not "dev", otherwise it attempts to read
-// the version from build info, falling back to "dev" if unavailable.
 func (b BuildInfo) GetVersion() string {
 	if b.Version != "dev" {
 		return b.Version
@@ -228,12 +223,10 @@ func (b BuildInfo) GetVersion() string {
 	return "dev"
 }
 
-// GetCommit returns the git commit hash for the CLI build.
 func (b BuildInfo) GetCommit() string {
 	return b.Commit
 }
 
-// GetDate returns the build date for the CLI.
 func (b BuildInfo) GetDate() string {
 	return b.Date
 }

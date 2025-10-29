@@ -11,10 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Test helpers for reducing boilerplate
-
-// setupVersionTestCommand creates a VersionCommand with default mocks and returns the cobra command
-// configured with output buffers. Use this for tests that don't need to inspect mock calls.
+// Use this for tests that don't need to inspect mock calls.
 func setupVersionTestCommand(t *testing.T, version, commit, date string) *cobra.Command {
 	mockBuild := mocks.NewMockBuildInfo(t)
 	mockBuild.On("GetVersion").Return(version).Maybe()
@@ -39,7 +36,6 @@ func setupVersionTestCommand(t *testing.T, version, commit, date string) *cobra.
 	return cobraCmd
 }
 
-// setupVersionTestCommandWithMock returns command and mocks for inspection.
 // Use this when you need to verify renderer or build info method calls.
 func setupVersionTestCommandWithMock(t *testing.T, version, commit, date string) (*cobra.Command, *mocks.MockRenderer, *mocks.MockBuildInfo) {
 	mockBuild := mocks.NewMockBuildInfo(t)
@@ -329,13 +325,13 @@ func TestVersionCommand_CommandDescriptions(t *testing.T) {
 	// Verify Long description mentions key information
 	keyPhrases := []string{"version number", "commit", "build date"}
 	for _, phrase := range keyPhrases {
-		if !contains(cobraCmd.Long, phrase) {
+		if !strings.Contains(cobraCmd.Long, phrase) {
 			t.Errorf("Long description missing mention of %q", phrase)
 		}
 	}
 
 	// Verify Short description is meaningful
-	if !contains(cobraCmd.Short, "version") {
+	if !strings.Contains(cobraCmd.Short, "version") {
 		t.Error("Short description should mention 'version'")
 	}
 }

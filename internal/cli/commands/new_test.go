@@ -11,10 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Test helpers for reducing boilerplate
-
-// setupTestCommand creates a NewCommand with default mocks and returns the cobra command
-// configured with output buffers. Use this for tests that don't need to inspect mock calls.
+// Use this for tests that don't need to inspect mock calls.
 func setupTestCommand(t *testing.T) *cobra.Command {
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Return().Maybe()
@@ -35,7 +32,6 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 	return cobraCmd
 }
 
-// setupTestCommandWithMock returns command and mock for inspection.
 // Use this when you need to verify renderer method calls.
 func setupTestCommandWithMock(t *testing.T) (*cobra.Command, *mocks.MockRenderer) {
 	mockRenderer := mocks.NewMockRenderer(t)
@@ -263,17 +259,13 @@ func TestNewCommand_CommandDescriptions(t *testing.T) {
 	// Verify Long description mentions key technologies
 	keyTechnologies := []string{"templ", "SQLC", "production-ready", "Go"}
 	for _, tech := range keyTechnologies {
-		if !contains(cobraCmd.Long, tech) {
+		if !strings.Contains(cobraCmd.Long, tech) {
 			t.Errorf("Long description missing mention of %q", tech)
 		}
 	}
 
 	// Verify Example includes basic usage
-	if !contains(cobraCmd.Example, "tracks new myapp") {
+	if !strings.Contains(cobraCmd.Example, "tracks new myapp") {
 		t.Error("Example missing basic usage pattern")
 	}
-}
-
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
 }
