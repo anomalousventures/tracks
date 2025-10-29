@@ -36,23 +36,13 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Allow Claude to read CI results and create PRs
+          # Tool permissions for autonomous development
+          claude_args: |
+            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Bash(make:*)" "Bash(npm:*)" "Bash(npx:*)" "Bash(pnpm:*)" "Bash(node:*)" "Bash(go:*)" "Bash(curl:*)" "Bash(jq:*)" "Bash(grep:*)" "Bash(sed:*)" "Bash(awk:*)" "Bash(find:*)" "Bash(cat:*)" "Bash(ls:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(wc:*)" "Bash(sort:*)" "Bash(cut:*)" "Bash(mkdir:*)" "Bash(mv:*)" "Bash(cp:*)" "Bash(rm:*)" "Bash(tar:*)" "Bash(zip:*)" "Bash(unzip:*)" "Edit" "Read" "Write" "Glob" "Grep"
+
+          # GitHub Actions permissions (not tool permissions)
           additional_permissions: |
             actions: read
-            Bash(gh pr create:*)
-            Bash(gh pr view:*)
-            Bash(gh issue view:*)
-            Bash(grep:*)
-            Bash(sed:*)
-            Bash(mkdir:*)
-            Bash(find:*)
-            Bash(mv:*)
-            Bash(cp:*)
-            Bash(rm:*)
-            Bash(cat:*)
-            Bash(ls:*)
-            Bash(go:*)
-            Bash(make:*)
 
           # No prompt specified - uses Interactive Mode
           # In Interactive Mode, Claude automatically:
