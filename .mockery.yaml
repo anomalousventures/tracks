@@ -1,0 +1,21 @@
+# Mockery Configuration for Tracks
+# Generated with mockery v3 init command and customized
+# Configuration docs: https://vektra.github.io/mockery/latest/configuration/
+
+# Generate all mocks in centralized tests/mocks directory
+dir: 'tests/mocks'
+
+# Filename pattern for generated mocks
+filename: 'mock_{{.InterfaceName}}.go'
+
+# Package name for generated mocks
+pkgname: 'mocks'
+
+# Use goimports for formatting
+formatter: goimports
+
+# Package-based discovery - automatically finds all interfaces
+packages:
+  github.com/anomalousventures/tracks/internal/cli/interfaces:
+    config:
+      all: true

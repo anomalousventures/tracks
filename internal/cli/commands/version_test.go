@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+	"github.com/anomalousventures/tracks/tests/mocks"
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/mock"
 )
 
 // mockBuildInfo implements the BuildInfo interface for testing.
@@ -32,11 +34,19 @@ func (m *mockBuildInfo) GetDate() string {
 
 // setupVersionTestCommand creates a VersionCommand with default mocks and returns the cobra command
 // configured with output buffers. Use this for tests that don't need to inspect mock calls.
-func setupVersionTestCommand(build interfaces.BuildInfo) *cobra.Command {
+func setupVersionTestCommand(t *testing.T, build interfaces.BuildInfo) *cobra.Command {
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Return().Maybe()
+	mockRenderer.On("Section", mock.Anything).Return().Maybe()
+	mockRenderer.On("Flush").Return(nil).Maybe()
+
 	factory := func(*cobra.Command) interfaces.Renderer {
-		return &mockRenderer{}
+		return mockRenderer
 	}
-	flusher := func(*cobra.Command, interfaces.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {
+		// Actually call Flush for tests that execute
+		mockRenderer.Flush()
+	}
 	cmd := NewVersionCommand(build, factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
@@ -46,17 +56,18 @@ func setupVersionTestCommand(build interfaces.BuildInfo) *cobra.Command {
 
 // setupVersionTestCommandWithMock returns command and mock for inspection.
 // Use this when you need to verify renderer method calls.
-func setupVersionTestCommandWithMock(build interfaces.BuildInfo) (*cobra.Command, *mockRenderer) {
-	mock := &mockRenderer{}
+func setupVersionTestCommandWithMock(t *testing.T, build interfaces.BuildInfo) (*cobra.Command, *mocks.MockRenderer) {
+	mockRenderer := mocks.NewMockRenderer(t)
+
 	factory := func(*cobra.Command) interfaces.Renderer {
-		return mock
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 	cmd := NewVersionCommand(build, factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
-	return cobraCmd, mock
+	return cobraCmd, mockRenderer
 }
 
 func TestNewVersionCommand(t *testing.T) {
@@ -66,8 +77,9 @@ func TestNewVersionCommand(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
+	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return &mockRenderer{}
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
@@ -104,8 +116,9 @@ func TestVersionCommand_Command(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
+	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return &mockRenderer{}
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
@@ -140,7 +153,7 @@ func TestVersionCommand_CommandUsage(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
-	cobraCmd := setupVersionTestCommand(build)
+	cobraCmd := setupVersionTestCommand(t, build)
 
 	// Test that it works with no arguments
 	cobraCmd.SetArgs([]string{})
@@ -156,15 +169,18 @@ func TestVersionCommand_Run(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
-	mock := &mockRenderer{}
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", "Tracks v1.0.0").Once()
+	mockRenderer.On("Section", interfaces.Section{Body: "Commit: abc123\nBuilt: 2025-10-29"}).Once()
+
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return mock
+		return mockRenderer
 	}
 
 	flusherCalled := false
 	flusher := func(cmd *cobra.Command, r interfaces.Renderer) {
 		flusherCalled = true
-		if r != mock {
+		if r != mockRenderer {
 			t.Error("flusher called with different renderer")
 		}
 	}
@@ -180,28 +196,11 @@ func TestVersionCommand_Run(t *testing.T) {
 		t.Fatalf("execution failed: %v", err)
 	}
 
-	// Verify renderer was called
-	if len(mock.titleCalls) != 1 {
-		t.Errorf("expected 1 Title call, got %d", len(mock.titleCalls))
-	} else {
-		expectedTitle := "Tracks v1.0.0"
-		if mock.titleCalls[0] != expectedTitle {
-			t.Errorf("expected title %q, got %q", expectedTitle, mock.titleCalls[0])
-		}
-	}
-
-	if len(mock.sectionCalls) != 1 {
-		t.Errorf("expected 1 Section call, got %d", len(mock.sectionCalls))
-	} else {
-		expectedBody := "Commit: abc123\nBuilt: 2025-10-29"
-		if mock.sectionCalls[0].Body != expectedBody {
-			t.Errorf("expected section body %q, got %q", expectedBody, mock.sectionCalls[0].Body)
-		}
-	}
-
 	if !flusherCalled {
 		t.Error("flusher was not called")
 	}
+
+	// Mock expectations are automatically verified in cleanup
 }
 
 func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
@@ -245,31 +244,20 @@ func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cobraCmd, mock := setupVersionTestCommandWithMock(tt.build)
+			cobraCmd, mockRenderer := setupVersionTestCommandWithMock(t, tt.build)
+			mockRenderer.On("Title", tt.wantTitle).Once()
+			mockRenderer.On("Section", mock.MatchedBy(func(s interfaces.Section) bool {
+				for _, part := range tt.wantBodyParts {
+					if !strings.Contains(s.Body, part) {
+						return false
+					}
+				}
+				return true
+			})).Once()
 
 			cobraCmd.SetArgs([]string{})
 			if err := cobraCmd.Execute(); err != nil {
 				t.Fatalf("execution failed: %v", err)
-			}
-
-			if len(mock.titleCalls) != 1 {
-				t.Fatalf("expected 1 Title call, got %d", len(mock.titleCalls))
-			}
-
-			if mock.titleCalls[0] != tt.wantTitle {
-				t.Errorf("expected title %q, got %q", tt.wantTitle, mock.titleCalls[0])
-			}
-
-			if len(mock.sectionCalls) != 1 {
-				t.Fatalf("expected 1 Section call, got %d", len(mock.sectionCalls))
-			}
-
-			// Check that all expected parts are present in the body
-			body := mock.sectionCalls[0].Body
-			for _, part := range tt.wantBodyParts {
-				if !strings.Contains(body, part) {
-					t.Errorf("expected body to contain %q, got %q", part, body)
-				}
 			}
 		})
 	}
@@ -282,10 +270,14 @@ func TestVersionCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Once()
+
 	var capturedCmd *cobra.Command
 	rendererFactory := func(cmd *cobra.Command) interfaces.Renderer {
 		capturedCmd = cmd
-		return &mockRenderer{}
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
@@ -311,9 +303,12 @@ func TestVersionCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
-	mock := &mockRenderer{}
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Once()
+
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return mock
+		return mockRenderer
 	}
 
 	var capturedCmd *cobra.Command
@@ -337,7 +332,7 @@ func TestVersionCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 		t.Error("flusher not called with correct command")
 	}
 
-	if capturedRenderer != mock {
+	if capturedRenderer != mockRenderer {
 		t.Error("flusher not called with correct renderer")
 	}
 }
@@ -349,22 +344,17 @@ func TestVersionCommand_BuildInfoGetVersionCalled(t *testing.T) {
 		date:    "2025-11-01",
 	}
 
-	cobraCmd, mock := setupVersionTestCommandWithMock(build)
+	cobraCmd, mockRenderer := setupVersionTestCommandWithMock(t, build)
+	expectedTitle := "Tracks " + build.GetVersion()
+	mockRenderer.On("Title", expectedTitle).Once()
+	mockRenderer.On("Section", mock.Anything).Once()
 
 	cobraCmd.SetArgs([]string{})
 	if err := cobraCmd.Execute(); err != nil {
 		t.Fatalf("execution failed: %v", err)
 	}
 
-	// Verify that GetVersion() result is used in the title
-	if len(mock.titleCalls) != 1 {
-		t.Fatalf("expected 1 Title call, got %d", len(mock.titleCalls))
-	}
-
-	expectedTitle := "Tracks " + build.GetVersion()
-	if mock.titleCalls[0] != expectedTitle {
-		t.Errorf("expected title %q, got %q", expectedTitle, mock.titleCalls[0])
-	}
+	// Mock expectations are automatically verified in cleanup
 }
 
 func TestVersionCommand_CommandDescriptions(t *testing.T) {
@@ -374,7 +364,7 @@ func TestVersionCommand_CommandDescriptions(t *testing.T) {
 		date:    "2025-10-29",
 	}
 
-	cobraCmd := setupVersionTestCommand(build)
+	cobraCmd := setupVersionTestCommand(t, build)
 
 	// Verify Long description mentions key information
 	keyPhrases := []string{"version number", "commit", "build date"}

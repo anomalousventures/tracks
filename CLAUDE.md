@@ -6,11 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Before making ANY commit, you MUST:**
 
-1. **Run `make lint`** - All linters must pass with zero errors
-2. **Run `make test`** - All tests must pass with zero failures
-3. **Remediate any errors** - Fix all issues found by linting and testing
+1. **Run `make generate-mocks`** - Generate test mocks from interfaces
+2. **Run `make lint`** - All linters must pass with zero errors
+3. **Run `make test`** - All tests must pass with zero failures
+4. **Remediate any errors** - Fix all issues found by linting and testing
 
 **Failure to complete these steps successfully means the code is NOT ready to commit.**
+
+**Note:** Generated mocks must be committed to the repository. The lint job checks that mocks are up-to-date.
 
 ## Quick Start
 

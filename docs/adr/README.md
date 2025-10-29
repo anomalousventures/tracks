@@ -27,6 +27,7 @@ Each ADR follows this structure:
 - [ADR-001: Dependency Injection Pattern for CLI Commands](./001-dependency-injection-for-cli-commands.md) - Establishes DI pattern for testable, maintainable CLI commands
 - [ADR-002: Interface Placement in Consumer Packages](./002-interface-placement-consumer-packages.md) - Prevents import cycles by placing interfaces in consumer packages
 - [ADR-003: Context Propagation Pattern](./003-context-propagation-pattern.md) - Uses Go context for request-scoped values like logger and trace IDs
+- [ADR-004: Mockery for Test Mock Generation](./004-mockery-for-test-mock-generation.md) - Uses mockery with package discovery for automated test mock generation
 
 ### Superseded
 

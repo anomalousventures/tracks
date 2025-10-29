@@ -35,6 +35,16 @@ lint-go: ## Run golangci-lint
 	@echo "Running golangci-lint..."
 	@go tool golangci-lint run ./...
 
+lint-mocks: ## Check that generated mocks are up-to-date
+	@echo "Checking generated mocks are up-to-date..."
+	@go tool mockery
+	@if [ -n "$$(git status --porcelain tests/mocks)" ]; then \
+		echo "❌ Generated mocks are out of date. Run 'make generate-mocks' and commit the changes."; \
+		git diff tests/mocks; \
+		exit 1; \
+	fi
+	@echo "✅ Generated mocks are up-to-date"
+
 # JavaScript linting
 lint-js: ## Run ESLint on JavaScript/TypeScript files
 	@echo "Running ESLint..."
@@ -54,7 +64,7 @@ format-check: ## Check code formatting with Prettier
 	@pnpm run --dir website format:check
 
 # Aggregate linting target
-lint: lint-md lint-go lint-js ## Run all linters
+lint: lint-md lint-go lint-mocks lint-js ## Run all linters
 
 # Go-related targets
 .PHONY: test test-coverage test-integration test-all build build-all
@@ -121,6 +131,14 @@ build-windows: ## Build for Windows amd64
 	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/tracks-mcp-windows-amd64.exe ./cmd/tracks-mcp
 
 build-all-platforms: build-linux build-linux-arm64 build-darwin build-darwin-arm64 build-windows ## Build for all platforms
+
+# Code generation targets
+.PHONY: generate-mocks
+
+generate-mocks: ## Generate test mocks from interfaces using mockery
+	@echo "Generating test mocks..."
+	@go tool mockery
+	@echo "✅ Mocks generated successfully!"
 
 # Website targets
 .PHONY: website-dev website-build website-serve website-deploy
