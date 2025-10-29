@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/anomalousventures/tracks/internal/cli/commands"
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/anomalousventures/tracks/internal/cli/renderer"
 	"github.com/anomalousventures/tracks/internal/cli/ui"
 	"github.com/spf13/cobra"
@@ -84,7 +85,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			r := NewRendererFromCommand(cmd)
 
-			r.Section(renderer.Section{
+			r.Section(interfaces.Section{
 				Body: "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
 			})
 
@@ -178,7 +179,7 @@ func GetConfig(cmd *cobra.Command) Config {
 }
 
 // NewRendererFromCommand creates an appropriate renderer based on command configuration.
-func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
+func NewRendererFromCommand(cmd *cobra.Command) interfaces.Renderer {
 	cfg := GetConfig(cmd)
 
 	uiMode := ui.DetectMode(ui.UIConfig{
@@ -201,7 +202,7 @@ func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
 }
 
 // FlushRenderer flushes the renderer and handles errors by writing to stderr and exiting.
-func FlushRenderer(cmd *cobra.Command, r renderer.Renderer) {
+func FlushRenderer(cmd *cobra.Command, r interfaces.Renderer) {
 	if err := r.Flush(); err != nil {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
 		os.Exit(1)
@@ -217,7 +218,7 @@ func versionCmd(build BuildInfo) *cobra.Command {
 			r := NewRendererFromCommand(cmd)
 
 			r.Title(fmt.Sprintf("Tracks %s", build.getVersion()))
-			r.Section(renderer.Section{
+			r.Section(interfaces.Section{
 				Body: fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
 			})
 

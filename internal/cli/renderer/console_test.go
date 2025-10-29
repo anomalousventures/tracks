@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
@@ -24,7 +25,7 @@ func TestNewConsoleRenderer(t *testing.T) {
 }
 
 func TestConsoleRendererImplementsInterface(t *testing.T) {
-	var _ Renderer = &ConsoleRenderer{}
+	var _ interfaces.Renderer = &ConsoleRenderer{}
 }
 
 func TestConsoleRendererTitle(t *testing.T) {
@@ -77,32 +78,32 @@ func TestConsoleRendererTitleUsesTheme(t *testing.T) {
 func TestConsoleRendererSection(t *testing.T) {
 	tests := []struct {
 		name    string
-		section Section
+		section interfaces.Section
 		want    []string
 	}{
 		{
 			name:    "section with title and body",
-			section: Section{Title: "Config", Body: "Using Chi router"},
+			section: interfaces.Section{Title: "Config", Body: "Using Chi router"},
 			want:    []string{"Config", "Using Chi router"},
 		},
 		{
 			name:    "section with title only",
-			section: Section{Title: "Settings"},
+			section: interfaces.Section{Title: "Settings"},
 			want:    []string{"Settings"},
 		},
 		{
 			name:    "section with body only",
-			section: Section{Body: "Database configured"},
+			section: interfaces.Section{Body: "Database configured"},
 			want:    []string{"Database configured"},
 		},
 		{
 			name:    "empty section",
-			section: Section{},
+			section: interfaces.Section{},
 			want:    []string{},
 		},
 		{
 			name:    "section with multiline body",
-			section: Section{Title: "Info", Body: "Line 1\nLine 2"},
+			section: interfaces.Section{Title: "Info", Body: "Line 1\nLine 2"},
 			want:    []string{"Info", "Line 1", "Line 2"},
 		},
 	}
@@ -132,7 +133,7 @@ func TestConsoleRendererSectionUsesTheme(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	section := Section{
+	section := interfaces.Section{
 		Title: "Section Title",
 		Body:  "Section body content",
 	}
@@ -169,7 +170,7 @@ func TestConsoleRendererTableStub(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Name", "Value"},
 		Rows: [][]string{
 			{"key1", "value1"},
@@ -183,7 +184,7 @@ func TestConsoleRendererProgressStub(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Downloading",
 		Total: 100,
 	}
@@ -203,7 +204,7 @@ func TestConsoleRendererOutputGoesToWriter(t *testing.T) {
 	renderer := NewConsoleRenderer(&buf)
 
 	renderer.Title("Test")
-	renderer.Section(Section{Title: "Section", Body: "Body"})
+	renderer.Section(interfaces.Section{Title: "Section", Body: "Body"})
 
 	output := buf.String()
 
@@ -217,7 +218,7 @@ func TestConsoleRendererMultipleOperations(t *testing.T) {
 	renderer := NewConsoleRenderer(&buf)
 
 	renderer.Title("Title")
-	renderer.Section(Section{Body: "Content"})
+	renderer.Section(interfaces.Section{Body: "Content"})
 	renderer.Flush()
 
 	output := buf.String()
@@ -258,13 +259,13 @@ func TestConsoleRendererRespectsNOCOLOR(t *testing.T) {
 func TestConsoleRendererTable(t *testing.T) {
 	tests := []struct {
 		name             string
-		table            Table
+		table interfaces.Table
 		shouldContain    []string
 		shouldNotContain []string
 	}{
 		{
 			name: "simple table with headers and rows",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"Name", "Type", "Status"},
 				Rows: [][]string{
 					{"user.go", "model", "created"},
@@ -275,7 +276,7 @@ func TestConsoleRendererTable(t *testing.T) {
 		},
 		{
 			name: "table with two columns",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"File", "Lines"},
 				Rows: [][]string{
 					{"main.go", "42"},
@@ -286,7 +287,7 @@ func TestConsoleRendererTable(t *testing.T) {
 		},
 		{
 			name: "table with varying content lengths",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"Short", "Very Long Header Name"},
 				Rows: [][]string{
 					{"A", "B"},
@@ -297,7 +298,7 @@ func TestConsoleRendererTable(t *testing.T) {
 		},
 		{
 			name: "table with extra columns in rows - extra columns ignored",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"Name", "Status"},
 				Rows: [][]string{
 					{"item1", "active", "ignored"},
@@ -339,14 +340,14 @@ func TestConsoleRendererTable(t *testing.T) {
 func TestConsoleRendererTableEmpty(t *testing.T) {
 	tests := []struct {
 		name              string
-		table             Table
+		table interfaces.Table
 		shouldHaveOutput  bool
 		shouldContain     []string
 		shouldNotContain  []string
 	}{
 		{
 			name: "empty table with no rows - headers displayed",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"Col1", "Col2"},
 				Rows:    [][]string{},
 			},
@@ -355,7 +356,7 @@ func TestConsoleRendererTableEmpty(t *testing.T) {
 		},
 		{
 			name: "table with no headers and no rows",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{},
 				Rows:    [][]string{},
 			},
@@ -363,7 +364,7 @@ func TestConsoleRendererTableEmpty(t *testing.T) {
 		},
 		{
 			name: "table with empty row slices",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{},
 				Rows:    [][]string{{}},
 			},
@@ -407,7 +408,7 @@ func TestConsoleRendererTableWithEmptyCells(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Name", "Value", "Status"},
 		Rows: [][]string{
 			{"item1", "", "active"},
@@ -436,7 +437,7 @@ func TestConsoleRendererTableAlignment(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Short", "Medium Length", "X"},
 		Rows: [][]string{
 			{"A", "B", "C"},
@@ -472,7 +473,7 @@ func TestConsoleRendererTableUsesTheme(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Header1", "Header2"},
 		Rows: [][]string{
 			{"data1", "data2"},
@@ -507,7 +508,7 @@ func TestConsoleRendererTableRespectsNOCOLOR(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Header1", "Header2"},
 		Rows: [][]string{
 			{"data1", "data2"},
@@ -531,7 +532,7 @@ func TestConsoleRendererTableSpecialCharacters(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Emoji", "Symbols", "Spaces"},
 		Rows: [][]string{
 			{"✓", "→", "  spaced  "},
@@ -555,7 +556,7 @@ func TestConsoleRendererTableSingleColumn(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"OnlyColumn"},
 		Rows: [][]string{
 			{"value1"},
@@ -580,7 +581,7 @@ func TestConsoleRendererTableSingleRow(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Col1", "Col2", "Col3"},
 		Rows: [][]string{
 			{"a", "b", "c"},
@@ -602,7 +603,7 @@ func TestConsoleRendererTableWritesToWriter(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{"Test"},
 		Rows:    [][]string{{"data"}},
 	}
@@ -618,7 +619,7 @@ func TestConsoleRendererTableNoHeaders(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	table := Table{
+	table := interfaces.Table{
 		Headers: []string{},
 		Rows: [][]string{
 			{"data1", "data2"},
@@ -641,7 +642,7 @@ func TestConsoleRendererProgressReturnsImplementation(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Downloading",
 		Total: 100,
 	}
@@ -661,7 +662,7 @@ func TestConsoleProgressIncrement(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Processing",
 		Total: 100,
 	}
@@ -684,7 +685,7 @@ func TestConsoleProgressDone(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Uploading",
 		Total: 100,
 	}
@@ -704,7 +705,7 @@ func TestConsoleProgressInPlaceUpdates(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Loading",
 		Total: 100,
 	}
@@ -734,7 +735,7 @@ func TestConsoleProgressMultipleIncrements(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Copying",
 		Total: 100,
 	}
@@ -757,7 +758,7 @@ func TestConsoleProgressCompletesAt100Percent(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Finalizing",
 		Total: 100,
 	}
@@ -781,7 +782,7 @@ func TestConsoleProgressZeroTotal(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Testing",
 		Total: 0,
 	}
@@ -800,7 +801,7 @@ func TestConsoleProgressIncrementBeyondTotal(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Overflowing",
 		Total: 100,
 	}
@@ -819,7 +820,7 @@ func TestConsoleProgressDoneMultipleTimes(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Repeating",
 		Total: 100,
 	}
@@ -844,7 +845,7 @@ func TestConsoleProgressDisplaysLabel(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "Downloading",
 		Total: 100,
 	}
@@ -867,7 +868,7 @@ func TestConsoleProgressWithoutLabel(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewConsoleRenderer(&buf)
 
-	spec := ProgressSpec{
+	spec := interfaces.ProgressSpec{
 		Label: "",
 		Total: 100,
 	}

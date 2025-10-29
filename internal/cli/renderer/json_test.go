@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"bytes"
 	"encoding/json"
 	"strings"
@@ -24,7 +25,7 @@ func TestJSONRendererImplementsInterface(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewJSONRenderer(&buf)
 
-	var _ Renderer = renderer
+	var _ interfaces.Renderer = renderer
 
 	if renderer == nil {
 		t.Fatal("JSONRenderer should implement Renderer interface")
@@ -57,7 +58,7 @@ func TestJSONRendererSection(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewJSONRenderer(&buf)
 
-	renderer.Section(Section{
+	renderer.Section(interfaces.Section{
 		Title: "Section 1",
 		Body:  "Section body",
 	})
@@ -95,7 +96,7 @@ func TestJSONRendererTable(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewJSONRenderer(&buf)
 
-	renderer.Table(Table{
+	renderer.Table(interfaces.Table{
 		Headers: []string{"Name", "Status"},
 		Rows: [][]string{
 			{"file1.go", "created"},
@@ -139,7 +140,7 @@ func TestJSONRendererProgress(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewJSONRenderer(&buf)
 
-	progress := renderer.Progress(ProgressSpec{
+	progress := renderer.Progress(interfaces.ProgressSpec{
 		Label: "Processing",
 		Total: 100,
 	})
@@ -178,8 +179,8 @@ func TestJSONRendererFlushWithAllFields(t *testing.T) {
 	renderer := NewJSONRenderer(&buf)
 
 	renderer.Title("Project Created")
-	renderer.Section(Section{Title: "Config", Body: "Using Chi"})
-	renderer.Table(Table{
+	renderer.Section(interfaces.Section{Title: "Config", Body: "Using Chi"})
+	renderer.Table(interfaces.Table{
 		Headers: []string{"File", "Status"},
 		Rows:    [][]string{{"user.go", "created"}},
 	})
@@ -212,9 +213,9 @@ func TestJSONRendererMultipleSections(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewJSONRenderer(&buf)
 
-	renderer.Section(Section{Title: "Section 1", Body: "Body 1"})
-	renderer.Section(Section{Title: "Section 2", Body: "Body 2"})
-	renderer.Section(Section{Title: "Section 3", Body: "Body 3"})
+	renderer.Section(interfaces.Section{Title: "Section 1", Body: "Body 1"})
+	renderer.Section(interfaces.Section{Title: "Section 2", Body: "Body 2"})
+	renderer.Section(interfaces.Section{Title: "Section 3", Body: "Body 3"})
 
 	err := renderer.Flush()
 	if err != nil {
@@ -241,8 +242,8 @@ func TestJSONRendererMultipleTables(t *testing.T) {
 	var buf bytes.Buffer
 	renderer := NewJSONRenderer(&buf)
 
-	renderer.Table(Table{Headers: []string{"A"}, Rows: [][]string{{"1"}}})
-	renderer.Table(Table{Headers: []string{"B"}, Rows: [][]string{{"2"}}})
+	renderer.Table(interfaces.Table{Headers: []string{"A"}, Rows: [][]string{{"1"}}})
+	renderer.Table(interfaces.Table{Headers: []string{"B"}, Rows: [][]string{{"2"}}})
 
 	err := renderer.Flush()
 	if err != nil {

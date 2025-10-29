@@ -9,10 +9,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/anomalousventures/tracks/internal/cli/ui"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/lipgloss"
 )
+
+// Ensure ConsoleRenderer implements interfaces.Renderer at compile time.
+var _ interfaces.Renderer = (*ConsoleRenderer)(nil)
 
 const (
 	columnPadding = 2
@@ -74,11 +78,11 @@ func (r *ConsoleRenderer) Title(s string) {
 //
 // Example:
 //
-//	renderer.Section(Section{
+//	renderer.Section(interfaces.Section{
 //	    Title: "Database Configuration",
 //	    Body:  "Using LibSQL with migrations enabled",
 //	})
-func (r *ConsoleRenderer) Section(sec Section) {
+func (r *ConsoleRenderer) Section(sec interfaces.Section) {
 	if sec.Title != "" {
 		fmt.Fprintln(r.out, ui.Theme.Title.Render(sec.Title))
 	}
@@ -95,14 +99,14 @@ func (r *ConsoleRenderer) Section(sec Section) {
 //
 // Example:
 //
-//	renderer.Table(Table{
+//	renderer.Table(interfaces.Table{
 //	    Headers: []string{"File", "Status", "Lines"},
 //	    Rows: [][]string{
 //	        {"user.go", "created", "42"},
 //	        {"user_test.go", "created", "128"},
 //	    },
 //	})
-func (r *ConsoleRenderer) Table(t Table) {
+func (r *ConsoleRenderer) Table(t interfaces.Table) {
 	if len(t.Headers) == 0 && len(t.Rows) == 0 {
 		return
 	}
@@ -179,12 +183,12 @@ func (r *ConsoleRenderer) Table(t Table) {
 //
 // Example:
 //
-//	progress := renderer.Progress(ProgressSpec{Label: "Downloading", Total: 100})
+//	progress := renderer.Progress(interfaces.ProgressSpec{Label: "Downloading", Total: 100})
 //	progress.Increment(25)  // 25%
 //	progress.Increment(50)  // 75%
 //	progress.Increment(25)  // 100%
 //	progress.Done()         // Adds newline
-func (r *ConsoleRenderer) Progress(spec ProgressSpec) Progress {
+func (r *ConsoleRenderer) Progress(spec interfaces.ProgressSpec) interfaces.Progress {
 	bar := progress.New(progress.WithScaledGradient("#7D56F4", "#04B575"))
 	return &ConsoleProgress{
 		out:   r.out,

@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anomalousventures/tracks/internal/cli/renderer"
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/spf13/cobra"
 )
 
 // Mock renderer that records calls
 type mockRenderer struct {
 	titleCalls   []string
-	sectionCalls []renderer.Section
+	sectionCalls []interfaces.Section
 	flushed      bool
 }
 
@@ -20,15 +20,15 @@ func (m *mockRenderer) Title(text string) {
 	m.titleCalls = append(m.titleCalls, text)
 }
 
-func (m *mockRenderer) Section(s renderer.Section) {
+func (m *mockRenderer) Section(s interfaces.Section) {
 	m.sectionCalls = append(m.sectionCalls, s)
 }
 
 // Table is not used by NewCommand, no-op for interface compliance.
-func (m *mockRenderer) Table(t renderer.Table) {}
+func (m *mockRenderer) Table(t interfaces.Table) {}
 
 // Progress is not used by NewCommand, no-op for interface compliance.
-func (m *mockRenderer) Progress(spec renderer.ProgressSpec) renderer.Progress {
+func (m *mockRenderer) Progress(spec interfaces.ProgressSpec) interfaces.Progress {
 	return nil
 }
 
@@ -42,10 +42,10 @@ func (m *mockRenderer) Flush() error {
 // setupTestCommand creates a NewCommand with default mocks and returns the cobra command
 // configured with output buffers. Use this for tests that don't need to inspect mock calls.
 func setupTestCommand() *cobra.Command {
-	factory := func(*cobra.Command) renderer.Renderer {
+	factory := func(*cobra.Command) interfaces.Renderer {
 		return &mockRenderer{}
 	}
-	flusher := func(*cobra.Command, renderer.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {}
 	cmd := NewNewCommand(factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
@@ -57,10 +57,10 @@ func setupTestCommand() *cobra.Command {
 // Use this when you need to verify renderer method calls.
 func setupTestCommandWithMock() (*cobra.Command, *mockRenderer) {
 	mock := &mockRenderer{}
-	factory := func(*cobra.Command) renderer.Renderer {
+	factory := func(*cobra.Command) interfaces.Renderer {
 		return mock
 	}
-	flusher := func(*cobra.Command, renderer.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {}
 	cmd := NewNewCommand(factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
@@ -69,10 +69,10 @@ func setupTestCommandWithMock() (*cobra.Command, *mockRenderer) {
 }
 
 func TestNewNewCommand(t *testing.T) {
-	rendererFactory := func(*cobra.Command) renderer.Renderer {
+	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return &mockRenderer{}
 	}
-	flusher := func(*cobra.Command, renderer.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
 	cmd := NewNewCommand(rendererFactory, flusher)
 
@@ -90,10 +90,10 @@ func TestNewNewCommand(t *testing.T) {
 }
 
 func TestNewCommand_Command(t *testing.T) {
-	rendererFactory := func(*cobra.Command) renderer.Renderer {
+	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return &mockRenderer{}
 	}
-	flusher := func(*cobra.Command, renderer.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
 	newCmd := NewNewCommand(rendererFactory, flusher)
 	cobraCmd := newCmd.Command()
@@ -140,12 +140,12 @@ func TestNewCommand_CommandUsage(t *testing.T) {
 
 func TestNewCommand_Run(t *testing.T) {
 	mock := &mockRenderer{}
-	rendererFactory := func(*cobra.Command) renderer.Renderer {
+	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return mock
 	}
 
 	flusherCalled := false
-	flusher := func(cmd *cobra.Command, r renderer.Renderer) {
+	flusher := func(cmd *cobra.Command, r interfaces.Renderer) {
 		flusherCalled = true
 		if r != mock {
 			t.Error("flusher called with different renderer")
@@ -232,11 +232,11 @@ func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
 
 func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 	var capturedCmd *cobra.Command
-	rendererFactory := func(cmd *cobra.Command) renderer.Renderer {
+	rendererFactory := func(cmd *cobra.Command) interfaces.Renderer {
 		capturedCmd = cmd
 		return &mockRenderer{}
 	}
-	flusher := func(*cobra.Command, renderer.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
 	newCmd := NewNewCommand(rendererFactory, flusher)
 	cobraCmd := newCmd.Command()
@@ -255,13 +255,13 @@ func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 
 func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 	mock := &mockRenderer{}
-	rendererFactory := func(*cobra.Command) renderer.Renderer {
+	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return mock
 	}
 
 	var capturedCmd *cobra.Command
-	var capturedRenderer renderer.Renderer
-	flusher := func(cmd *cobra.Command, r renderer.Renderer) {
+	var capturedRenderer interfaces.Renderer
+	flusher := func(cmd *cobra.Command, r interfaces.Renderer) {
 		capturedCmd = cmd
 		capturedRenderer = r
 	}
