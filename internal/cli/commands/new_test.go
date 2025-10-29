@@ -22,7 +22,6 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {
-		// Actually call Flush for tests that execute
 		mockRenderer.Flush()
 	}
 	cmd := NewNewCommand(factory, flusher)
@@ -107,7 +106,6 @@ func TestNewCommand_Command(t *testing.T) {
 func TestNewCommand_CommandUsage(t *testing.T) {
 	cobraCmd := setupTestCommand(t)
 
-	// Test that it requires exactly 1 argument
 	cobraCmd.SetArgs([]string{})
 	if err := cobraCmd.Execute(); err == nil {
 		t.Error("expected error when no arguments provided, got nil")
@@ -150,8 +148,6 @@ func TestNewCommand_Run(t *testing.T) {
 	if !flusherCalled {
 		t.Error("flusher was not called")
 	}
-
-	// Mock expectations are automatically verified in cleanup
 }
 
 func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
@@ -256,7 +252,6 @@ func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 func TestNewCommand_CommandDescriptions(t *testing.T) {
 	cobraCmd := setupTestCommand(t)
 
-	// Verify Long description mentions key technologies
 	keyTechnologies := []string{"templ", "SQLC", "production-ready", "Go"}
 	for _, tech := range keyTechnologies {
 		if !strings.Contains(cobraCmd.Long, tech) {
@@ -264,7 +259,6 @@ func TestNewCommand_CommandDescriptions(t *testing.T) {
 		}
 	}
 
-	// Verify Example includes basic usage
 	if !strings.Contains(cobraCmd.Example, "tracks new myapp") {
 		t.Error("Example missing basic usage pattern")
 	}

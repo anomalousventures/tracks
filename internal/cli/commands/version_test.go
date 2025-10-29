@@ -26,7 +26,6 @@ func setupVersionTestCommand(t *testing.T, version, commit, date string) *cobra.
 		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {
-		// Actually call Flush for tests that execute
 		mockRenderer.Flush()
 	}
 	cmd := NewVersionCommand(mockBuild, factory, flusher)
@@ -82,7 +81,6 @@ func TestNewVersionCommand(t *testing.T) {
 		t.Error("flushRenderer field not set")
 	}
 
-	// Verify build info is stored correctly
 	if cmd.build.GetVersion() != "v1.0.0" {
 		t.Errorf("expected build.GetVersion() %q, got %q", "v1.0.0", cmd.build.GetVersion())
 	}
@@ -173,8 +171,6 @@ func TestVersionCommand_Run(t *testing.T) {
 	if !flusherCalled {
 		t.Error("flusher was not called")
 	}
-
-	// Mock expectations are automatically verified in cleanup
 }
 
 func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
@@ -315,14 +311,11 @@ func TestVersionCommand_BuildInfoGetVersionCalled(t *testing.T) {
 	if err := cobraCmd.Execute(); err != nil {
 		t.Fatalf("execution failed: %v", err)
 	}
-
-	// Mock expectations are automatically verified in cleanup
 }
 
 func TestVersionCommand_CommandDescriptions(t *testing.T) {
 	cobraCmd := setupVersionTestCommand(t, "v1.0.0", "abc123", "2025-10-29")
 
-	// Verify Long description mentions key information
 	keyPhrases := []string{"version number", "commit", "build date"}
 	for _, phrase := range keyPhrases {
 		if !strings.Contains(cobraCmd.Long, phrase) {
@@ -330,7 +323,6 @@ func TestVersionCommand_CommandDescriptions(t *testing.T) {
 		}
 	}
 
-	// Verify Short description is meaningful
 	if !strings.Contains(cobraCmd.Short, "version") {
 		t.Error("Short description should mention 'version'")
 	}
