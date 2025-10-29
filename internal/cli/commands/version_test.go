@@ -11,30 +11,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// mockBuildInfo implements the BuildInfo interface for testing.
-type mockBuildInfo struct {
-	version string
-	commit  string
-	date    string
-}
-
-func (m *mockBuildInfo) GetVersion() string {
-	return m.version
-}
-
-func (m *mockBuildInfo) GetCommit() string {
-	return m.commit
-}
-
-func (m *mockBuildInfo) GetDate() string {
-	return m.date
-}
-
 // Test helpers for reducing boilerplate
 
 // setupVersionTestCommand creates a VersionCommand with default mocks and returns the cobra command
 // configured with output buffers. Use this for tests that don't need to inspect mock calls.
-func setupVersionTestCommand(t *testing.T, build interfaces.BuildInfo) *cobra.Command {
+func setupVersionTestCommand(t *testing.T, version, commit, date string) *cobra.Command {
+	mockBuild := mocks.NewMockBuildInfo(t)
+	mockBuild.On("GetVersion").Return(version).Maybe()
+	mockBuild.On("GetCommit").Return(commit).Maybe()
+	mockBuild.On("GetDate").Return(date).Maybe()
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Return().Maybe()
 	mockRenderer.On("Section", mock.Anything).Return().Maybe()
@@ -47,35 +32,39 @@ func setupVersionTestCommand(t *testing.T, build interfaces.BuildInfo) *cobra.Co
 		// Actually call Flush for tests that execute
 		mockRenderer.Flush()
 	}
-	cmd := NewVersionCommand(build, factory, flusher)
+	cmd := NewVersionCommand(mockBuild, factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
 	return cobraCmd
 }
 
-// setupVersionTestCommandWithMock returns command and mock for inspection.
-// Use this when you need to verify renderer method calls.
-func setupVersionTestCommandWithMock(t *testing.T, build interfaces.BuildInfo) (*cobra.Command, *mocks.MockRenderer) {
+// setupVersionTestCommandWithMock returns command and mocks for inspection.
+// Use this when you need to verify renderer or build info method calls.
+func setupVersionTestCommandWithMock(t *testing.T, version, commit, date string) (*cobra.Command, *mocks.MockRenderer, *mocks.MockBuildInfo) {
+	mockBuild := mocks.NewMockBuildInfo(t)
+	mockBuild.On("GetVersion").Return(version).Maybe()
+	mockBuild.On("GetCommit").Return(commit).Maybe()
+	mockBuild.On("GetDate").Return(date).Maybe()
+
 	mockRenderer := mocks.NewMockRenderer(t)
 
 	factory := func(*cobra.Command) interfaces.Renderer {
 		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
-	cmd := NewVersionCommand(build, factory, flusher)
+	cmd := NewVersionCommand(mockBuild, factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
-	return cobraCmd, mockRenderer
+	return cobraCmd, mockRenderer, mockBuild
 }
 
 func TestNewVersionCommand(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
+	mockBuild := mocks.NewMockBuildInfo(t)
+	mockBuild.On("GetVersion").Return("v1.0.0")
+	mockBuild.On("GetCommit").Return("abc123")
+	mockBuild.On("GetDate").Return("2025-10-29")
 
 	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
@@ -83,7 +72,7 @@ func TestNewVersionCommand(t *testing.T) {
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
-	cmd := NewVersionCommand(build, rendererFactory, flusher)
+	cmd := NewVersionCommand(mockBuild, rendererFactory, flusher)
 
 	if cmd == nil {
 		t.Fatal("NewVersionCommand returned nil")
@@ -98,23 +87,19 @@ func TestNewVersionCommand(t *testing.T) {
 	}
 
 	// Verify build info is stored correctly
-	if cmd.build.GetVersion() != build.GetVersion() {
-		t.Errorf("expected build.GetVersion() %q, got %q", build.GetVersion(), cmd.build.GetVersion())
+	if cmd.build.GetVersion() != "v1.0.0" {
+		t.Errorf("expected build.GetVersion() %q, got %q", "v1.0.0", cmd.build.GetVersion())
 	}
-	if cmd.build.GetCommit() != build.GetCommit() {
-		t.Errorf("expected build.GetCommit() %q, got %q", build.GetCommit(), cmd.build.GetCommit())
+	if cmd.build.GetCommit() != "abc123" {
+		t.Errorf("expected build.GetCommit() %q, got %q", "abc123", cmd.build.GetCommit())
 	}
-	if cmd.build.GetDate() != build.GetDate() {
-		t.Errorf("expected build.GetDate() %q, got %q", build.GetDate(), cmd.build.GetDate())
+	if cmd.build.GetDate() != "2025-10-29" {
+		t.Errorf("expected build.GetDate() %q, got %q", "2025-10-29", cmd.build.GetDate())
 	}
 }
 
 func TestVersionCommand_Command(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
+	mockBuild := mocks.NewMockBuildInfo(t)
 
 	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
@@ -122,7 +107,7 @@ func TestVersionCommand_Command(t *testing.T) {
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
-	versionCmd := NewVersionCommand(build, rendererFactory, flusher)
+	versionCmd := NewVersionCommand(mockBuild, rendererFactory, flusher)
 	cobraCmd := versionCmd.Command()
 
 	if cobraCmd == nil {
@@ -147,13 +132,7 @@ func TestVersionCommand_Command(t *testing.T) {
 }
 
 func TestVersionCommand_CommandUsage(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
-
-	cobraCmd := setupVersionTestCommand(t, build)
+	cobraCmd := setupVersionTestCommand(t, "v1.0.0", "abc123", "2025-10-29")
 
 	// Test that it works with no arguments
 	cobraCmd.SetArgs([]string{})
@@ -163,11 +142,10 @@ func TestVersionCommand_CommandUsage(t *testing.T) {
 }
 
 func TestVersionCommand_Run(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
+	mockBuild := mocks.NewMockBuildInfo(t)
+	mockBuild.On("GetVersion").Return("v1.0.0")
+	mockBuild.On("GetCommit").Return("abc123")
+	mockBuild.On("GetDate").Return("2025-10-29")
 
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", "Tracks v1.0.0").Once()
@@ -185,7 +163,7 @@ func TestVersionCommand_Run(t *testing.T) {
 		}
 	}
 
-	versionCmd := NewVersionCommand(build, rendererFactory, flusher)
+	versionCmd := NewVersionCommand(mockBuild, rendererFactory, flusher)
 	cobraCmd := versionCmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -206,37 +184,33 @@ func TestVersionCommand_Run(t *testing.T) {
 func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
 	tests := []struct {
 		name          string
-		build         interfaces.BuildInfo
+		version       string
+		commit        string
+		date          string
 		wantTitle     string
 		wantBodyParts []string
 	}{
 		{
-			name: "release version",
-			build: &mockBuildInfo{
-				version: "v1.2.3",
-				commit:  "abc123def456",
-				date:    "2025-10-29T12:00:00Z",
-			},
+			name:          "release version",
+			version:       "v1.2.3",
+			commit:        "abc123def456",
+			date:          "2025-10-29T12:00:00Z",
 			wantTitle:     "Tracks v1.2.3",
 			wantBodyParts: []string{"Commit: abc123def456", "Built: 2025-10-29T12:00:00Z"},
 		},
 		{
-			name: "dev version",
-			build: &mockBuildInfo{
-				version: "dev",
-				commit:  "local",
-				date:    "unknown",
-			},
+			name:          "dev version",
+			version:       "dev",
+			commit:        "local",
+			date:          "unknown",
 			wantTitle:     "Tracks dev",
 			wantBodyParts: []string{"Commit: local", "Built: unknown"},
 		},
 		{
-			name: "empty commit and date",
-			build: &mockBuildInfo{
-				version: "v0.1.0",
-				commit:  "",
-				date:    "",
-			},
+			name:          "empty commit and date",
+			version:       "v0.1.0",
+			commit:        "",
+			date:          "",
 			wantTitle:     "Tracks v0.1.0",
 			wantBodyParts: []string{"Commit: ", "Built: "},
 		},
@@ -244,7 +218,7 @@ func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cobraCmd, mockRenderer := setupVersionTestCommandWithMock(t, tt.build)
+			cobraCmd, mockRenderer, _ := setupVersionTestCommandWithMock(t, tt.version, tt.commit, tt.date)
 			mockRenderer.On("Title", tt.wantTitle).Once()
 			mockRenderer.On("Section", mock.MatchedBy(func(s interfaces.Section) bool {
 				for _, part := range tt.wantBodyParts {
@@ -264,11 +238,10 @@ func TestVersionCommand_RunWithDifferentBuildInfo(t *testing.T) {
 }
 
 func TestVersionCommand_RendererFactoryCalledWithCommand(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
+	mockBuild := mocks.NewMockBuildInfo(t)
+	mockBuild.On("GetVersion").Return("v1.0.0")
+	mockBuild.On("GetCommit").Return("abc123")
+	mockBuild.On("GetDate").Return("2025-10-29")
 
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Once()
@@ -281,7 +254,7 @@ func TestVersionCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
-	versionCmd := NewVersionCommand(build, rendererFactory, flusher)
+	versionCmd := NewVersionCommand(mockBuild, rendererFactory, flusher)
 	cobraCmd := versionCmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -297,11 +270,10 @@ func TestVersionCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 }
 
 func TestVersionCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
+	mockBuild := mocks.NewMockBuildInfo(t)
+	mockBuild.On("GetVersion").Return("v1.0.0")
+	mockBuild.On("GetCommit").Return("abc123")
+	mockBuild.On("GetDate").Return("2025-10-29")
 
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Once()
@@ -318,7 +290,7 @@ func TestVersionCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 		capturedRenderer = r
 	}
 
-	versionCmd := NewVersionCommand(build, rendererFactory, flusher)
+	versionCmd := NewVersionCommand(mockBuild, rendererFactory, flusher)
 	cobraCmd := versionCmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -338,14 +310,8 @@ func TestVersionCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 }
 
 func TestVersionCommand_BuildInfoGetVersionCalled(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v2.5.0",
-		commit:  "xyz789",
-		date:    "2025-11-01",
-	}
-
-	cobraCmd, mockRenderer := setupVersionTestCommandWithMock(t, build)
-	expectedTitle := "Tracks " + build.GetVersion()
+	cobraCmd, mockRenderer, _ := setupVersionTestCommandWithMock(t, "v2.5.0", "xyz789", "2025-11-01")
+	expectedTitle := "Tracks v2.5.0"
 	mockRenderer.On("Title", expectedTitle).Once()
 	mockRenderer.On("Section", mock.Anything).Once()
 
@@ -358,13 +324,7 @@ func TestVersionCommand_BuildInfoGetVersionCalled(t *testing.T) {
 }
 
 func TestVersionCommand_CommandDescriptions(t *testing.T) {
-	build := &mockBuildInfo{
-		version: "v1.0.0",
-		commit:  "abc123",
-		date:    "2025-10-29",
-	}
-
-	cobraCmd := setupVersionTestCommand(t, build)
+	cobraCmd := setupVersionTestCommand(t, "v1.0.0", "abc123", "2025-10-29")
 
 	// Verify Long description mentions key information
 	keyPhrases := []string{"version number", "commit", "build date"}

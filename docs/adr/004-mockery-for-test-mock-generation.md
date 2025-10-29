@@ -47,41 +47,52 @@ We will use **Mockery** to automatically generate test mocks from interfaces:
 1. **Add Mockery as Tool** - Use Go 1.25+ tool directive in `go.mod`
 2. **Package-Based Discovery** - Configure mockery to discover all interfaces in `interfaces/` packages
 3. **Convention Over Configuration** - Auto-generate mocks for all interfaces, no manual registration needed
-4. **Generated Mocks Package** - Mocks live in `<package>/mocks/` subdirectories
+4. **Centralized Mocks Directory** - All mocks live in `tests/mocks/` for simplified imports
 5. **Testify Integration** - Use `github.com/stretchr/testify/mock` for mock assertions
 
 **Configuration:**
 
 ```yaml
 # .mockery.yaml
-with-expecter: true
-dir: "{{.InterfaceDir}}/mocks"
-outpkg: "{{.PackageName}}"
-filename: "mock_{{.InterfaceName}}.go"
+# Configuration docs: https://vektra.github.io/mockery/latest/configuration/
+
+# Generate all mocks in centralized tests/mocks directory
+dir: 'tests/mocks'
+
+# Filename pattern for generated mocks
+filename: 'mock_{{.InterfaceName}}.go'
+
+# Package name for generated mocks
+pkgname: 'mocks'
+
+# Use goimports for formatting
+formatter: goimports
+
+# Package-based discovery - automatically finds all interfaces
 packages:
   github.com/anomalousventures/tracks/internal/cli/interfaces:
-    interfaces:
-      # Auto-discover all interfaces
-  github.com/anomalousventures/tracks/internal/generator/interfaces:
-    interfaces:
-      # Auto-discover all interfaces (future)
+    config:
+      all: true
 ```
+
+**Note:** We use a centralized `tests/mocks/` directory instead of per-package `mocks/` subdirectories to simplify imports and consolidate generated code.
 
 **Usage:**
 
 ```go
 // Test with generated mock
 import (
-    "github.com/anomalousventures/tracks/internal/cli/interfaces/mocks"
+    "github.com/anomalousventures/tracks/tests/mocks"
+    "github.com/stretchr/testify/mock"
 )
 
 func TestNewCommand_Run(t *testing.T) {
     mockRenderer := mocks.NewMockRenderer(t)
-    mockRenderer.EXPECT().Title("Creating new Tracks application: myapp").Once()
-    mockRenderer.EXPECT().Section(mock.Anything).Once()
-    mockRenderer.EXPECT().Flush().Return(nil).Once()
+    mockRenderer.On("Title", "Creating new Tracks application: myapp").Once()
+    mockRenderer.On("Section", mock.Anything).Once()
 
     // Test command with mock
+    // Mock expectations are automatically verified in cleanup
 }
 ```
 
@@ -142,7 +153,7 @@ Consider adding to `.githooks/pre-commit`:
 ```bash
 # Ensure mocks are up-to-date
 make generate-mocks
-git add internal/*/interfaces/mocks/
+git add tests/mocks/
 ```
 
 
@@ -156,13 +167,18 @@ git add internal/*/interfaces/mocks/
 
 ### Package Discovery Pattern
 
-Mockery will discover interfaces in packages matching:
+Mockery automatically discovers all interfaces in configured packages:
 
-- `internal/cli/interfaces/`
-- `internal/generator/interfaces/` (future)
-- Any package named `interfaces/`
+- `internal/cli/interfaces/` - Currently configured
+- Future packages added to `.mockery.yaml` will be auto-discovered
 
-No need to register individual interfaces - adding a new interface automatically generates its mock.
+All generated mocks are placed in the centralized `tests/mocks/` directory regardless of source package.
+
+**Benefits:**
+
+- Single import path for all mocks: `github.com/anomalousventures/tracks/tests/mocks`
+- No need to register individual interfaces
+- Adding a new interface automatically generates its mock on next `make generate-mocks`
 
 ## References
 

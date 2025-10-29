@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Before making ANY commit, you MUST:**
 
-1. **Run `make generate-mocks`** - Generate test mocks from interfaces
+1. **Run `make generate-mocks`** - Generate test mocks from interfaces (see [ADR-004](./docs/adr/004-mockery-for-test-mock-generation.md))
 2. **Run `make lint`** - All linters must pass with zero errors
 3. **Run `make test`** - All tests must pass with zero failures
 4. **Remediate any errors** - Fix all issues found by linting and testing
