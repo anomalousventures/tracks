@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// BuildInfo contains version metadata for the CLI.
 type BuildInfo struct {
 	Version string
 	Commit  string
@@ -74,7 +73,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 
   # View help for any command
   tracks help new`,
-		Version: build.getVersion(),
+		Version: build.GetVersion(),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			v := GetViper(cmd)
 			if v.GetBool("verbose") && v.GetBool("quiet") {
@@ -99,7 +98,8 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output (shows detailed information)")
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode (suppress non-error output)")
 
-	rootCmd.AddCommand(versionCmd(build))
+	versionCmd := commands.NewVersionCommand(build, NewRendererFromCommand, FlushRenderer)
+	rootCmd.AddCommand(versionCmd.Command())
 
 	newCmd := commands.NewNewCommand(NewRendererFromCommand, FlushRenderer)
 	rootCmd.AddCommand(newCmd.Command())
@@ -209,26 +209,7 @@ func FlushRenderer(cmd *cobra.Command, r interfaces.Renderer) {
 	}
 }
 
-func versionCmd(build BuildInfo) *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "Print version information",
-		Long:  "Display the version number, git commit hash, and build date for this Tracks CLI binary.",
-		Run: func(cmd *cobra.Command, args []string) {
-			r := NewRendererFromCommand(cmd)
-
-			r.Title(fmt.Sprintf("Tracks %s", build.getVersion()))
-			r.Section(interfaces.Section{
-				Body: fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
-			})
-
-			FlushRenderer(cmd, r)
-		},
-	}
-}
-
-
-func (b BuildInfo) getVersion() string {
+func (b BuildInfo) GetVersion() string {
 	if b.Version != "dev" {
 		return b.Version
 	}
@@ -240,4 +221,12 @@ func (b BuildInfo) getVersion() string {
 	}
 
 	return "dev"
+}
+
+func (b BuildInfo) GetCommit() string {
+	return b.Commit
+}
+
+func (b BuildInfo) GetDate() string {
+	return b.Date
 }

@@ -6,46 +6,24 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+	"github.com/anomalousventures/tracks/tests/mocks"
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/mock"
 )
 
-// Mock renderer that records calls
-type mockRenderer struct {
-	titleCalls   []string
-	sectionCalls []interfaces.Section
-	flushed      bool
-}
+// Use this for tests that don't need to inspect mock calls.
+func setupTestCommand(t *testing.T) *cobra.Command {
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Return().Maybe()
+	mockRenderer.On("Section", mock.Anything).Return().Maybe()
+	mockRenderer.On("Flush").Return(nil).Maybe()
 
-func (m *mockRenderer) Title(text string) {
-	m.titleCalls = append(m.titleCalls, text)
-}
-
-func (m *mockRenderer) Section(s interfaces.Section) {
-	m.sectionCalls = append(m.sectionCalls, s)
-}
-
-// Table is not used by NewCommand, no-op for interface compliance.
-func (m *mockRenderer) Table(t interfaces.Table) {}
-
-// Progress is not used by NewCommand, no-op for interface compliance.
-func (m *mockRenderer) Progress(spec interfaces.ProgressSpec) interfaces.Progress {
-	return nil
-}
-
-func (m *mockRenderer) Flush() error {
-	m.flushed = true
-	return nil
-}
-
-// Test helpers for reducing boilerplate
-
-// setupTestCommand creates a NewCommand with default mocks and returns the cobra command
-// configured with output buffers. Use this for tests that don't need to inspect mock calls.
-func setupTestCommand() *cobra.Command {
 	factory := func(*cobra.Command) interfaces.Renderer {
-		return &mockRenderer{}
+		return mockRenderer
 	}
-	flusher := func(*cobra.Command, interfaces.Renderer) {}
+	flusher := func(*cobra.Command, interfaces.Renderer) {
+		mockRenderer.Flush()
+	}
 	cmd := NewNewCommand(factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
@@ -53,24 +31,25 @@ func setupTestCommand() *cobra.Command {
 	return cobraCmd
 }
 
-// setupTestCommandWithMock returns command and mock for inspection.
 // Use this when you need to verify renderer method calls.
-func setupTestCommandWithMock() (*cobra.Command, *mockRenderer) {
-	mock := &mockRenderer{}
+func setupTestCommandWithMock(t *testing.T) (*cobra.Command, *mocks.MockRenderer) {
+	mockRenderer := mocks.NewMockRenderer(t)
+
 	factory := func(*cobra.Command) interfaces.Renderer {
-		return mock
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 	cmd := NewNewCommand(factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
-	return cobraCmd, mock
+	return cobraCmd, mockRenderer
 }
 
 func TestNewNewCommand(t *testing.T) {
+	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return &mockRenderer{}
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
@@ -90,8 +69,9 @@ func TestNewNewCommand(t *testing.T) {
 }
 
 func TestNewCommand_Command(t *testing.T) {
+	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return &mockRenderer{}
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
@@ -124,9 +104,8 @@ func TestNewCommand_Command(t *testing.T) {
 }
 
 func TestNewCommand_CommandUsage(t *testing.T) {
-	cobraCmd := setupTestCommand()
+	cobraCmd := setupTestCommand(t)
 
-	// Test that it requires exactly 1 argument
 	cobraCmd.SetArgs([]string{})
 	if err := cobraCmd.Execute(); err == nil {
 		t.Error("expected error when no arguments provided, got nil")
@@ -139,15 +118,18 @@ func TestNewCommand_CommandUsage(t *testing.T) {
 }
 
 func TestNewCommand_Run(t *testing.T) {
-	mock := &mockRenderer{}
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", "Creating new Tracks application: myapp").Once()
+	mockRenderer.On("Section", interfaces.Section{Body: "(Full implementation coming soon)"}).Once()
+
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return mock
+		return mockRenderer
 	}
 
 	flusherCalled := false
 	flusher := func(cmd *cobra.Command, r interfaces.Renderer) {
 		flusherCalled = true
-		if r != mock {
+		if r != mockRenderer {
 			t.Error("flusher called with different renderer")
 		}
 	}
@@ -161,25 +143,6 @@ func TestNewCommand_Run(t *testing.T) {
 	cobraCmd.SetArgs([]string{"myapp"})
 	if err := cobraCmd.Execute(); err != nil {
 		t.Fatalf("execution failed: %v", err)
-	}
-
-	// Verify renderer was called
-	if len(mock.titleCalls) != 1 {
-		t.Errorf("expected 1 Title call, got %d", len(mock.titleCalls))
-	} else {
-		expectedTitle := "Creating new Tracks application: myapp"
-		if mock.titleCalls[0] != expectedTitle {
-			t.Errorf("expected title %q, got %q", expectedTitle, mock.titleCalls[0])
-		}
-	}
-
-	if len(mock.sectionCalls) != 1 {
-		t.Errorf("expected 1 Section call, got %d", len(mock.sectionCalls))
-	} else {
-		expectedBody := "(Full implementation coming soon)"
-		if mock.sectionCalls[0].Body != expectedBody {
-			t.Errorf("expected section body %q, got %q", expectedBody, mock.sectionCalls[0].Body)
-		}
 	}
 
 	if !flusherCalled {
@@ -212,29 +175,27 @@ func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cobraCmd, mock := setupTestCommandWithMock()
+			cobraCmd, mockRenderer := setupTestCommandWithMock(t)
+			mockRenderer.On("Title", tt.wantTitle).Once()
+			mockRenderer.On("Section", mock.Anything).Once()
 
 			cobraCmd.SetArgs([]string{tt.projectName})
 			if err := cobraCmd.Execute(); err != nil {
 				t.Fatalf("execution failed: %v", err)
-			}
-
-			if len(mock.titleCalls) != 1 {
-				t.Fatalf("expected 1 Title call, got %d", len(mock.titleCalls))
-			}
-
-			if mock.titleCalls[0] != tt.wantTitle {
-				t.Errorf("expected title %q, got %q", tt.wantTitle, mock.titleCalls[0])
 			}
 		})
 	}
 }
 
 func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Once()
+
 	var capturedCmd *cobra.Command
 	rendererFactory := func(cmd *cobra.Command) interfaces.Renderer {
 		capturedCmd = cmd
-		return &mockRenderer{}
+		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
@@ -254,9 +215,12 @@ func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 }
 
 func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
-	mock := &mockRenderer{}
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Once()
+
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return mock
+		return mockRenderer
 	}
 
 	var capturedCmd *cobra.Command
@@ -280,28 +244,22 @@ func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 		t.Error("flusher not called with correct command")
 	}
 
-	if capturedRenderer != mock {
+	if capturedRenderer != mockRenderer {
 		t.Error("flusher not called with correct renderer")
 	}
 }
 
 func TestNewCommand_CommandDescriptions(t *testing.T) {
-	cobraCmd := setupTestCommand()
+	cobraCmd := setupTestCommand(t)
 
-	// Verify Long description mentions key technologies
 	keyTechnologies := []string{"templ", "SQLC", "production-ready", "Go"}
 	for _, tech := range keyTechnologies {
-		if !contains(cobraCmd.Long, tech) {
+		if !strings.Contains(cobraCmd.Long, tech) {
 			t.Errorf("Long description missing mention of %q", tech)
 		}
 	}
 
-	// Verify Example includes basic usage
-	if !contains(cobraCmd.Example, "tracks new myapp") {
+	if !strings.Contains(cobraCmd.Example, "tracks new myapp") {
 		t.Error("Example missing basic usage pattern")
 	}
-}
-
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
 }

@@ -4,11 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize]
     # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+      - '**/*.md'
 
 jobs:
   claude-review:
@@ -36,11 +37,12 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
 
-            ## Context: Go 1.24+ Modern Practices
+          # Automated review prompt
+          prompt: |
+            Please review this pull request and provide feedback based on the file types:
+
+            **Context: Go 1.24+ Modern Practices**
             This project uses Go 1.25.3 with modern tooling patterns:
             - The `tool` directive in go.mod (introduced in Go 1.24) declares development tools
             - Tools are invoked with `go tool <name>` (e.g., `go tool golangci-lint`)
@@ -48,25 +50,48 @@ jobs:
             - All make commands should use `go tool` prefix for tools declared in the tool block
             - Go 1.25.3 is the current stable version (not a typo)
 
-            ## Review Guidelines
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices (using modern Go patterns)
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+            **For Go Code Files:**
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            **BLOCKERS (must be fixed):**
+            - Comments that don't explain WHY (comments should only ever explain _why_ and never _what_ - the code should be self-documenting)
+            - Security vulnerabilities
+            - Tests that test implementation details instead of behavior
 
-            ## Comment Management
-            IMPORTANT: Before leaving a review comment, check if you've already commented on this PR:
-            1. Run `gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.author.login == "claude-code[bot]") | .id'` to find your previous comment ID
-            2. If a previous comment exists, update it with `gh api repos/${{ github.repository }}/issues/comments/{comment_id} -X PATCH -f body="<your review>"`
-            3. If no previous comment exists, create one with `gh pr comment ${{ github.event.pull_request.number }} --body "<your review>"`
+            **Code Quality:**
+            - Go idioms and best practices
+            - Error handling patterns
+            - Security considerations
 
-            This ensures you maintain a single, updated review comment rather than creating multiple comments.
+            **Testing Guidelines:**
+            - Tests should verify application behavior, not implementation details
+            - Tests should be readable and maintainable
+            - Tests should use descriptive names that explain the scenario being tested
+            - Avoid testing internal functions directly - test through public interfaces
+            - Mock external dependencies, not internal code
 
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
+            **Comments Policy:**
+            - Flag ANY comment that explains WHAT the code does as a BLOCKER
+            - Comments should only explain WHY decisions were made
+            - Prefer descriptive variable/function names over explanatory comments
+            - Code should be self-documenting through clear naming
+
+            **For Documentation Files (.md):**
+
+            **Documentation Quality:**
+            - Clarity and completeness of instructions
+            - Accuracy of code examples
+            - Consistency with project architecture and conventions
+            - Security considerations are properly documented
+            - Step-by-step instructions are logical and complete
+            - Verification procedures are adequate
+            - Links and references are correct
+
+            The CI pipeline will run tests, linting, and security scanning automatically.
+            Be constructive and helpful in your feedback.
+
+          # Use sticky comments to reuse same PR comment on each push
+          use_sticky_comment: true
+
+          # Use Sonnet 4.5 for reviews
+          claude_args: '--model claude-sonnet-4-5-20250929'
 
