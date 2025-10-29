@@ -10,10 +10,28 @@ package interfaces
 // The interface provides methods to render templates from an embedded filesystem,
 // write rendered templates to files, and validate template syntax.
 //
+// Data Parameter Design:
+//
+// The data parameter uses 'any' instead of a specific type (like TemplateData)
+// to provide flexibility for future template rendering scenarios. While the
+// current implementation exclusively uses template.TemplateData, the 'any' type
+// allows the interface to support:
+//   - Future data structure variations without interface changes
+//   - Test scenarios with mock or simplified data structures
+//   - Custom data types for specialized template rendering use cases
+//
+// Implementations are expected to document their supported data types.
+// The standard implementation (template.NewRenderer) accepts template.TemplateData.
+//
 // Example usage:
 //
 //	renderer := template.NewRenderer(templateFS)
-//	content, err := renderer.Render("go.mod.tmpl", templateData)
+//	data := template.TemplateData{
+//	    ModuleName:  "github.com/user/myapp",
+//	    ProjectName: "myapp",
+//	    GoVersion:   "1.25",
+//	}
+//	content, err := renderer.Render("go.mod.tmpl", data)
 //	if err != nil {
 //	    return fmt.Errorf("failed to render template: %w", err)
 //	}
@@ -22,12 +40,22 @@ package interfaces
 type TemplateRenderer interface {
 	// Render renders a template by name with the given data and returns the result as a string.
 	// The template name should include the .tmpl extension (e.g., "go.mod.tmpl").
+	//
+	// The data parameter accepts any type, but callers should use template.TemplateData
+	// for standard project generation. See interface documentation for details on the
+	// design rationale for using 'any'.
+	//
 	// Returns an error if the template does not exist or cannot be parsed/executed.
 	Render(name string, data any) (string, error)
 
 	// RenderToFile renders a template and writes it to the specified output path.
 	// The output path should NOT include the .tmpl extension (e.g., "project/go.mod").
 	// Parent directories will be created automatically if they don't exist.
+	//
+	// The data parameter accepts any type, but callers should use template.TemplateData
+	// for standard project generation. See interface documentation for details on the
+	// design rationale for using 'any'.
+	//
 	// Returns an error if rendering fails or the file cannot be written.
 	RenderToFile(templateName string, data any, outputPath string) error
 
