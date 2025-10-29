@@ -1,35 +1,39 @@
 package renderer
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+)
 
 func TestSectionStruct(t *testing.T) {
 	tests := []struct {
 		name      string
-		section   Section
+		section   interfaces.Section
 		wantTitle string
 		wantBody  string
 	}{
 		{
 			name:      "zero value",
-			section:   Section{},
+			section:   interfaces.Section{},
 			wantTitle: "",
 			wantBody:  "",
 		},
 		{
 			name:      "with title only",
-			section:   Section{Title: "Test Title"},
+			section:   interfaces.Section{Title: "Test Title"},
 			wantTitle: "Test Title",
 			wantBody:  "",
 		},
 		{
 			name:      "with body only",
-			section:   Section{Body: "Test body content"},
+			section:   interfaces.Section{Body: "Test body content"},
 			wantTitle: "",
 			wantBody:  "Test body content",
 		},
 		{
 			name:      "with title and body",
-			section:   Section{Title: "Overview", Body: "This is a description"},
+			section:   interfaces.Section{Title: "Overview", Body: "This is a description"},
 			wantTitle: "Overview",
 			wantBody:  "This is a description",
 		},
@@ -50,25 +54,25 @@ func TestSectionStruct(t *testing.T) {
 func TestTableStruct(t *testing.T) {
 	tests := []struct {
 		name        string
-		table       Table
+		table       interfaces.Table
 		wantHeaders []string
 		wantRows    [][]string
 	}{
 		{
 			name:        "zero value",
-			table:       Table{},
+			table:       interfaces.Table{},
 			wantHeaders: nil,
 			wantRows:    nil,
 		},
 		{
 			name:        "with headers only",
-			table:       Table{Headers: []string{"Name", "Age"}},
+			table:       interfaces.Table{Headers: []string{"Name", "Age"}},
 			wantHeaders: []string{"Name", "Age"},
 			wantRows:    nil,
 		},
 		{
 			name: "with headers and rows",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"Name", "Age", "City"},
 				Rows: [][]string{
 					{"Alice", "30", "NYC"},
@@ -83,7 +87,7 @@ func TestTableStruct(t *testing.T) {
 		},
 		{
 			name: "with empty rows",
-			table: Table{
+			table: interfaces.Table{
 				Headers: []string{"Col1", "Col2"},
 				Rows:    [][]string{},
 			},
@@ -123,37 +127,37 @@ func TestTableStruct(t *testing.T) {
 func TestProgressSpecStruct(t *testing.T) {
 	tests := []struct {
 		name      string
-		spec      ProgressSpec
+		spec      interfaces.ProgressSpec
 		wantLabel string
 		wantTotal int64
 	}{
 		{
 			name:      "zero value",
-			spec:      ProgressSpec{},
+			spec:      interfaces.ProgressSpec{},
 			wantLabel: "",
 			wantTotal: 0,
 		},
 		{
 			name:      "with label only",
-			spec:      ProgressSpec{Label: "Downloading"},
+			spec:      interfaces.ProgressSpec{Label: "Downloading"},
 			wantLabel: "Downloading",
 			wantTotal: 0,
 		},
 		{
 			name:      "with total only",
-			spec:      ProgressSpec{Total: 100},
+			spec:      interfaces.ProgressSpec{Total: 100},
 			wantLabel: "",
 			wantTotal: 100,
 		},
 		{
 			name:      "with label and total",
-			spec:      ProgressSpec{Label: "Processing files", Total: 42},
+			spec:      interfaces.ProgressSpec{Label: "Processing files", Total: 42},
 			wantLabel: "Processing files",
 			wantTotal: 42,
 		},
 		{
 			name:      "with large total",
-			spec:      ProgressSpec{Label: "Large operation", Total: 1000000},
+			spec:      interfaces.ProgressSpec{Label: "Large operation", Total: 1000000},
 			wantLabel: "Large operation",
 			wantTotal: 1000000,
 		},
@@ -173,11 +177,11 @@ func TestProgressSpecStruct(t *testing.T) {
 
 type mockRenderer struct{}
 
-func (m *mockRenderer) Title(s string)                       {}
-func (m *mockRenderer) Section(sec Section)                  {}
-func (m *mockRenderer) Table(t Table)                        {}
-func (m *mockRenderer) Progress(spec ProgressSpec) Progress  { return &mockProgress{} }
-func (m *mockRenderer) Flush() error                         { return nil }
+func (m *mockRenderer) Title(s string)                                             {}
+func (m *mockRenderer) Section(sec interfaces.Section)                             {}
+func (m *mockRenderer) Table(t interfaces.Table)                                   {}
+func (m *mockRenderer) Progress(spec interfaces.ProgressSpec) interfaces.Progress  { return &mockProgress{} }
+func (m *mockRenderer) Flush() error                                               { return nil }
 
 type mockProgress struct{}
 
@@ -185,11 +189,11 @@ func (m *mockProgress) Increment(n int64) {}
 func (m *mockProgress) Done()              {}
 
 func TestRendererInterface(t *testing.T) {
-	var _ Renderer = (*mockRenderer)(nil)
+	var _ interfaces.Renderer = (*mockRenderer)(nil)
 }
 
 func TestProgressInterface(t *testing.T) {
-	var _ Progress = (*mockProgress)(nil)
+	var _ interfaces.Progress = (*mockProgress)(nil)
 }
 
 func TestRendererInterfaceMethods(t *testing.T) {
@@ -200,15 +204,15 @@ func TestRendererInterfaceMethods(t *testing.T) {
 	})
 
 	t.Run("Section method exists", func(t *testing.T) {
-		r.Section(Section{Title: "test", Body: "body"})
+		r.Section(interfaces.Section{Title: "test", Body: "body"})
 	})
 
 	t.Run("Table method exists", func(t *testing.T) {
-		r.Table(Table{Headers: []string{"h1"}, Rows: [][]string{{"r1"}}})
+		r.Table(interfaces.Table{Headers: []string{"h1"}, Rows: [][]string{{"r1"}}})
 	})
 
 	t.Run("Progress method exists and returns Progress interface", func(t *testing.T) {
-		p := r.Progress(ProgressSpec{Label: "test", Total: 100})
+		p := r.Progress(interfaces.ProgressSpec{Label: "test", Total: 100})
 		if p == nil {
 			t.Error("Progress() returned nil")
 		}

@@ -3,15 +3,15 @@ package commands
 import (
 	"fmt"
 
-	"github.com/anomalousventures/tracks/internal/cli/renderer"
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/spf13/cobra"
 )
 
 // RendererFactory creates a renderer from a cobra command.
-type RendererFactory func(*cobra.Command) renderer.Renderer
+type RendererFactory func(*cobra.Command) interfaces.Renderer
 
 // RendererFlusher flushes a renderer and handles errors.
-type RendererFlusher func(*cobra.Command, renderer.Renderer)
+type RendererFlusher func(*cobra.Command, interfaces.Renderer)
 
 // NewCommand represents the 'new' command for creating Tracks applications.
 type NewCommand struct {
@@ -64,7 +64,7 @@ func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
 	r := c.newRenderer(cmd)
 
 	r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
-	r.Section(renderer.Section{
+	r.Section(interfaces.Section{
 		Body: "(Full implementation coming soon)",
 	})
 

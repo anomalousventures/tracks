@@ -8,7 +8,12 @@ package renderer
 import (
 	"encoding/json"
 	"io"
+
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 )
+
+// Ensure JSONRenderer implements interfaces.Renderer at compile time.
+var _ interfaces.Renderer = (*JSONRenderer)(nil)
 
 // JSONRenderer implements the Renderer interface for machine-readable
 // JSON output.
@@ -52,9 +57,9 @@ type JSONRenderer struct {
 
 // jsonOutput holds all accumulated data for JSON output.
 type jsonOutput struct {
-	Title    string    `json:"title,omitempty"`
-	Sections []Section `json:"sections,omitempty"`
-	Tables   []Table   `json:"tables,omitempty"`
+	Title    string               `json:"title,omitempty"`
+	Sections []interfaces.Section `json:"sections,omitempty"`
+	Tables   []interfaces.Table   `json:"tables,omitempty"`
 }
 
 // NewJSONRenderer creates a new JSONRenderer that writes to the
@@ -92,11 +97,11 @@ func (r *JSONRenderer) Title(s string) {
 //
 // Example:
 //
-//	renderer.Section(Section{
+//	renderer.Section(interfaces.Section{
 //	    Title: "Database Configuration",
 //	    Body:  "Using LibSQL with migrations enabled",
 //	})
-func (r *JSONRenderer) Section(sec Section) {
+func (r *JSONRenderer) Section(sec interfaces.Section) {
 	r.data.Sections = append(r.data.Sections, sec)
 }
 
@@ -107,14 +112,14 @@ func (r *JSONRenderer) Section(sec Section) {
 //
 // Example:
 //
-//	renderer.Table(Table{
+//	renderer.Table(interfaces.Table{
 //	    Headers: []string{"File", "Status", "Lines"},
 //	    Rows: [][]string{
 //	        {"user.go", "created", "42"},
 //	        {"user_test.go", "created", "128"},
 //	    },
 //	})
-func (r *JSONRenderer) Table(t Table) {
+func (r *JSONRenderer) Table(t interfaces.Table) {
 	r.data.Tables = append(r.data.Tables, t)
 }
 
@@ -126,10 +131,10 @@ func (r *JSONRenderer) Table(t Table) {
 //
 // Example:
 //
-//	progress := renderer.Progress(ProgressSpec{Label: "Downloading", Total: 100})
+//	progress := renderer.Progress(interfaces.ProgressSpec{Label: "Downloading", Total: 100})
 //	progress.Increment(50)  // No output
 //	progress.Done()         // No output
-func (r *JSONRenderer) Progress(spec ProgressSpec) Progress {
+func (r *JSONRenderer) Progress(spec interfaces.ProgressSpec) interfaces.Progress {
 	return &jsonProgress{}
 }
 
