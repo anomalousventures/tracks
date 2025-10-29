@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/anomalousventures/tracks/internal/cli/commands"
 	"github.com/anomalousventures/tracks/internal/cli/renderer"
 	"github.com/anomalousventures/tracks/internal/cli/ui"
 	"github.com/spf13/cobra"
@@ -87,7 +88,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 				Body: "Interactive TUI mode coming in Phase 4. Use --help for available commands.",
 			})
 
-			flushRenderer(cmd, r)
+			FlushRenderer(cmd, r)
 		},
 	}
 
@@ -98,7 +99,9 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode (suppress non-error output)")
 
 	rootCmd.AddCommand(versionCmd(build))
-	rootCmd.AddCommand(newCmd())
+
+	newCmd := commands.NewNewCommand(NewRendererFromCommand, FlushRenderer)
+	rootCmd.AddCommand(newCmd.Command())
 
 	return rootCmd
 }
@@ -197,8 +200,8 @@ func NewRendererFromCommand(cmd *cobra.Command) renderer.Renderer {
 	return renderer.NewConsoleRenderer(cmd.OutOrStdout())
 }
 
-// flushRenderer flushes the renderer and handles errors by writing to stderr and exiting.
-func flushRenderer(cmd *cobra.Command, r renderer.Renderer) {
+// FlushRenderer flushes the renderer and handles errors by writing to stderr and exiting.
+func FlushRenderer(cmd *cobra.Command, r renderer.Renderer) {
 	if err := r.Flush(); err != nil {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
 		os.Exit(1)
@@ -218,51 +221,11 @@ func versionCmd(build BuildInfo) *cobra.Command {
 				Body: fmt.Sprintf("Commit: %s\nBuilt: %s", build.Commit, build.Date),
 			})
 
-			flushRenderer(cmd, r)
+			FlushRenderer(cmd, r)
 		},
 	}
 }
 
-func newCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "new [project-name]",
-		Short: "Create a new Tracks application",
-		Long: `Create a new Tracks application with the specified project name.
-
-This command generates a complete Go web application with:
-  - Proper project structure following Go best practices
-  - Type-safe templates using templ
-  - Type-safe SQL queries using SQLC
-  - Built-in authentication and authorization (RBAC)
-  - Development tooling (Makefile, hot-reload, linting)
-  - Docker and CI/CD configurations
-
-The generated application is production-ready and follows idiomatic Go patterns.`,
-		Example: `  # Create a new application with default settings
-  tracks new myapp
-
-  # Future: Specify database driver
-  tracks new myapp --db postgres
-
-  # Future: Custom Go module path
-  tracks new myapp --module github.com/myorg/myapp
-
-  # Future: Skip git initialization
-  tracks new myapp --no-git`,
-		Args: cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			projectName := args[0]
-			r := NewRendererFromCommand(cmd)
-
-			r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
-			r.Section(renderer.Section{
-				Body: "(Full implementation coming soon)",
-			})
-
-			flushRenderer(cmd, r)
-		},
-	}
-}
 
 func (b BuildInfo) getVersion() string {
 	if b.Version != "dev" {
