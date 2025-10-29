@@ -37,8 +37,49 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           # Tool permissions for autonomous development
+          # Formatted as multi-line for maintainability and security review
           claude_args: |
-            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Bash(make:*)" "Bash(npm:*)" "Bash(npx:*)" "Bash(pnpm:*)" "Bash(node:*)" "Bash(go:*)" "Bash(curl:*)" "Bash(jq:*)" "Bash(grep:*)" "Bash(sed:*)" "Bash(awk:*)" "Bash(find:*)" "Bash(cat:*)" "Bash(ls:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(wc:*)" "Bash(sort:*)" "Bash(cut:*)" "Bash(mkdir:*)" "Bash(mv:*)" "Bash(cp:*)" "Bash(rm:*)" "Bash(tar:*)" "Bash(zip:*)" "Bash(unzip:*)" "Edit" "Read" "Write" "Glob" "Grep"
+            --allowedTools
+              "Bash(gh pr create:*)"
+              "Bash(gh pr view:*)"
+              "Bash(gh pr list:*)"
+              "Bash(gh pr comment:*)"
+              "Bash(gh pr diff:*)"
+              "Bash(gh pr review:*)"
+              "Bash(gh issue view:*)"
+              "Bash(gh issue list:*)"
+              "Bash(gh issue comment:*)"
+              "Bash(gh api:*)"
+              "Bash(gh search:*)"
+              "Bash(gh label:*)"
+              "Bash(gh release:*)"
+              "Bash(git:*)"
+              "Bash(make:*)"
+              "Bash(go:*)"
+              "Bash(npm:*)"
+              "Bash(npx:*)"
+              "Bash(pnpm:*)"
+              "Bash(node:*)"
+              "Bash(sed:*)"
+              "Bash(awk:*)"
+              "Bash(wc:*)"
+              "Bash(sort:*)"
+              "Bash(cut:*)"
+              "Bash(ls:*)"
+              "Bash(mkdir:*)"
+              "Bash(mv:*)"
+              "Bash(cp:*)"
+              "Bash(rm:*)"
+              "Bash(curl:*)"
+              "Bash(jq:*)"
+              "Bash(tar:*)"
+              "Bash(zip:*)"
+              "Bash(unzip:*)"
+              "Edit"
+              "Read"
+              "Write"
+              "Glob"
+              "Grep"
 
           # GitHub Actions permissions (not tool permissions)
           additional_permissions: |
