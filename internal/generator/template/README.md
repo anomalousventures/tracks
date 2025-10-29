@@ -414,5 +414,6 @@ go doc github.com/anomalousventures/tracks/internal/generator/interfaces.Templat
 ```
 
 Or visit:
+
 - https://pkg.go.dev/github.com/anomalousventures/tracks/internal/generator/template
 - https://pkg.go.dev/github.com/anomalousventures/tracks/internal/generator/interfaces
