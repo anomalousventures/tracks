@@ -1,27 +1,39 @@
 <!--
-PR Title must use Conventional Commits format (for squash merge):
-  feat: add new feature
-  fix: fix bug
-  chore: maintenance task
-  docs: documentation only
-  refactor: code refactoring
-  test: add tests
-  ci: CI/CD changes
+PR Title must use Conventional Commits format (becomes squash merge commit):
+  feat(scope): add new feature
+  fix(scope): fix bug
+  refactor(scope): code refactoring
+  docs(scope): documentation only
+  test(scope): add tests
+  ci(scope): CI/CD changes
+  chore(scope): maintenance task
+
+Write PR descriptions naturally - avoid AI slop and excessive formality.
 -->
 
-## What
+## Summary
 
-Brief description of what this PR does.
+Brief description of what this PR does and why.
 
-## Why
+## Changes
 
-Why is this change needed?
+- List the key changes made
+- Focus on what was added/modified/removed
+- Keep it concise but informative
 
 ## Testing
 
-- [ ] Tests pass locally
-- [ ] Linting passes (`make lint`)
+**Validation (REQUIRED before creating PR):**
+- [ ] `make generate-mocks` - Mocks generated successfully
+- [ ] `make lint` - All linters pass
+- [ ] `make test` - All tests pass
+
+**Test Coverage:**
+- Describe what tests were added/modified
+- Note any test patterns or edge cases covered
 
 ## Notes
 
-Any additional context or notes for reviewers.
+Any additional context, future work, or reviewer guidance.
+
+**Closes #ISSUE_NUMBER** (if applicable)
