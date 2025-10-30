@@ -31,6 +31,11 @@ func TestCommandsCanImportInterfaces(t *testing.T) {
 
 // TestGeneratorPackageDoesNotImportCLI verifies that the generator package
 // does not import internal/cli, ensuring the fix from Issue #161 is maintained.
+//
+// This is a preventive test that catches the import BEFORE an import cycle forms.
+// While TestNoImportCycles detects complete cycles, this test fails immediately
+// if someone re-introduces the problematic import pattern from Issue #161, providing
+// specific guidance before CLI commands import generator in Phase 2+.
 func TestGeneratorPackageDoesNotImportCLI(t *testing.T) {
 	cmd := exec.Command("go", "list", "-f", "{{.Imports}}",
 		"github.com/anomalousventures/tracks/internal/generator")
