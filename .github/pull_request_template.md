@@ -24,11 +24,13 @@ Brief description of what this PR does and why.
 ## Testing
 
 **Validation (REQUIRED before creating PR):**
+
 - [ ] `make generate-mocks` - Mocks generated successfully
 - [ ] `make lint` - All linters pass
 - [ ] `make test` - All tests pass
 
 **Test Coverage:**
+
 - Describe what tests were added/modified
 - Note any test patterns or edge cases covered
 
