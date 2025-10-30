@@ -11,6 +11,7 @@ import (
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/anomalousventures/tracks/internal/cli/renderer"
 	"github.com/anomalousventures/tracks/internal/cli/ui"
+	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/anomalousventures/tracks/internal/validation"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -33,7 +34,6 @@ type Config struct {
 	LogLevel    string
 }
 
-// viperKey is used as a type-safe key for storing Viper in context.
 type viperKey struct{}
 
 // WithViper returns a new context with the provided Viper instance.
@@ -53,7 +53,7 @@ func ViperFromContext(ctx context.Context) *viper.Viper {
 
 // NewRootCmd creates a new root command with all flags and subcommands configured.
 // This returns a fresh command instance to avoid cross-test state coupling.
-func NewRootCmd(build BuildInfo) *cobra.Command {
+func NewRootCmd(build BuildInfo) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:   "tracks",
 		Short: "A productive web framework for Go",
@@ -103,19 +103,19 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	// Configure viper to read flags and environment variables
 	v := viper.New()
 	if err := v.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json")); err != nil {
-		panic(fmt.Sprintf("failed to bind json flag: %v", err))
+		return nil, fmt.Errorf("failed to bind json flag: %w", err)
 	}
 	if err := v.BindPFlag("no-color", rootCmd.PersistentFlags().Lookup("no-color")); err != nil {
-		panic(fmt.Sprintf("failed to bind no-color flag: %v", err))
+		return nil, fmt.Errorf("failed to bind no-color flag: %w", err)
 	}
 	if err := v.BindPFlag("interactive", rootCmd.PersistentFlags().Lookup("interactive")); err != nil {
-		panic(fmt.Sprintf("failed to bind interactive flag: %v", err))
+		return nil, fmt.Errorf("failed to bind interactive flag: %w", err)
 	}
 	if err := v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")); err != nil {
-		panic(fmt.Sprintf("failed to bind verbose flag: %v", err))
+		return nil, fmt.Errorf("failed to bind verbose flag: %w", err)
 	}
 	if err := v.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet")); err != nil {
-		panic(fmt.Sprintf("failed to bind quiet flag: %v", err))
+		return nil, fmt.Errorf("failed to bind quiet flag: %w", err)
 	}
 
 	v.SetEnvPrefix("TRACKS")
@@ -143,8 +143,8 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	validator := validation.NewValidator(logger)
 
 	// Generator will be implemented in Phase 3+
-	// Using nil placeholder - current run() method doesn't call it yet
-	var generator interfaces.ProjectGenerator
+	// Using noop implementation that returns "not yet implemented" errors
+	projectGenerator := generator.NewNoopGenerator()
 
 	// Make viper available through context (ADR-003)
 	ctx := WithViper(context.Background(), v)
@@ -153,10 +153,10 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	versionCmd := commands.NewVersionCommand(build, NewRendererFromCommand, FlushRenderer)
 	rootCmd.AddCommand(versionCmd.Command())
 
-	newCmd := commands.NewNewCommand(validator, generator, NewRendererFromCommand, FlushRenderer)
+	newCmd := commands.NewNewCommand(validator, projectGenerator, NewRendererFromCommand, FlushRenderer)
 	rootCmd.AddCommand(newCmd.Command())
 
-	return rootCmd
+	return rootCmd, nil
 }
 
 // Execute initializes and runs the root command with build information.
@@ -170,7 +170,13 @@ func Execute(versionStr, commitStr, dateStr string) error {
 		Date:    dateStr,
 	}
 
-	rootCmd := NewRootCmd(build)
+	rootCmd, err := NewRootCmd(build)
+	if err != nil {
+		// Log technical error to stderr
+		fmt.Fprintf(os.Stderr, "Error initializing CLI: %v\n", err)
+		// Return user-friendly error
+		return fmt.Errorf("failed to initialize tracks CLI - please report this issue at https://github.com/anomalousventures/tracks/issues")
+	}
 	return rootCmd.Execute()
 }
 

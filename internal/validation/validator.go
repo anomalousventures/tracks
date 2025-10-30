@@ -23,14 +23,12 @@ var (
 	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
 )
 
-// validatorImpl implements the interfaces.Validator interface.
 type validatorImpl struct {
 	validate *validator.Validate
 	logger   zerolog.Logger
 }
 
-// NewValidator creates a new Validator with custom validation rules.
-// The logger is used for non-critical warnings (e.g., cleanup failures).
+// NewValidator accepts a logger for non-critical warnings (e.g., cleanup failures).
 func NewValidator(logger zerolog.Logger) interfaces.Validator {
 	v := validator.New()
 

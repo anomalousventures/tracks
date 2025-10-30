@@ -4,7 +4,7 @@ package interfaces
 //
 // This interface is owned by the CLI commands package, following ADR-002:
 // interfaces are defined by consumers, not providers. The validation
-// implementation lives in internal/generator/validator_impl.go.
+// implementation lives in internal/validation/validator.go.
 //
 // This pattern prevents import cycles and enables proper dependency inversion:
 // CLI (high-level) defines interface, validation (low-level) implements it.
@@ -12,7 +12,7 @@ package interfaces
 // Example usage:
 //
 //	logger := zerolog.New(os.Stderr).Level(zerolog.InfoLevel)
-//	validator := generator.NewValidator(logger)
+//	validator := validation.NewValidator(logger)
 //	if err := validator.ValidateProjectName("my-app"); err != nil {
 //	    return err
 //	}

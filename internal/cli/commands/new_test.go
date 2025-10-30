@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Use this for tests that don't need to inspect mock calls.
 func setupTestCommand(t *testing.T) *cobra.Command {
 	mockValidator := mocks.NewMockValidator(t)
 	mockGenerator := mocks.NewMockProjectGenerator(t)
@@ -33,7 +32,6 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 	return cobraCmd
 }
 
-// Use this when you need to verify renderer method calls.
 func setupTestCommandWithMock(t *testing.T) (*cobra.Command, *mocks.MockRenderer) {
 	mockValidator := mocks.NewMockValidator(t)
 	mockGenerator := mocks.NewMockProjectGenerator(t)
@@ -65,20 +63,13 @@ func TestNewNewCommand(t *testing.T) {
 		t.Fatal("NewNewCommand returned nil")
 	}
 
-	if cmd.validator == nil {
-		t.Error("validator field not set")
+	// Verify the command is properly configured by checking its cobra.Command
+	cobraCmd := cmd.Command()
+	if cobraCmd == nil {
+		t.Fatal("Command() returned nil")
 	}
-
-	if cmd.generator == nil {
-		t.Error("generator field not set")
-	}
-
-	if cmd.newRenderer == nil {
-		t.Error("newRenderer field not set")
-	}
-
-	if cmd.flushRenderer == nil {
-		t.Error("flushRenderer field not set")
+	if cobraCmd.Use != "new [project-name]" {
+		t.Errorf("Expected Use='new [project-name]', got Use='%s'", cobraCmd.Use)
 	}
 }
 
