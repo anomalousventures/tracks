@@ -26,17 +26,6 @@ import "context"
 //	    return err
 //	}
 type ProjectGenerator interface {
-	// Generate creates a new project with the given configuration.
-	// It creates the directory structure, renders templates, and optionally
-	// initializes a git repository. Returns an error if validation fails
-	// or if any file system operations fail.
-	//
-	// The cfg parameter should be a generator.ProjectConfig value.
 	Generate(ctx context.Context, cfg any) error
-
-	// Validate checks if the configuration is valid without creating any files.
-	// This allows callers to check for errors before attempting generation.
-	//
-	// The cfg parameter should be a generator.ProjectConfig value.
 	Validate(cfg any) error
 }
