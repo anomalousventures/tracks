@@ -1,15 +1,15 @@
 package generator
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/anomalousventures/tracks/internal/cli"
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -22,13 +22,15 @@ var (
 	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
 )
 
-// validatorImpl implements the Validator interface using go-playground/validator.
+// validatorImpl implements the interfaces.Validator interface.
 type validatorImpl struct {
 	validate *validator.Validate
+	logger   zerolog.Logger
 }
 
 // NewValidator creates a new Validator with custom validation rules.
-func NewValidator() Validator {
+// The logger is used for non-critical warnings (e.g., cleanup failures).
+func NewValidator(logger zerolog.Logger) interfaces.Validator {
 	v := validator.New()
 
 	if err := v.RegisterValidation("project_name", func(fl validator.FieldLevel) bool {
@@ -60,7 +62,10 @@ func NewValidator() Validator {
 		panic(fmt.Sprintf("failed to register module_path validator: %v", err))
 	}
 
-	return &validatorImpl{validate: v}
+	return &validatorImpl{
+		validate: v,
+		logger:   logger,
+	}
 }
 
 // ValidateProjectName validates that a project name follows the required format:
@@ -204,8 +209,7 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 	}
 
 	if err := os.Remove(testFile); err != nil {
-		logger := cli.GetLogger(context.Background())
-		logger.Warn().
+		v.logger.Warn().
 			Err(err).
 			Str("path", testFile).
 			Msg("failed to cleanup validation test file")
