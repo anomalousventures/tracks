@@ -13,6 +13,8 @@ import (
 
 // Use this for tests that don't need to inspect mock calls.
 func setupTestCommand(t *testing.T) *cobra.Command {
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Return().Maybe()
 	mockRenderer.On("Section", mock.Anything).Return().Maybe()
@@ -24,7 +26,7 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 	flusher := func(*cobra.Command, interfaces.Renderer) {
 		mockRenderer.Flush()
 	}
-	cmd := NewNewCommand(factory, flusher)
+	cmd := NewNewCommand(mockValidator, mockGenerator, factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -33,13 +35,15 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 
 // Use this when you need to verify renderer method calls.
 func setupTestCommandWithMock(t *testing.T) (*cobra.Command, *mocks.MockRenderer) {
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
 	mockRenderer := mocks.NewMockRenderer(t)
 
 	factory := func(*cobra.Command) interfaces.Renderer {
 		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
-	cmd := NewNewCommand(factory, flusher)
+	cmd := NewNewCommand(mockValidator, mockGenerator, factory, flusher)
 	cobraCmd := cmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -53,10 +57,20 @@ func TestNewNewCommand(t *testing.T) {
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
-	cmd := NewNewCommand(rendererFactory, flusher)
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
+	cmd := NewNewCommand(mockValidator, mockGenerator, rendererFactory, flusher)
 
 	if cmd == nil {
 		t.Fatal("NewNewCommand returned nil")
+	}
+
+	if cmd.validator == nil {
+		t.Error("validator field not set")
+	}
+
+	if cmd.generator == nil {
+		t.Error("generator field not set")
 	}
 
 	if cmd.newRenderer == nil {
@@ -69,13 +83,15 @@ func TestNewNewCommand(t *testing.T) {
 }
 
 func TestNewCommand_Command(t *testing.T) {
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
 	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return mockRenderer
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
-	newCmd := NewNewCommand(rendererFactory, flusher)
+	newCmd := NewNewCommand(mockValidator, mockGenerator, rendererFactory, flusher)
 	cobraCmd := newCmd.Command()
 
 	if cobraCmd == nil {
@@ -118,6 +134,8 @@ func TestNewCommand_CommandUsage(t *testing.T) {
 }
 
 func TestNewCommand_Run(t *testing.T) {
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", "Creating new Tracks application: myapp").Once()
 	mockRenderer.On("Section", interfaces.Section{Body: "(Full implementation coming soon)"}).Once()
@@ -134,7 +152,7 @@ func TestNewCommand_Run(t *testing.T) {
 		}
 	}
 
-	newCmd := NewNewCommand(rendererFactory, flusher)
+	newCmd := NewNewCommand(mockValidator, mockGenerator, rendererFactory, flusher)
 	cobraCmd := newCmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -188,6 +206,8 @@ func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
 }
 
 func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Once()
 	mockRenderer.On("Section", mock.Anything).Once()
@@ -199,7 +219,7 @@ func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 	}
 	flusher := func(*cobra.Command, interfaces.Renderer) {}
 
-	newCmd := NewNewCommand(rendererFactory, flusher)
+	newCmd := NewNewCommand(mockValidator, mockGenerator, rendererFactory, flusher)
 	cobraCmd := newCmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))
@@ -215,6 +235,8 @@ func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 }
 
 func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
+	mockValidator := mocks.NewMockValidator(t)
+	mockGenerator := mocks.NewMockProjectGenerator(t)
 	mockRenderer := mocks.NewMockRenderer(t)
 	mockRenderer.On("Title", mock.Anything).Once()
 	mockRenderer.On("Section", mock.Anything).Once()
@@ -230,7 +252,7 @@ func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 		capturedRenderer = r
 	}
 
-	newCmd := NewNewCommand(rendererFactory, flusher)
+	newCmd := NewNewCommand(mockValidator, mockGenerator, rendererFactory, flusher)
 	cobraCmd := newCmd.Command()
 	cobraCmd.SetOut(new(bytes.Buffer))
 	cobraCmd.SetErr(new(bytes.Buffer))

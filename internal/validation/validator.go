@@ -1,4 +1,4 @@
-package generator
+package validation
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 )
@@ -69,7 +70,7 @@ func NewValidator(logger zerolog.Logger) interfaces.Validator {
 }
 
 func (v *validatorImpl) ValidateProjectName(name string) error {
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    name,
 		ModulePath:     "placeholder",
 		DatabaseDriver: "go-libsql",
@@ -97,7 +98,7 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 }
 
 func (v *validatorImpl) ValidateModulePath(path string) error {
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    "placeholder",
 		ModulePath:     path,
 		DatabaseDriver: "go-libsql",
@@ -212,7 +213,7 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 }
 
 func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    "placeholder",
 		ModulePath:     "placeholder",
 		DatabaseDriver: driver,
