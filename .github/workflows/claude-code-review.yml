@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
       issues: read
       id-token: write
 
@@ -92,6 +92,8 @@ jobs:
           # Use sticky comments to reuse same PR comment on each push
           use_sticky_comment: true
 
-          # Use Sonnet 4.5 for reviews
-          claude_args: '--model claude-sonnet-4-5-20250929'
+          # Use Sonnet 4.5 for reviews and allow necessary bash commands
+          claude_args: |
+            --model claude-sonnet-4-5-20250929
+            --allowedTools "Bash(git *),Bash(gh *),Bash(env *),Bash(grep *),Bash(sed *),Bash(find *),Bash(cat *),Bash(head *),Bash(tail *),Bash(awk *),Bash(jq *),Bash(ls *),Bash(make *)"
 
