@@ -1,15 +1,15 @@
 package generator
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/anomalousventures/tracks/internal/cli"
+	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -22,13 +22,15 @@ var (
 	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
 )
 
-// validatorImpl implements the Validator interface using go-playground/validator.
+// validatorImpl implements the interfaces.Validator interface.
 type validatorImpl struct {
 	validate *validator.Validate
+	logger   zerolog.Logger
 }
 
 // NewValidator creates a new Validator with custom validation rules.
-func NewValidator() Validator {
+// The logger is used for non-critical warnings (e.g., cleanup failures).
+func NewValidator(logger zerolog.Logger) interfaces.Validator {
 	v := validator.New()
 
 	if err := v.RegisterValidation("project_name", func(fl validator.FieldLevel) bool {
@@ -60,11 +62,12 @@ func NewValidator() Validator {
 		panic(fmt.Sprintf("failed to register module_path validator: %v", err))
 	}
 
-	return &validatorImpl{validate: v}
+	return &validatorImpl{
+		validate: v,
+		logger:   logger,
+	}
 }
 
-// ValidateProjectName validates that a project name follows the required format:
-// lowercase alphanumeric with hyphens and underscores, max 100 characters.
 func (v *validatorImpl) ValidateProjectName(name string) error {
 	cfg := ProjectConfig{
 		ProjectName:    name,
@@ -93,8 +96,6 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 	return nil
 }
 
-// ValidateModulePath validates that a module path is a valid Go import path.
-// Must contain domain and path, cannot start/end with slash, max 300 characters.
 func (v *validatorImpl) ValidateModulePath(path string) error {
 	cfg := ProjectConfig{
 		ProjectName:    "placeholder",
@@ -147,9 +148,6 @@ func (v *validatorImpl) ValidateModulePath(path string) error {
 	return nil
 }
 
-// ValidateDirectory checks if the target directory is valid for project creation.
-// The directory must either not exist, or exist and be empty. The parent directory
-// must exist and be writable.
 func (v *validatorImpl) ValidateDirectory(path string) error {
 	info, err := os.Stat(path)
 	if err == nil {
@@ -204,8 +202,7 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 	}
 
 	if err := os.Remove(testFile); err != nil {
-		logger := cli.GetLogger(context.Background())
-		logger.Warn().
+		v.logger.Warn().
 			Err(err).
 			Str("path", testFile).
 			Msg("failed to cleanup validation test file")
@@ -214,8 +211,6 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 	return nil
 }
 
-// ValidateDatabaseDriver checks if the database driver is supported.
-// Valid drivers: go-libsql, sqlite3, postgres (case-sensitive).
 func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
 	cfg := ProjectConfig{
 		ProjectName:    "placeholder",

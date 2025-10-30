@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/rs/zerolog"
 )
 
 func testStringValidator(t *testing.T, tests []struct {
@@ -35,7 +37,8 @@ func testStringValidator(t *testing.T, tests []struct {
 }
 
 func TestValidateProjectName(t *testing.T) {
-	v := NewValidator()
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	v := NewValidator(logger)
 
 	tests := []struct {
 		name    string
@@ -61,7 +64,8 @@ func TestValidateProjectName(t *testing.T) {
 }
 
 func TestValidateModulePath(t *testing.T) {
-	v := NewValidator()
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	v := NewValidator(logger)
 
 	tests := []struct {
 		name    string
@@ -88,7 +92,8 @@ func TestValidateModulePath(t *testing.T) {
 }
 
 func TestValidateDirectory(t *testing.T) {
-	v := NewValidator()
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	v := NewValidator(logger)
 
 	t.Run("non-existent directory is valid", func(t *testing.T) {
 		tmpDir := t.TempDir()
@@ -166,7 +171,8 @@ func TestValidateDirectory(t *testing.T) {
 }
 
 func TestValidateDatabaseDriver(t *testing.T) {
-	v := NewValidator()
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	v := NewValidator(logger)
 
 	tests := []struct {
 		name    string
@@ -187,12 +193,9 @@ func TestValidateDatabaseDriver(t *testing.T) {
 	testStringValidator(t, tests, v.ValidateDatabaseDriver, "ValidateDatabaseDriver", "database_driver")
 }
 
-func TestValidatorImplementsInterface(t *testing.T) {
-	var _ Validator = NewValidator()
-}
-
 func TestValidationErrorMessages(t *testing.T) {
-	v := NewValidator()
+	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
+	v := NewValidator(logger)
 
 	t.Run("project name error includes helpful message", func(t *testing.T) {
 		err := v.ValidateProjectName("MyApp")

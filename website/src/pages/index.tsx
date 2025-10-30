@@ -12,11 +12,23 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
-        <img
-          src="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo.svg"
-          alt="Tracks Logo"
-          style={{ width: '300px', marginBottom: '2rem' }}
-        />
+        <picture>
+          <source
+            type="image/webp"
+            srcSet="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-256.webp 256w,
+                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.webp 512w"
+            sizes="(max-width: 768px) 256px, 300px"
+          />
+          <img
+            src="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.png"
+            srcSet="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-256.png 256w,
+                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.png 512w"
+            sizes="(max-width: 768px) 256px, 300px"
+            alt="Tracks Logo"
+            style={{ width: '300px', marginBottom: '2rem' }}
+            loading="lazy"
+          />
+        </picture>
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
         <div className={styles.buttons}>

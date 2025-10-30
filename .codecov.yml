@@ -1,0 +1,26 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto           # Maintain current project coverage
+        threshold: 2%          # Allow 2% flexibility for refactoring
+        informational: true    # Display but don't block PRs
+    patch:
+      default:
+        target: 80%            # Require 80% coverage on new code
+        threshold: 5%          # Allow down to 75% (80% - 5%)
+        # Blocks PR if new code coverage < 75%
+
+ignore:
+  - "tests/mocks/**/*"           # Generated test mocks
+  - "**/*_mock.go"               # Any mock files
+  - "**/*.pb.go"                 # Protocol buffer generated files
+  - "**/mock_*.go"               # Mock files with mock_ prefix
+
+comment:
+  layout: "diff, flags, files"
+  behavior: default
+  require_changes: true          # Only comment when coverage changes

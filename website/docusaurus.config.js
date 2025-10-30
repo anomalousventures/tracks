@@ -85,7 +85,7 @@ const config = {
         title: 'Tracks',
         logo: {
           alt: 'Tracks Logo',
-          src: 'https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo.svg',
+          src: 'https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.webp',
         },
         items: [
           {
