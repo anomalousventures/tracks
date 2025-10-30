@@ -68,8 +68,6 @@ func NewValidator(logger zerolog.Logger) interfaces.Validator {
 	}
 }
 
-// ValidateProjectName validates that a project name follows the required format:
-// lowercase alphanumeric with hyphens and underscores, max 100 characters.
 func (v *validatorImpl) ValidateProjectName(name string) error {
 	cfg := ProjectConfig{
 		ProjectName:    name,
@@ -98,8 +96,6 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 	return nil
 }
 
-// ValidateModulePath validates that a module path is a valid Go import path.
-// Must contain domain and path, cannot start/end with slash, max 300 characters.
 func (v *validatorImpl) ValidateModulePath(path string) error {
 	cfg := ProjectConfig{
 		ProjectName:    "placeholder",
@@ -152,9 +148,6 @@ func (v *validatorImpl) ValidateModulePath(path string) error {
 	return nil
 }
 
-// ValidateDirectory checks if the target directory is valid for project creation.
-// The directory must either not exist, or exist and be empty. The parent directory
-// must exist and be writable.
 func (v *validatorImpl) ValidateDirectory(path string) error {
 	info, err := os.Stat(path)
 	if err == nil {
@@ -218,8 +211,6 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 	return nil
 }
 
-// ValidateDatabaseDriver checks if the database driver is supported.
-// Valid drivers: go-libsql, sqlite3, postgres (case-sensitive).
 func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
 	cfg := ProjectConfig{
 		ProjectName:    "placeholder",

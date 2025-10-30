@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/rs/zerolog"
 )
 
@@ -192,11 +191,6 @@ func TestValidateDatabaseDriver(t *testing.T) {
 	}
 
 	testStringValidator(t, tests, v.ValidateDatabaseDriver, "ValidateDatabaseDriver", "database_driver")
-}
-
-func TestValidatorImplementsInterface(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	var _ interfaces.Validator = NewValidator(logger)
 }
 
 func TestValidationErrorMessages(t *testing.T) {
