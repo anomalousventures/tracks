@@ -17,8 +17,13 @@ func newTestBuildInfo() BuildInfo {
 	return BuildInfo{Version: "dev", Commit: "none", Date: "unknown"}
 }
 
-func newTestRootCmd() *cobra.Command {
-	return NewRootCmd(newTestBuildInfo())
+func newTestRootCmd(t *testing.T) *cobra.Command {
+	t.Helper()
+	cmd, err := NewRootCmd(newTestBuildInfo())
+	if err != nil {
+		t.Fatalf("NewRootCmd() failed: %v", err)
+	}
+	return cmd
 }
 
 func findCommand(t *testing.T, rootCmd *cobra.Command, name string) *cobra.Command {
@@ -59,7 +64,10 @@ func TestGlobalFlagsExist(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			build := newTestBuildInfo()
-			rootCmd := NewRootCmd(build)
+			rootCmd, err := NewRootCmd(build)
+			if err != nil {
+				t.Fatalf("NewRootCmd() failed: %v", err)
+			}
 			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			if flag == nil {
 				t.Errorf("flag --%s does not exist", tt.flagName)
@@ -83,7 +91,10 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			build := newTestBuildInfo()
-			rootCmd := NewRootCmd(build)
+			rootCmd, err := NewRootCmd(build)
+			if err != nil {
+				t.Fatalf("NewRootCmd() failed: %v", err)
+			}
 			persistentFlag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			localFlag := rootCmd.Flags().Lookup(tt.flagName)
 
@@ -98,7 +109,7 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 }
 
 func TestGlobalFlagsDefaultValues(t *testing.T) {
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	v := viper.New()
 
 	if os.Getenv("TRACKS_LOG_LEVEL") == "" {
@@ -266,7 +277,10 @@ func TestGlobalFlagsHelpText(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			build := newTestBuildInfo()
-			rootCmd := NewRootCmd(build)
+			rootCmd, err := NewRootCmd(build)
+			if err != nil {
+				t.Fatalf("NewRootCmd() failed: %v", err)
+			}
 			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			if flag == nil {
 				t.Fatalf("flag --%s not found", tt.flagName)
@@ -306,7 +320,10 @@ func TestFlagDescriptionsAreHelpful(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			build := newTestBuildInfo()
-			rootCmd := NewRootCmd(build)
+			rootCmd, err := NewRootCmd(build)
+			if err != nil {
+				t.Fatalf("NewRootCmd() failed: %v", err)
+			}
 			flag := rootCmd.PersistentFlags().Lookup(tt.flagName)
 			if flag == nil {
 				t.Fatalf("flag --%s not found", tt.flagName)
@@ -324,7 +341,10 @@ func TestVersionCommand(t *testing.T) {
 	var buf bytes.Buffer
 
 	build := BuildInfo{Version: "v1.0.0", Commit: "abc123", Date: "2025-10-19"}
-	rootCmd := NewRootCmd(build)
+	rootCmd, err := NewRootCmd(build)
+	if err != nil {
+		t.Fatalf("NewRootCmd() failed: %v", err)
+	}
 	rootCmd.SetOut(&buf)
 
 	v := viper.New()
@@ -344,7 +364,7 @@ func TestVersionCommand(t *testing.T) {
 func TestNewCommand(t *testing.T) {
 	var buf bytes.Buffer
 
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	rootCmd.SetOut(&buf)
 
 	v := viper.New()
@@ -429,7 +449,7 @@ func TestGetVersion(t *testing.T) {
 }
 
 func TestRootCommandUsage(t *testing.T) {
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 
 	use := rootCmd.Use
 	if use != "tracks" {
@@ -450,7 +470,7 @@ func TestRootCommandUsage(t *testing.T) {
 }
 
 func TestRootCommandExamples(t *testing.T) {
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	examples := rootCmd.Example
 
 	tests := []struct {
@@ -473,7 +493,7 @@ func TestRootCommandExamples(t *testing.T) {
 }
 
 func TestCommandDescriptionsAreDetailed(t *testing.T) {
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 
 	tests := []struct {
 		name         string
@@ -516,7 +536,10 @@ func TestVersionCommandDetails(t *testing.T) {
 	var buf bytes.Buffer
 
 	build := BuildInfo{Version: expectedVersion, Commit: expectedCommit, Date: expectedDate}
-	rootCmd := NewRootCmd(build)
+	rootCmd, err := NewRootCmd(build)
+	if err != nil {
+		t.Fatalf("NewRootCmd() failed: %v", err)
+	}
 	rootCmd.SetOut(&buf)
 
 	v := viper.New()
@@ -542,7 +565,7 @@ func TestVersionCommandDetails(t *testing.T) {
 func TestNewCommandMissingArg(t *testing.T) {
 	var buf bytes.Buffer
 
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	rootCmd.SetOut(&buf)
 	rootCmd.SetErr(&buf)
 
@@ -559,7 +582,7 @@ func TestNewCommandMissingArg(t *testing.T) {
 func TestNewCommandWithFlags(t *testing.T) {
 	var buf bytes.Buffer
 
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	rootCmd.SetOut(&buf)
 
 	v := viper.New()
@@ -585,7 +608,7 @@ func TestNewCommandWithFlags(t *testing.T) {
 }
 
 func TestConfigStoredInContext(t *testing.T) {
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 
 	v := viper.New()
 	if err := v.BindPFlag("json", rootCmd.PersistentFlags().Lookup("json")); err != nil {
@@ -667,7 +690,7 @@ func TestGetViper(t *testing.T) {
 func TestRootCommandWithoutArgs(t *testing.T) {
 	var buf bytes.Buffer
 
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	rootCmd.SetOut(&buf)
 
 	v := viper.New()
@@ -688,7 +711,7 @@ func TestRootCommandWithoutArgs(t *testing.T) {
 func TestRootCommandHelpStillWorks(t *testing.T) {
 	var buf bytes.Buffer
 
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	rootCmd.SetOut(&buf)
 
 	v := viper.New()
@@ -753,7 +776,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	t.Run("NO_COLOR with empty value sets no-color flag", func(t *testing.T) {
 		t.Setenv("NO_COLOR", "")
 
-		rootCmd := newTestRootCmd()
+		rootCmd := newTestRootCmd(t)
 		v := setupViperWithNoColor(t, rootCmd)
 		ctx := WithViper(context.Background(), v)
 		rootCmd.SetContext(ctx)
@@ -767,7 +790,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	t.Run("flags override NO_COLOR environment variable", func(t *testing.T) {
 		t.Setenv("NO_COLOR", "1")
 
-		rootCmd := newTestRootCmd()
+		rootCmd := newTestRootCmd(t)
 		v := setupViperWithNoColor(t, rootCmd)
 		ctx := WithViper(context.Background(), v)
 		rootCmd.SetArgs([]string{"--no-color=false"})
@@ -819,7 +842,10 @@ func TestVerboseAndQuietShorthandFlags(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			build := newTestBuildInfo()
-			rootCmd := NewRootCmd(build)
+			rootCmd, err := NewRootCmd(build)
+			if err != nil {
+				t.Fatalf("NewRootCmd() failed: %v", err)
+			}
 			rootCmd.SetOut(io.Discard)
 
 			v := viper.New()
@@ -849,7 +875,7 @@ func TestVerboseAndQuietShorthandFlags(t *testing.T) {
 }
 
 func TestVerboseAndQuietMutuallyExclusive(t *testing.T) {
-	rootCmd := newTestRootCmd()
+	rootCmd := newTestRootCmd(t)
 	rootCmd.SetOut(io.Discard)
 	rootCmd.SetErr(io.Discard)
 
@@ -924,7 +950,10 @@ func TestTracksLogLevelEnvironmentVariable(t *testing.T) {
 			}
 
 			build := newTestBuildInfo()
-			rootCmd := NewRootCmd(build)
+			rootCmd, err := NewRootCmd(build)
+			if err != nil {
+				t.Fatalf("NewRootCmd() failed: %v", err)
+			}
 			rootCmd.SetOut(io.Discard)
 
 			v := viper.New()

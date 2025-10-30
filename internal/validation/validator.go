@@ -1,4 +1,4 @@
-package generator
+package validation
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 )
@@ -22,14 +23,12 @@ var (
 	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
 )
 
-// validatorImpl implements the interfaces.Validator interface.
 type validatorImpl struct {
 	validate *validator.Validate
 	logger   zerolog.Logger
 }
 
-// NewValidator creates a new Validator with custom validation rules.
-// The logger is used for non-critical warnings (e.g., cleanup failures).
+// NewValidator accepts a logger for non-critical warnings (e.g., cleanup failures).
 func NewValidator(logger zerolog.Logger) interfaces.Validator {
 	v := validator.New()
 
@@ -69,7 +68,7 @@ func NewValidator(logger zerolog.Logger) interfaces.Validator {
 }
 
 func (v *validatorImpl) ValidateProjectName(name string) error {
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    name,
 		ModulePath:     "placeholder",
 		DatabaseDriver: "go-libsql",
@@ -97,7 +96,7 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 }
 
 func (v *validatorImpl) ValidateModulePath(path string) error {
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    "placeholder",
 		ModulePath:     path,
 		DatabaseDriver: "go-libsql",
@@ -212,7 +211,7 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 }
 
 func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    "placeholder",
 		ModulePath:     "placeholder",
 		DatabaseDriver: driver,

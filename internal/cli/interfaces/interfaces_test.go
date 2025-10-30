@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
-	"github.com/anomalousventures/tracks/internal/generator"
+	"github.com/anomalousventures/tracks/internal/validation"
 	"github.com/rs/zerolog"
 )
 
@@ -39,11 +39,11 @@ func TestInterfacesPackageOnlyContainsInterfaces(t *testing.T) {
 	}
 }
 
-// TestValidatorInterfaceSatisfaction verifies that the generator's validator
+// TestValidatorInterfaceSatisfaction verifies that the validation package's validator
 // implementation satisfies the Validator interface at compile time.
 func TestValidatorInterfaceSatisfaction(t *testing.T) {
 	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	var _ interfaces.Validator = generator.NewValidator(logger)
+	var _ interfaces.Validator = validation.NewValidator(logger)
 	t.Log("✓ Validator implementation satisfies interfaces.Validator")
 }
 
