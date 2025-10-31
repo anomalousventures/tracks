@@ -1,7 +1,10 @@
 package commands_test
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -53,4 +56,60 @@ func TestGeneratorPackageDoesNotImportCLI(t *testing.T) {
 	}
 
 	t.Log("✓ Generator package does not import CLI package directly")
+}
+
+// TestCommandsUseDI verifies all Command structs have corresponding New*Command constructors.
+// This enforces the dependency injection pattern from ADR-001, ensuring commands are testable
+// through constructor injection rather than hard-coded dependencies.
+func TestCommandsUseDI(t *testing.T) {
+	// Find all .go files in the commands package (excluding tests and doc.go)
+	pattern := filepath.Join(".", "*.go")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		t.Fatalf("Failed to glob files: %v", err)
+	}
+
+	commandStructs := make(map[string]bool)
+	constructors := make(map[string]bool)
+
+	for _, file := range matches {
+		if strings.HasSuffix(file, "_test.go") || filepath.Base(file) == "doc.go" {
+			continue
+		}
+
+		content, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatalf("Failed to read %s: %v", file, err)
+		}
+
+		// Find Command structs using simple pattern matching
+		structPattern := regexp.MustCompile(`type\s+(\w+Command)\s+struct`)
+		constructorPattern := regexp.MustCompile(`func\s+(New\w+Command)\(`)
+
+		for _, match := range structPattern.FindAllStringSubmatch(string(content), -1) {
+			commandStructs[match[1]] = true
+		}
+
+		for _, match := range constructorPattern.FindAllStringSubmatch(string(content), -1) {
+			constructors[match[1]] = true
+		}
+	}
+
+	// Verify each Command struct has corresponding constructor
+	missing := []string{}
+	for cmd := range commandStructs {
+		expectedConstructor := "New" + cmd
+		if !constructors[expectedConstructor] {
+			missing = append(missing, cmd)
+		}
+	}
+
+	if len(missing) > 0 {
+		t.Errorf("Commands missing DI constructors (violates ADR-001):\n"+
+			"Commands: %v\n"+
+			"Each *Command struct must have a New*Command(...) constructor for dependency injection.",
+			missing)
+	}
+
+	t.Logf("✓ All %d commands use dependency injection pattern", len(commandStructs))
 }

@@ -233,6 +233,45 @@ Hierarchical configuration (lowest to highest priority):
 - PRD docs live in `/docs/prd/`
 - User docs live in `/website/docs/` (Docusaurus)
 
+### Architecture Tests
+
+We use architecture tests to enforce design principles programmatically. These tests run on every `make test` and prevent architectural drift.
+
+**Current Architecture Tests:**
+
+1. **Import Cycle Detection** (`TestNoImportCycles`)
+   - **Purpose:** Prevent circular dependencies
+   - **Method:** Uses `go list -json` to detect cycles
+   - **Location:** `internal/cli/commands/architecture_test.go`
+   - **References:** [ADR-002](./docs/adr/002-interface-placement-consumer-packages.md)
+
+2. **Interface Location Validation** (`TestInterfacesPackageOnlyContainsInterfaces`)
+   - **Purpose:** Enforce "interfaces in consumer packages" rule
+   - **Method:** AST parsing to verify only interfaces in `cli/interfaces/`
+   - **Location:** `internal/cli/interfaces/interfaces_test.go`
+   - **References:** [ADR-002](./docs/adr/002-interface-placement-consumer-packages.md)
+
+3. **DI Pattern Enforcement** (`TestCommandsUseDI`)
+   - **Purpose:** Ensure all commands use dependency injection
+   - **Method:** Pattern matching to verify each `*Command` has `New*Command` constructor
+   - **Location:** `internal/cli/commands/architecture_test.go`
+   - **References:** [ADR-001](./docs/adr/001-dependency-injection-for-cli-commands.md)
+
+**When to Add Architecture Tests:**
+
+- New architectural rule that can be verified programmatically
+- Pattern that must be followed by all new code
+- Design decision that prevents future bugs if enforced
+- When code review alone isn't sufficient to catch violations
+
+**How to Add a New Architecture Test:**
+
+1. Add test function to appropriate `architecture_test.go` file
+2. Use `go list`, AST parsing, or pattern matching as appropriate
+3. Provide clear error messages that explain the violation and reference relevant ADRs
+4. Verify test passes on current codebase
+5. Document the test in this section of CLAUDE.md
+
 ## Commit and PR Guidelines
 
 **See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed PR process.**
