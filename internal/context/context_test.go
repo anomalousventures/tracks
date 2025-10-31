@@ -3,11 +3,24 @@ package context
 import (
 	"bytes"
 	"context"
+	"io"
 	"sync"
 	"testing"
 
 	"github.com/rs/zerolog"
 )
+
+// syncWriter wraps an io.Writer with mutex synchronization for concurrent writes.
+type syncWriter struct {
+	w  io.Writer
+	mu sync.Mutex
+}
+
+func (sw *syncWriter) Write(p []byte) (n int, err error) {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+	return sw.w.Write(p)
+}
 
 func TestWithLogger(t *testing.T) {
 	ctx := context.Background()
@@ -57,7 +70,8 @@ func TestGetLogger_NoLogger(t *testing.T) {
 func TestContextPropagation_Concurrent(t *testing.T) {
 	ctx := context.Background()
 	var buf bytes.Buffer
-	logger := zerolog.New(&buf).Level(zerolog.InfoLevel)
+	sw := &syncWriter{w: &buf}
+	logger := zerolog.New(sw).Level(zerolog.InfoLevel)
 
 	ctx = WithLogger(ctx, logger)
 

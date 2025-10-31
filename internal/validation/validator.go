@@ -200,6 +200,8 @@ func (v *validatorImpl) ValidateDirectory(ctx context.Context, path string) erro
 		}
 	}
 
+	// Cleanup failure is non-critical since write test already passed,
+	// but we log it for debugging potential filesystem issues.
 	if err := os.Remove(testFile); err != nil {
 		logger := trackscontext.GetLogger(ctx)
 		logger.Warn().
