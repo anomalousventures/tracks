@@ -2,6 +2,8 @@
 
 [← Back to Phase 0](../0-foundation.md)
 
+> **Note:** This epic documents the original CLI implementation (October 2025). The architecture was later enhanced by [Epic 0.5: Architecture Alignment](./0.5-architecture-alignment.md) which added dependency injection, moved interfaces to consumer packages, and established context propagation patterns. See also [ADR-001](../../../adr/001-dependency-injection-for-cli-commands.md), [ADR-002](../../../adr/002-interface-placement-consumer-packages.md), and [ADR-003](../../../adr/003-context-propagation-pattern.md).
+
 ## Overview
 
 Establish the foundational CLI tool using Cobra framework. This epic creates the basic `tracks` command that can be executed, displays version information, and provides help text. This is the absolute foundation that all other epics depend on.
@@ -36,9 +38,11 @@ Establish the foundational CLI tool using Cobra framework. This epic creates the
 
 - Actual command implementations (new, generate, etc.) - those come in later epics
 - Full TUI implementation - deferred to Phase 4
-- Structured logging with zerolog - only for generated apps, not CLI tool
+- Structured logging with zerolog - initially deferred, later added in Epic 0.5 for developer debugging (dual-output strategy: Renderer for stdout, zerolog for stderr)
 - Configuration file loading from tracks.yaml - deferred to later phases (Viper infrastructure ready)
 - Advanced CLI features (autocomplete, etc.)
+- Dependency injection pattern - established later in Epic 0.5
+- Interface placement in consumer packages - moved later in Epic 0.5 per ADR-002
 
 ## Task Breakdown
 
@@ -208,6 +212,8 @@ go build -ldflags "-X main.Version=v0.1.0 -X main.Commit=$(git rev-parse HEAD)"
 
 ### Command Structure
 
+**Original Structure (Epic 1):**
+
 Keep root command minimal. Structure for extensibility:
 
 ```go
@@ -224,9 +230,15 @@ var rootCmd = &cobra.Command{
 }
 ```
 
+> **Epic 0.5 Enhancement:** Commands were moved to `internal/cli/commands/` directory with dependency injection pattern. Each command is now a struct with a constructor (e.g., `NewCommand`, `VersionCommand`) that receives dependencies via constructor parameters. See [ADR-001](../../../adr/001-dependency-injection-for-cli-commands.md) for details.
+
 ### Note on Logging vs Output
 
-The tracks CLI tool uses the Renderer pattern for user-facing output (progress bars, success messages, table data). Structured logging with zerolog is for generated applications (web servers), not the CLI tool itself. This separation keeps the CLI tool friendly for developers while generated apps remain production-ready with structured logs.
+**Original Design (Epic 1):**
+
+The tracks CLI tool uses the Renderer pattern for user-facing output (progress bars, success messages, table data). Structured logging with zerolog was initially only for generated applications (web servers), not the CLI tool itself.
+
+> **Epic 0.5 Enhancement:** Dual-output strategy established - Renderer for stdout (user-facing output), zerolog for stderr (developer debugging controlled by `TRACKS_LOG_LEVEL` environment variable). This keeps the user experience clean while enabling detailed debugging when needed. See [ADR-003](../../../adr/003-context-propagation-pattern.md) for context propagation details.
 
 ### Note on Modern Go Tooling Pattern
 
