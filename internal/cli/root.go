@@ -135,8 +135,6 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	logLevelStr := v.GetString("log-level")
 	logger := NewLogger(logLevelStr)
 
-	// Create validator from validation package (moved in Phase 3)
-	// Logger access is provided through context via cli.GetLogger(ctx)
 	validator := validation.NewValidator()
 
 	// Generator will be implemented in Phase 3+
