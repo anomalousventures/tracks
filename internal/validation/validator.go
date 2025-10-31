@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+	trackscontext "github.com/anomalousventures/tracks/internal/context"
 	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
 )
 
 const (
@@ -25,11 +26,10 @@ var (
 
 type validatorImpl struct {
 	validate *validator.Validate
-	logger   zerolog.Logger
 }
 
-// NewValidator accepts a logger for non-critical warnings (e.g., cleanup failures).
-func NewValidator(logger zerolog.Logger) interfaces.Validator {
+// NewValidator creates a new validator with custom validation rules.
+func NewValidator() interfaces.Validator {
 	v := validator.New()
 
 	if err := v.RegisterValidation("project_name", func(fl validator.FieldLevel) bool {
@@ -63,11 +63,10 @@ func NewValidator(logger zerolog.Logger) interfaces.Validator {
 
 	return &validatorImpl{
 		validate: v,
-		logger:   logger,
 	}
 }
 
-func (v *validatorImpl) ValidateProjectName(name string) error {
+func (v *validatorImpl) ValidateProjectName(ctx context.Context, name string) error {
 	cfg := generator.ProjectConfig{
 		ProjectName:    name,
 		ModulePath:     "placeholder",
@@ -95,7 +94,7 @@ func (v *validatorImpl) ValidateProjectName(name string) error {
 	return nil
 }
 
-func (v *validatorImpl) ValidateModulePath(path string) error {
+func (v *validatorImpl) ValidateModulePath(ctx context.Context, path string) error {
 	cfg := generator.ProjectConfig{
 		ProjectName:    "placeholder",
 		ModulePath:     path,
@@ -147,7 +146,7 @@ func (v *validatorImpl) ValidateModulePath(path string) error {
 	return nil
 }
 
-func (v *validatorImpl) ValidateDirectory(path string) error {
+func (v *validatorImpl) ValidateDirectory(ctx context.Context, path string) error {
 	info, err := os.Stat(path)
 	if err == nil {
 		if !info.IsDir() {
@@ -201,7 +200,8 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 	}
 
 	if err := os.Remove(testFile); err != nil {
-		v.logger.Warn().
+		logger := trackscontext.GetLogger(ctx)
+		logger.Warn().
 			Err(err).
 			Str("path", testFile).
 			Msg("failed to cleanup validation test file")
@@ -210,7 +210,7 @@ func (v *validatorImpl) ValidateDirectory(path string) error {
 	return nil
 }
 
-func (v *validatorImpl) ValidateDatabaseDriver(driver string) error {
+func (v *validatorImpl) ValidateDatabaseDriver(ctx context.Context, driver string) error {
 	cfg := generator.ProjectConfig{
 		ProjectName:    "placeholder",
 		ModulePath:     "placeholder",

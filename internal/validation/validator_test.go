@@ -1,24 +1,24 @@
 package validation
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/rs/zerolog"
 )
 
 func testStringValidator(t *testing.T, tests []struct {
 	name    string
 	input   string
 	wantErr bool
-}, validateFunc func(string) error, funcName, expectedField string) {
+}, validateFunc func(context.Context, string) error, funcName, expectedField string) {
 	t.Helper()
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateFunc(tt.input)
+			err := validateFunc(ctx, tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("%s(%q) error = %v, wantErr %v", funcName, tt.input, err, tt.wantErr)
 			}
@@ -37,8 +37,7 @@ func testStringValidator(t *testing.T, tests []struct {
 }
 
 func TestValidateProjectName(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	v := NewValidator(logger)
+	v := NewValidator()
 
 	tests := []struct {
 		name    string
@@ -64,8 +63,7 @@ func TestValidateProjectName(t *testing.T) {
 }
 
 func TestValidateModulePath(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	v := NewValidator(logger)
+	v := NewValidator()
 
 	tests := []struct {
 		name    string
@@ -92,14 +90,14 @@ func TestValidateModulePath(t *testing.T) {
 }
 
 func TestValidateDirectory(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	v := NewValidator(logger)
+	ctx := context.Background()
+	v := NewValidator()
 
 	t.Run("non-existent directory is valid", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		newDir := filepath.Join(tmpDir, "nonexistent")
 
-		err := v.ValidateDirectory(newDir)
+		err := v.ValidateDirectory(ctx, newDir)
 		if err != nil {
 			t.Errorf("expected no error for non-existent directory, got %v", err)
 		}
@@ -112,7 +110,7 @@ func TestValidateDirectory(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := v.ValidateDirectory(emptyDir)
+		err := v.ValidateDirectory(ctx, emptyDir)
 		if err != nil {
 			t.Errorf("expected no error for empty directory, got %v", err)
 		}
@@ -125,7 +123,7 @@ func TestValidateDirectory(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := v.ValidateDirectory(tmpDir)
+		err := v.ValidateDirectory(ctx, tmpDir)
 		if err == nil {
 			t.Error("expected error for directory with files")
 		}
@@ -143,7 +141,7 @@ func TestValidateDirectory(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := v.ValidateDirectory(testFile)
+		err := v.ValidateDirectory(ctx, testFile)
 		if err == nil {
 			t.Error("expected error for file path")
 		}
@@ -158,7 +156,7 @@ func TestValidateDirectory(t *testing.T) {
 		tmpDir := t.TempDir()
 		deepPath := filepath.Join(tmpDir, "nonexistent", "child")
 
-		err := v.ValidateDirectory(deepPath)
+		err := v.ValidateDirectory(ctx, deepPath)
 		if err == nil {
 			t.Error("expected error for missing parent directory")
 		}
@@ -171,8 +169,7 @@ func TestValidateDirectory(t *testing.T) {
 }
 
 func TestValidateDatabaseDriver(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	v := NewValidator(logger)
+	v := NewValidator()
 
 	tests := []struct {
 		name    string
@@ -194,11 +191,11 @@ func TestValidateDatabaseDriver(t *testing.T) {
 }
 
 func TestValidationErrorMessages(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	v := NewValidator(logger)
+	ctx := context.Background()
+	v := NewValidator()
 
 	t.Run("project name error includes helpful message", func(t *testing.T) {
-		err := v.ValidateProjectName("MyApp")
+		err := v.ValidateProjectName(ctx, "MyApp")
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -214,7 +211,7 @@ func TestValidationErrorMessages(t *testing.T) {
 	})
 
 	t.Run("database driver error lists supported options", func(t *testing.T) {
-		err := v.ValidateDatabaseDriver("mysql")
+		err := v.ValidateDatabaseDriver(ctx, "mysql")
 		if err == nil {
 			t.Fatal("expected error")
 		}

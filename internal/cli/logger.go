@@ -1,16 +1,11 @@
 package cli
 
 import (
-	"context"
 	"io"
 	"os"
 
 	"github.com/rs/zerolog"
 )
-
-type contextKey int
-
-const loggerKey contextKey = iota
 
 func NewLogger(logLevel string) zerolog.Logger {
 	level := parseLogLevel(logLevel)
@@ -40,15 +35,4 @@ func parseLogLevel(level string) zerolog.Level {
 	default:
 		return zerolog.Disabled
 	}
-}
-
-func WithLogger(ctx context.Context, logger zerolog.Logger) context.Context {
-	return context.WithValue(ctx, loggerKey, logger)
-}
-
-func GetLogger(ctx context.Context) zerolog.Logger {
-	if logger, ok := ctx.Value(loggerKey).(zerolog.Logger); ok {
-		return logger
-	}
-	return zerolog.Nop()
 }

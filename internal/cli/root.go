@@ -11,9 +11,9 @@ import (
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/anomalousventures/tracks/internal/cli/renderer"
 	"github.com/anomalousventures/tracks/internal/cli/ui"
+	trackscontext "github.com/anomalousventures/tracks/internal/context"
 	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/anomalousventures/tracks/internal/validation"
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -133,21 +133,13 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	// Logger is configured from viper (which reads TRACKS_LOG_LEVEL env var)
 	// Defaults to disabled per ADR-003 (Context Propagation)
 	logLevelStr := v.GetString("log-level")
-	logLevel, err := zerolog.ParseLevel(logLevelStr)
-	if err != nil {
-		logLevel = zerolog.Disabled
-	}
-	logger := zerolog.New(os.Stderr).Level(logLevel)
+	logger := NewLogger(logLevelStr)
 
-	// Create validator from validation package (moved in Phase 3)
-	validator := validation.NewValidator(logger)
-
-	// Generator will be implemented in Phase 3+
-	// Using noop implementation that returns "not yet implemented" errors
+	validator := validation.NewValidator()
 	projectGenerator := generator.NewNoopGenerator()
 
-	// Make viper available through context (ADR-003)
 	ctx := WithViper(context.Background(), v)
+	ctx = trackscontext.WithLogger(ctx, logger)
 	rootCmd.SetContext(ctx)
 
 	versionCmd := commands.NewVersionCommand(build, NewRendererFromCommand, FlushRenderer)
