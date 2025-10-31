@@ -136,12 +136,8 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	logger := NewLogger(logLevelStr)
 
 	validator := validation.NewValidator()
-
-	// Generator will be implemented in Phase 3+
-	// Using noop implementation that returns "not yet implemented" errors
 	projectGenerator := generator.NewNoopGenerator()
 
-	// Make viper and logger available through context (ADR-003)
 	ctx := WithViper(context.Background(), v)
 	ctx = trackscontext.WithLogger(ctx, logger)
 	rootCmd.SetContext(ctx)
