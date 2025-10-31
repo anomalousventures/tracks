@@ -5,12 +5,10 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/anomalousventures/tracks/internal/validation"
-	"github.com/rs/zerolog"
 )
 
 // TestInterfacesPackageOnlyContainsInterfaces verifies that newly added interface
@@ -42,8 +40,7 @@ func TestInterfacesPackageOnlyContainsInterfaces(t *testing.T) {
 // TestValidatorInterfaceSatisfaction verifies that the validation package's validator
 // implementation satisfies the Validator interface at compile time.
 func TestValidatorInterfaceSatisfaction(t *testing.T) {
-	logger := zerolog.New(os.Stderr).Level(zerolog.Disabled)
-	var _ interfaces.Validator = validation.NewValidator(logger)
+	var _ interfaces.Validator = validation.NewValidator()
 	t.Log("✓ Validator implementation satisfies interfaces.Validator")
 }
 

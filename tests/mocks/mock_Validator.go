@@ -5,6 +5,8 @@
 package mocks
 
 import (
+	"context"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,16 +38,16 @@ func (_m *MockValidator) EXPECT() *MockValidator_Expecter {
 }
 
 // ValidateDatabaseDriver provides a mock function for the type MockValidator
-func (_mock *MockValidator) ValidateDatabaseDriver(driver string) error {
-	ret := _mock.Called(driver)
+func (_mock *MockValidator) ValidateDatabaseDriver(ctx context.Context, driver string) error {
+	ret := _mock.Called(ctx, driver)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateDatabaseDriver")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(driver)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, driver)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -58,19 +60,25 @@ type MockValidator_ValidateDatabaseDriver_Call struct {
 }
 
 // ValidateDatabaseDriver is a helper method to define mock.On call
+//   - ctx context.Context
 //   - driver string
-func (_e *MockValidator_Expecter) ValidateDatabaseDriver(driver interface{}) *MockValidator_ValidateDatabaseDriver_Call {
-	return &MockValidator_ValidateDatabaseDriver_Call{Call: _e.mock.On("ValidateDatabaseDriver", driver)}
+func (_e *MockValidator_Expecter) ValidateDatabaseDriver(ctx interface{}, driver interface{}) *MockValidator_ValidateDatabaseDriver_Call {
+	return &MockValidator_ValidateDatabaseDriver_Call{Call: _e.mock.On("ValidateDatabaseDriver", ctx, driver)}
 }
 
-func (_c *MockValidator_ValidateDatabaseDriver_Call) Run(run func(driver string)) *MockValidator_ValidateDatabaseDriver_Call {
+func (_c *MockValidator_ValidateDatabaseDriver_Call) Run(run func(ctx context.Context, driver string)) *MockValidator_ValidateDatabaseDriver_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -81,22 +89,22 @@ func (_c *MockValidator_ValidateDatabaseDriver_Call) Return(err error) *MockVali
 	return _c
 }
 
-func (_c *MockValidator_ValidateDatabaseDriver_Call) RunAndReturn(run func(driver string) error) *MockValidator_ValidateDatabaseDriver_Call {
+func (_c *MockValidator_ValidateDatabaseDriver_Call) RunAndReturn(run func(ctx context.Context, driver string) error) *MockValidator_ValidateDatabaseDriver_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ValidateDirectory provides a mock function for the type MockValidator
-func (_mock *MockValidator) ValidateDirectory(path string) error {
-	ret := _mock.Called(path)
+func (_mock *MockValidator) ValidateDirectory(ctx context.Context, path string) error {
+	ret := _mock.Called(ctx, path)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateDirectory")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(path)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, path)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -109,19 +117,25 @@ type MockValidator_ValidateDirectory_Call struct {
 }
 
 // ValidateDirectory is a helper method to define mock.On call
+//   - ctx context.Context
 //   - path string
-func (_e *MockValidator_Expecter) ValidateDirectory(path interface{}) *MockValidator_ValidateDirectory_Call {
-	return &MockValidator_ValidateDirectory_Call{Call: _e.mock.On("ValidateDirectory", path)}
+func (_e *MockValidator_Expecter) ValidateDirectory(ctx interface{}, path interface{}) *MockValidator_ValidateDirectory_Call {
+	return &MockValidator_ValidateDirectory_Call{Call: _e.mock.On("ValidateDirectory", ctx, path)}
 }
 
-func (_c *MockValidator_ValidateDirectory_Call) Run(run func(path string)) *MockValidator_ValidateDirectory_Call {
+func (_c *MockValidator_ValidateDirectory_Call) Run(run func(ctx context.Context, path string)) *MockValidator_ValidateDirectory_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -132,22 +146,22 @@ func (_c *MockValidator_ValidateDirectory_Call) Return(err error) *MockValidator
 	return _c
 }
 
-func (_c *MockValidator_ValidateDirectory_Call) RunAndReturn(run func(path string) error) *MockValidator_ValidateDirectory_Call {
+func (_c *MockValidator_ValidateDirectory_Call) RunAndReturn(run func(ctx context.Context, path string) error) *MockValidator_ValidateDirectory_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ValidateModulePath provides a mock function for the type MockValidator
-func (_mock *MockValidator) ValidateModulePath(path string) error {
-	ret := _mock.Called(path)
+func (_mock *MockValidator) ValidateModulePath(ctx context.Context, path string) error {
+	ret := _mock.Called(ctx, path)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateModulePath")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(path)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, path)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -160,19 +174,25 @@ type MockValidator_ValidateModulePath_Call struct {
 }
 
 // ValidateModulePath is a helper method to define mock.On call
+//   - ctx context.Context
 //   - path string
-func (_e *MockValidator_Expecter) ValidateModulePath(path interface{}) *MockValidator_ValidateModulePath_Call {
-	return &MockValidator_ValidateModulePath_Call{Call: _e.mock.On("ValidateModulePath", path)}
+func (_e *MockValidator_Expecter) ValidateModulePath(ctx interface{}, path interface{}) *MockValidator_ValidateModulePath_Call {
+	return &MockValidator_ValidateModulePath_Call{Call: _e.mock.On("ValidateModulePath", ctx, path)}
 }
 
-func (_c *MockValidator_ValidateModulePath_Call) Run(run func(path string)) *MockValidator_ValidateModulePath_Call {
+func (_c *MockValidator_ValidateModulePath_Call) Run(run func(ctx context.Context, path string)) *MockValidator_ValidateModulePath_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -183,22 +203,22 @@ func (_c *MockValidator_ValidateModulePath_Call) Return(err error) *MockValidato
 	return _c
 }
 
-func (_c *MockValidator_ValidateModulePath_Call) RunAndReturn(run func(path string) error) *MockValidator_ValidateModulePath_Call {
+func (_c *MockValidator_ValidateModulePath_Call) RunAndReturn(run func(ctx context.Context, path string) error) *MockValidator_ValidateModulePath_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ValidateProjectName provides a mock function for the type MockValidator
-func (_mock *MockValidator) ValidateProjectName(name string) error {
-	ret := _mock.Called(name)
+func (_mock *MockValidator) ValidateProjectName(ctx context.Context, name string) error {
+	ret := _mock.Called(ctx, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateProjectName")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, name)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -211,19 +231,25 @@ type MockValidator_ValidateProjectName_Call struct {
 }
 
 // ValidateProjectName is a helper method to define mock.On call
+//   - ctx context.Context
 //   - name string
-func (_e *MockValidator_Expecter) ValidateProjectName(name interface{}) *MockValidator_ValidateProjectName_Call {
-	return &MockValidator_ValidateProjectName_Call{Call: _e.mock.On("ValidateProjectName", name)}
+func (_e *MockValidator_Expecter) ValidateProjectName(ctx interface{}, name interface{}) *MockValidator_ValidateProjectName_Call {
+	return &MockValidator_ValidateProjectName_Call{Call: _e.mock.On("ValidateProjectName", ctx, name)}
 }
 
-func (_c *MockValidator_ValidateProjectName_Call) Run(run func(name string)) *MockValidator_ValidateProjectName_Call {
+func (_c *MockValidator_ValidateProjectName_Call) Run(run func(ctx context.Context, name string)) *MockValidator_ValidateProjectName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -234,7 +260,7 @@ func (_c *MockValidator_ValidateProjectName_Call) Return(err error) *MockValidat
 	return _c
 }
 
-func (_c *MockValidator_ValidateProjectName_Call) RunAndReturn(run func(name string) error) *MockValidator_ValidateProjectName_Call {
+func (_c *MockValidator_ValidateProjectName_Call) RunAndReturn(run func(ctx context.Context, name string) error) *MockValidator_ValidateProjectName_Call {
 	_c.Call.Return(run)
 	return _c
 }
