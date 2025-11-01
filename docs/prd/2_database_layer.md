@@ -334,8 +334,8 @@ sql:
     schema: "db/migrations/sqlite"  # or postgres
     gen:
       go:
-        package: "db"
-        out: "internal/repositories/db"
+        package: "generated"
+        out: "db/generated"
         sql_package: "database/sql"
         emit_json_tags: true
         emit_interface: true
@@ -432,8 +432,8 @@ DELETE FROM posts WHERE id = ?;
 ### Interface Definition
 
 ```go
-// internal/repositories/interfaces.go
-package repositories
+// internal/interfaces/user.go
+package interfaces
 
 import (
     "context"
@@ -451,6 +451,7 @@ type UserRepository interface {
     Count(ctx context.Context) (int64, error)
 }
 
+// internal/interfaces/post.go
 type PostRepository interface {
     Create(ctx context.Context, post *Post) error
     GetByID(ctx context.Context, id string) (*Post, error)
@@ -465,8 +466,10 @@ type PostRepository interface {
 ### Implementation
 
 ```go
-// internal/repositories/user_repository.go
-package repositories
+// internal/domain/users/repository.go
+package users
+
+import "myapp/internal/interfaces"
 
 import (
     "context"
@@ -474,20 +477,20 @@ import (
     "errors"
     "fmt"
 
+    "myapp/db/generated"  // SQLC generated
     "myapp/internal/pkg/identifier"
     "myapp/internal/pkg/slug"
-    "myapp/internal/repositories/db"  // SQLC generated
 )
 
 type userRepository struct {
     db      *sql.DB
-    queries *db.Queries
+    queries *generated.Queries
 }
 
-func NewUserRepository(database *sql.DB) UserRepository {
+func NewUserRepository(database *sql.DB) interfaces.UserRepository {
     return &userRepository{
         db:      database,
-        queries: db.New(database),
+        queries: generated.New(database),
     }
 }
 
@@ -552,8 +555,18 @@ func (r *userRepository) WithTx(tx *sql.Tx) UserRepository {
 ## Transaction Management
 
 ```go
-// internal/services/user_service.go
-func (s *UserService) CreateUserWithProfile(ctx context.Context, input CreateUserInput) (*User, error) {
+// internal/domain/users/service.go
+package users
+
+import "myapp/internal/interfaces"
+
+type service struct {
+    db          *sql.DB
+    userRepo    interfaces.UserRepository
+    profileRepo interfaces.ProfileRepository
+}
+
+func (s *service) CreateUserWithProfile(ctx context.Context, input CreateUserInput) (*User, error) {
     // Start transaction
     tx, err := s.db.BeginTx(ctx, nil)
     if err != nil {
@@ -701,8 +714,8 @@ type PageResponse[T any] struct {
 ### Error Handling
 
 ```go
-// internal/repositories/errors.go
-package repositories
+// internal/pkg/errors/errors.go
+package errors
 
 import "errors"
 

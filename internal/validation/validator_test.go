@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -164,6 +165,82 @@ func TestValidateDirectory(t *testing.T) {
 		var valErr *ValidationError
 		if !errors.As(err, &valErr) {
 			t.Error("expected ValidationError")
+		}
+	})
+
+	t.Run("parent directory not writable", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping Unix permission test on Windows")
+		}
+
+		tmpDir := t.TempDir()
+		readOnlyParent := filepath.Join(tmpDir, "readonly")
+		if err := os.Mkdir(readOnlyParent, 0555); err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = os.Chmod(readOnlyParent, 0755) }()
+
+		newDir := filepath.Join(readOnlyParent, "child")
+
+		err := v.ValidateDirectory(ctx, newDir)
+		if err == nil {
+			t.Error("expected error for non-writable parent directory")
+		}
+
+		var valErr *ValidationError
+		if !errors.As(err, &valErr) {
+			t.Error("expected ValidationError")
+		}
+		if !errors.Is(err, ErrDirectoryNotWritable) {
+			t.Errorf("expected ErrDirectoryNotWritable, got %v", err)
+		}
+	})
+
+	t.Run("directory exists but unreadable", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping Unix permission test on Windows")
+		}
+
+		tmpDir := t.TempDir()
+		unreadableDir := filepath.Join(tmpDir, "unreadable")
+		if err := os.Mkdir(unreadableDir, 0000); err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = os.Chmod(unreadableDir, 0755) }()
+
+		err := v.ValidateDirectory(ctx, unreadableDir)
+		if err == nil {
+			t.Error("expected error for unreadable directory")
+		}
+
+		var valErr *ValidationError
+		if errors.As(err, &valErr) {
+			t.Error("expected wrapped error, not ValidationError for permission issue")
+		}
+	})
+
+	t.Run("stat fails with non-NotExist error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping Unix permission test on Windows")
+		}
+
+		tmpDir := t.TempDir()
+		restrictedParent := filepath.Join(tmpDir, "restricted")
+		if err := os.Mkdir(restrictedParent, 0000); err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = os.Chmod(restrictedParent, 0755) }()
+
+		testPath := filepath.Join(restrictedParent, "child")
+
+		err := v.ValidateDirectory(ctx, testPath)
+		if err == nil {
+			t.Error("expected error when stat fails due to permissions")
+		}
+
+		var valErr *ValidationError
+		if errors.As(err, &valErr) {
+			t.Error("expected wrapped error, not ValidationError for stat permission issue")
 		}
 	})
 }

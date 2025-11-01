@@ -478,14 +478,14 @@ import (
     "fmt"
 
     "myapp/internal/jobs"
-    "myapp/internal/services/email"
+    "myapp/internal/interfaces"
 )
 
 type EmailHandler struct {
-    emailService *email.Service
+    emailService interfaces.EmailService
 }
 
-func NewEmailHandler(emailService *email.Service) *EmailHandler {
+func NewEmailHandler(emailService interfaces.EmailService) *EmailHandler {
     return &EmailHandler{
         emailService: emailService,
     }
@@ -522,8 +522,8 @@ func (h *EmailHandler) SendPasswordReset(ctx context.Context, msg jobs.Message) 
 ## Usage in Services
 
 ```go
-// internal/services/user_service.go
-package services
+// internal/domain/users/service.go
+package users
 
 import (
     "context"

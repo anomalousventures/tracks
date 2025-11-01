@@ -31,14 +31,16 @@ Tracks provides a secure, flexible authentication system that prioritizes passwo
 The primary authentication method uses email or SMS-based OTP codes.
 
 ```go
-// internal/services/auth.go
-package services
+// internal/domain/auth/service.go
+package auth
 
 import (
     "context"
     "crypto/rand"
     "encoding/binary"
     "errors"
+
+    "myapp/internal/interfaces"
     "fmt"
     "time"
 
@@ -274,8 +276,8 @@ func RegisterOAuthRoutes(r chi.Router, providers []goth.Provider) {
 While passwordless is preferred, passwords can be enabled for compliance.
 
 ```go
-// internal/services/auth_password.go
-package services
+// internal/domain/auth/password.go
+package auth
 
 import (
     "golang.org/x/crypto/bcrypt"
@@ -330,8 +332,8 @@ func (s *AuthService) SetPassword(ctx context.Context, userID, password string) 
 Comprehensive rate limiting for all authentication endpoints.
 
 ```go
-// internal/services/rate_limiter.go
-package services
+// internal/pkg/ratelimit/limiter.go
+package ratelimit
 
 import (
     "context"
@@ -400,7 +402,7 @@ func (r *RateLimiter) RecordFailedAttempt(identifier string) {
 Secure session management with multiple storage backends.
 
 ```go
-// internal/middleware/session.go
+// internal/http/middleware/session.go
 package middleware
 
 import (
@@ -538,7 +540,7 @@ func OptionalAuth(sessions *scs.SessionManager) func(http.Handler) http.Handler 
 HTTP handlers for authentication flows.
 
 ```go
-// internal/handlers/auth_handler.go
+// internal/http/handlers/auth_handler.go
 package handlers
 
 type AuthHandler struct {
@@ -655,8 +657,8 @@ func SetupCSRF(sessionManager *scs.SessionManager) func(http.Handler) http.Handl
 ## Error Definitions
 
 ```go
-// internal/services/auth_errors.go
-package services
+// internal/domain/auth/errors.go
+package auth
 
 import "errors"
 

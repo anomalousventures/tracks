@@ -281,7 +281,9 @@ templ HeroImage(alt string) {
 ### Lexical Storage
 
 ```go
-// internal/services/editor.go
+// internal/pkg/editor/types.go
+package editor
+
 type EditorContent struct {
     ID          int64           `db:"id"`
     LexicalJSON json.RawMessage `db:"lexical_json"`

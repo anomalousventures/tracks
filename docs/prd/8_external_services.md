@@ -29,8 +29,8 @@ Circuit breakers prevent cascading failures by monitoring service health and ope
 ### Circuit Breaker Configuration
 
 ```go
-// internal/services/circuit_breaker.go
-package services
+// internal/pkg/circuitbreaker/breaker.go
+package circuitbreaker
 
 import (
     "time"
@@ -107,8 +107,8 @@ func NewServiceBreakers() *ServiceBreakers {
 ### Email Adapter Interface
 
 ```go
-// internal/services/email/adapter.go
-package email
+// internal/interfaces/email.go
+package interfaces
 
 import (
     "context"
@@ -171,7 +171,7 @@ func (b *BaseAdapter) SendWithRetry(ctx context.Context, msg *EmailMessage, maxR
 ### AWS SES Adapter
 
 ```go
-// internal/services/email/ses.go
+// internal/adapters/email/ses.go
 package email
 
 import (
@@ -241,7 +241,7 @@ func (a *SESAdapter) Send(ctx context.Context, msg *EmailMessage) error {
 ### Mailpit Adapter (Development)
 
 ```go
-// internal/services/email/mailpit.go
+// internal/adapters/email/mailpit.go
 package email
 
 import (
@@ -294,8 +294,8 @@ func (a *MailpitAdapter) Send(ctx context.Context, msg *EmailMessage) error {
 ### SMS Adapter Interface
 
 ```go
-// internal/services/sms/adapter.go
-package sms
+// internal/interfaces/sms.go
+package interfaces
 
 import (
     "context"
@@ -312,7 +312,7 @@ type SMSAdapter interface {
 ### AWS SNS Adapter
 
 ```go
-// internal/services/sms/sns.go
+// internal/adapters/sms/sns.go
 package sms
 
 import (
@@ -370,7 +370,7 @@ func (a *SNSAdapter) GetProvider() string {
 ### Twilio Adapter
 
 ```go
-// internal/services/sms/twilio.go
+// internal/adapters/sms/twilio.go
 package sms
 
 import (
@@ -457,8 +457,8 @@ See [Storage →](./11_storage.md) for detailed storage service implementation w
 ## Service Factory
 
 ```go
-// internal/services/factory.go
-package services
+// internal/adapters/factory.go
+package adapters
 
 import (
     "fmt"
@@ -537,8 +537,8 @@ func (f *ServiceFactory) CreateSMSAdapter() (SMSAdapter, error) {
 ## Monitoring Circuit Breakers
 
 ```go
-// internal/services/monitoring.go
-package services
+// internal/pkg/monitoring/monitoring.go
+package monitoring
 
 import (
     "github.com/prometheus/client_golang/prometheus"
@@ -594,7 +594,7 @@ func RecordCircuitBreakerRequest(service, result string) {
 ## Testing
 
 ```go
-// internal/services/email/ses_test.go
+// internal/adapters/email/ses_test.go
 func TestSESAdapter_CircuitBreaker(t *testing.T) {
     // Create mock client that fails
     mockClient := &mockSESClient{

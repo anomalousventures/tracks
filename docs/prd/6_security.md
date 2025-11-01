@@ -164,8 +164,8 @@ func NewSessionManager(cfg SessionConfig) *scs.SessionManager {
 Rate limiting is applied at multiple levels to prevent abuse and brute force attacks.
 
 ```go
-// internal/services/rate_limiter.go
-package services
+// internal/pkg/ratelimit/limiter.go
+package ratelimit
 
 import (
     "fmt"
@@ -227,7 +227,7 @@ func (s *RateLimiter) AllowLogin(email string) bool {
 CSRF protection is built into the session management system and form handling.
 
 ```go
-// internal/middleware/csrf.go
+// internal/http/middleware/csrf.go
 package middleware
 
 import (
@@ -276,7 +276,7 @@ templ CSRFToken(ctx context.Context) {
 File uploads are validated using magic numbers to prevent malicious file types.
 
 ```go
-// internal/handlers/upload_handler.go
+// internal/http/handlers/upload_handler.go
 package handlers
 
 import (
@@ -390,8 +390,8 @@ XSS is prevented through:
 3. Input sanitization
 
 ```go
-// internal/services/sanitizer.go
-package services
+// internal/pkg/sanitizer/sanitizer.go
+package sanitizer
 
 import (
     "github.com/microcosm-cc/bluemonday"
@@ -446,7 +446,7 @@ func (s *Sanitizer) SanitizePlainText(input string) string {
 ## Testing Security
 
 ```go
-// internal/handlers/security_test.go
+// internal/http/handlers/security_test.go
 func TestSecurityHeaders(t *testing.T) {
     handler := NewServer()
 

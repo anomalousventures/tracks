@@ -233,7 +233,7 @@ func OpenInstrumentedDB(ctx context.Context, driverName, dsn string) (*sql.DB, e
 ## HTTP Instrumentation
 
 ```go
-// internal/middleware/tracing.go
+// internal/http/middleware/tracing.go
 package middleware
 
 import (
@@ -434,7 +434,7 @@ func (m *Metrics) UserLogout(ctx context.Context) {
 ## Health & Metrics Endpoints
 
 ```go
-// internal/handlers/health.go
+// internal/http/handlers/health.go
 package handlers
 
 import (

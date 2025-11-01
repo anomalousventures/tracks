@@ -148,8 +148,8 @@ func (s *TracksServer) generateService(
         UseUUIDv7:    true,  // Always use UUIDv7
     })
 
-    filePath := fmt.Sprintf("%s/internal/services/%s_service.go",
-        s.projectPath, toSnakeCase(input.Name))
+    filePath := fmt.Sprintf("%s/internal/domain/%s/service.go",
+        s.projectPath, input.Name)
 
     if err := os.WriteFile(filePath, []byte(code), 0644); err != nil {
         return mcp.NewErrorResult(err.Error()), struct{}{}, nil
