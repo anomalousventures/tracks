@@ -228,14 +228,15 @@ const (
 ## Permission Service
 
 ```go
-// internal/services/permission_service.go
-package services
+// internal/domain/permissions/service.go
+package permissions
 
 import (
     "context"
     "time"
 
     "github.com/casbin/casbin/v2"
+    "myapp/internal/interfaces"
     "github.com/gofrs/uuid/v5"  // Fixed: Using correct UUID package for UUIDv7
     "myapp/internal/rbac"
 )
@@ -377,7 +378,7 @@ func (s *PermissionService) GetRolePermissions(ctx context.Context, role string)
 ## Permission Middleware
 
 ```go
-// internal/middleware/permission.go
+// internal/http/middleware/permission.go
 package middleware
 
 import (
@@ -516,7 +517,7 @@ func NewServer(cfg config.Config, services *app.Services) *Server {
 ## Handler-Level Permission Checks
 
 ```go
-// internal/handlers/post_handler.go
+// internal/http/handlers/post_handler.go
 func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) {
     slug := chi.URLParam(r, "slug")
     userID := r.Context().Value("user_id").(string)

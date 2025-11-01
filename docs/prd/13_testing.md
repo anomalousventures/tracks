@@ -242,8 +242,8 @@ func (f *UserFactory) Create(db *sql.DB, params ...UserParams) (*User, error) {
 ## Unit Tests
 
 ```go
-// internal/services/user_service_test.go
-package services_test
+// internal/domain/users/service_test.go
+package users_test
 
 import (
     "context"
@@ -253,7 +253,7 @@ import (
     "github.com/stretchr/testify/mock"
     "github.com/stretchr/testify/require"
 
-    "myapp/internal/services"
+    "myapp/internal/domain/users"
     "myapp/test/mocks"
 )
 
@@ -262,9 +262,9 @@ func TestUserService_Create(t *testing.T) {
     mockRepo := new(mocks.UserRepository)
     mockEmail := new(mocks.EmailService)
 
-    svc := services.NewUserService(mockRepo, mockEmail)
+    svc := users.NewUserService(mockRepo, mockEmail)
 
-    dto := services.CreateUserDTO{
+    dto := users.CreateUserDTO{
         Email: "test@example.com",
         Name:  "Test User",
     }
@@ -320,11 +320,11 @@ func TestUserService_Create_EmailFailure(t *testing.T) {
 ## Integration Tests
 
 ```go
-// internal/services/user_service_integration_test.go
+// internal/domain/users/service_integration_test.go
 //go:build integration
 // +build integration
 
-package services_test
+package users_test
 
 import (
     "context"
@@ -333,8 +333,7 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 
-    "myapp/internal/repositories"
-    "myapp/internal/services"
+    "myapp/internal/domain/users"
     "myapp/test/testutil"
     "myapp/test/factories"
 )
@@ -398,7 +397,7 @@ func TestUserService_Integration(t *testing.T) {
 ## Handler Tests
 
 ```go
-// internal/handlers/user_handler_test.go
+// internal/http/handlers/user_handler_test.go
 package handlers_test
 
 import (
@@ -412,7 +411,7 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 
-    "myapp/internal/handlers"
+    "myapp/internal/http/handlers"
     "myapp/test/mocks"
 )
 
@@ -551,13 +550,14 @@ test-coverage:
 ## Benchmark Tests
 
 ```go
-// internal/services/user_service_bench_test.go
-package services_test
+// internal/domain/users/service_bench_test.go
+package users_test
 
 import (
     "context"
     "testing"
 
+    "myapp/internal/domain/users"
     "myapp/test/testutil"
 )
 
@@ -568,7 +568,7 @@ func BenchmarkUserService_Create(b *testing.B) {
 
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        dto := services.CreateUserDTO{
+        dto := users.CreateUserDTO{
             Email:    fmt.Sprintf("bench%d@test.com", i),
             Username: fmt.Sprintf("bench%d", i),
             Name:     "Benchmark User",

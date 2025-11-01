@@ -94,8 +94,8 @@ DTOs are generated interactively, allowing developers to select which fields to 
 ### Generated DTO
 
 ```go
-// internal/dto/post_dto.go
-package dto
+// internal/domain/posts/dto.go
+package posts
 
 import (
     "time"
@@ -351,7 +351,7 @@ LIMIT ? OFFSET ?;
 Handlers are generated with proper validation and error handling.
 
 ```go
-// internal/handlers/post_handler.go
+// internal/http/handlers/post_handler.go
 package handlers
 
 import (
@@ -360,16 +360,16 @@ import (
 
     "github.com/go-chi/chi/v5"
     "github.com/go-playground/validator/v10"
-    "myapp/internal/dto"
-    "myapp/internal/services"
+    "myapp/internal/domain/posts"
+    "myapp/internal/interfaces"
 )
 
 type PostHandler struct {
-    postService *services.PostService
+    postService interfaces.PostService
     validator   *validator.Validate
 }
 
-func NewPostHandler(postService *services.PostService) *PostHandler {
+func NewPostHandler(postService interfaces.PostService) *PostHandler {
     return &PostHandler{
         postService: postService,
         validator:   validator.New(),
@@ -431,7 +431,7 @@ func (h *PostHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 Route helpers are automatically generated for type-safe URL building.
 
 ```go
-// internal/routes/generated.go (auto-generated)
+// internal/http/routes/routes.go (auto-generated)
 package routes
 
 import "github.com/a-h/templ"
@@ -520,8 +520,8 @@ templ PostCard(post *models.Post) {
 Tests are automatically generated for services with mocks.
 
 ```go
-// internal/services/post_service_test.go
-package services_test
+// internal/domain/posts/service_test.go
+package posts_test
 
 import (
     "context"
@@ -529,8 +529,7 @@ import (
 
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
-    "myapp/internal/dto"
-    "myapp/internal/services"
+    "myapp/internal/domain/posts"
     "myapp/test/mocks"
 )
 
@@ -540,10 +539,10 @@ func TestPostService_Create(t *testing.T) {
     mockCache := new(mocks.CacheService)
     mockEvents := new(mocks.EventPublisher)
 
-    svc := services.NewPostService(mockRepo, mockCache, mockEvents)
+    svc := posts.NewPostService(mockRepo, mockCache, mockEvents)
 
     // Test data
-    createDTO := dto.CreatePostDTO{
+    createDTO := posts.CreatePostDTO{
         Title:     "Test Post",
         Content:   "Test content",
         Published: true,

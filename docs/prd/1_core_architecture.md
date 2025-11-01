@@ -135,58 +135,64 @@ myapp/
 │   │   ├── loader.go           # Viper configuration loader
 │   │   └── validation.go       # Config validation rules
 │   │
-│   ├── handlers/               # HTTP request handlers
-│   │   ├── base.go            # Base handler with common dependencies
-│   │   ├── auth.go            # Authentication handlers
-│   │   ├── health.go          # Health check endpoints
-│   │   └── [resource].go      # Generated resource handlers
+│   ├── http/                  # HTTP layer (server, routes, handlers, middleware, views)
+│   │   ├── server.go          # HTTP server setup and dependency injection
+│   │   ├── routes.go          # Route registration and middleware chain
+│   │   ├── handlers/          # HTTP request handlers
+│   │   │   ├── base.go        # Base handler with common dependencies
+│   │   │   ├── auth.go        # Authentication handlers
+│   │   │   ├── health.go      # Health check endpoints
+│   │   │   └── [resource].go  # Generated resource handlers
+│   │   ├── middleware/        # HTTP middleware
+│   │   │   ├── auth.go        # Authentication checks
+│   │   │   ├── security.go    # Security headers, CSP, nonce
+│   │   │   ├── rate_limit.go  # Rate limiting
+│   │   │   ├── session.go     # Session management
+│   │   │   ├── i18n.go       # Internationalization
+│   │   │   └── otel.go       # OpenTelemetry tracing
+│   │   └── views/             # templ templates
+│   │       ├── layouts/
+│   │       │   ├── base.templ   # Main HTML layout
+│   │       │   └── email.templ  # Email layout
+│   │       ├── pages/
+│   │       │   ├── home.templ   # Homepage
+│   │       │   ├── login.templ  # Auth pages
+│   │       │   └── [page].templ # Generated pages
+│   │       ├── components/
+│   │       │   ├── nav.templ    # Navigation
+│   │       │   ├── forms.templ  # Form components
+│   │       │   └── [comp].templ # Custom components
+│   │       └── emails/
+│   │           ├── welcome.templ # Welcome email
+│   │           └── otp.templ     # OTP email
 │   │
-│   ├── services/               # Business logic layer
-│   │   ├── auth.go            # Authentication service
-│   │   ├── email.go           # Email service with adapters
-│   │   ├── permission.go      # RBAC permission service
-│   │   └── [resource].go      # Generated business logic
+│   ├── interfaces/            # All service and repository interfaces (zero implementation)
+│   │   ├── post.go           # PostService, PostRepository interfaces
+│   │   ├── user.go           # UserService, UserRepository interfaces
+│   │   └── auth.go           # AuthService interface
 │   │
-│   ├── repositories/           # Data access layer
-│   │   ├── queries.go         # SQLC generated code
-│   │   ├── interfaces.go      # Repository interfaces
-│   │   └── [resource].go      # Resource-specific repos
+│   ├── domain/                # Business logic organized by feature
+│   │   ├── posts/
+│   │   │   ├── service.go    # Post service (implements interfaces.PostService)
+│   │   │   ├── repository.go # Post repository (wraps db/generated, implements interfaces.PostRepository)
+│   │   │   └── dto.go        # Post request/response DTOs
+│   │   ├── users/
+│   │   │   ├── service.go
+│   │   │   ├── repository.go
+│   │   │   └── dto.go
+│   │   └── auth/
+│   │       ├── service.go
+│   │       ├── password.go   # Password authentication
+│   │       ├── otp.go        # OTP authentication
+│   │       └── errors.go     # Auth-specific errors
 │   │
-│   ├── middleware/            # HTTP middleware
-│   │   ├── auth.go           # Authentication checks
-│   │   ├── security.go       # Security headers, CSP
-│   │   ├── rate_limit.go     # Rate limiting
-│   │   ├── session.go        # Session management
-│   │   ├── i18n.go          # Internationalization
-│   │   └── otel.go          # OpenTelemetry tracing
-│   │
-│   ├── templates/            # templ templates
-│   │   ├── layouts/
-│   │   │   ├── base.templ   # Main HTML layout
-│   │   │   └── email.templ  # Email layout
-│   │   ├── pages/
-│   │   │   ├── home.templ   # Homepage
-│   │   │   ├── login.templ  # Auth pages
-│   │   │   └── [page].templ # Generated pages
-│   │   ├── components/
-│   │   │   ├── nav.templ    # Navigation
-│   │   │   ├── forms.templ  # Form components
-│   │   │   └── [comp].templ # Custom components
-│   │   └── emails/
-│   │       ├── welcome.templ # Welcome email
-│   │       └── otp.templ     # OTP email
-│   │
-│   ├── assets/               # Static assets (embedded)
-│   │   ├── css/
-│   │   │   └── app.css      # Main stylesheet
-│   │   ├── js/
-│   │   │   └── app.js       # Alpine.js components
+│   ├── assets/               # Compiled/embedded assets (built from web/)
+│   │   ├── dist/
+│   │   │   ├── app.css      # Built from web/styles/
+│   │   │   └── app.js       # Built from web/scripts/
 │   │   └── static/
 │   │       ├── favicon.ico
 │   │       └── robots.txt
-│   │
-│   ├── dto/                  # Data Transfer Objects
-│   │   └── [resource]_dto.go # Request/response DTOs
 │   │
 │   ├── adapters/             # External service adapters
 │   │   ├── email/
@@ -211,9 +217,13 @@ myapp/
 │   ├── migrations/          # Goose migrations
 │   │   ├── 20250116_init.sql
 │   │   └── [timestamp]_[name].sql
-│   ├── queries/             # SQLC queries
+│   ├── queries/             # SQLC query sources (hand-written SQL)
 │   │   ├── users.sql
 │   │   └── [resource].sql
+│   ├── generated/           # SQLC-generated Go code (DO NOT EDIT)
+│   │   ├── db.go
+│   │   ├── models.go
+│   │   └── queries.sql.go
 │   └── seeds/               # Seed data
 │       └── development.sql
 │
@@ -223,9 +233,11 @@ myapp/
 │   ├── fixtures/           # Test data
 │   └── helpers/            # Test utilities
 │
-├── web/                     # Web assets (source)
-│   ├── styles/             # Source CSS/SCSS
-│   └── scripts/            # Source JavaScript
+├── web/                     # Web asset sources (builds to internal/assets/dist/)
+│   ├── styles/             # Source CSS/Tailwind
+│   │   └── app.css
+│   └── scripts/            # Source JavaScript/TypeScript
+│       └── app.js
 │
 ├── docs/                    # Documentation
 │   ├── api/                # API documentation
@@ -268,14 +280,20 @@ Contains application entry points. Each subdirectory is a separate executable.
 
 Private application code that cannot be imported by other projects. This is enforced by Go.
 
-### `/internal/handlers`
+### `/internal/http`
 
-HTTP handlers follow a pattern:
+The HTTP layer contains all web-facing code:
 
-- Receive HTTP request
-- Validate input
-- Call service layer
-- Render response (HTML via templ or JSON)
+- **`server.go`** - HTTP server setup, dependency injection
+- **`routes.go`** - Route registration, middleware chain configuration
+- **`handlers/`** - HTTP request handlers (thin orchestration layer)
+  - Receive HTTP request
+  - Validate input using DTOs
+  - Call domain services (via interfaces from multiple domains if needed)
+  - Render response (HTML via templ or JSON)
+  - Handlers orchestrate cross-domain operations
+- **`middleware/`** - Composable middleware functions (single responsibility each)
+- **`views/`** - templ templates for HTML generation
 
 ### `/internal/interfaces`
 
@@ -292,25 +310,10 @@ Business logic organized by feature (modular architecture):
 
 - Each feature in its own directory (`posts/`, `users/`, etc.)
 - Service implementations (implements `interfaces.XxxService`)
-- Repository implementations (wraps `db/generated` SQLC code)
+- Repository implementations (wraps `db/generated` SQLC code, implements `interfaces.XxxRepository`)
+- DTOs (request/response data transfer objects)
 - Feature-specific business rules and validations
-- Colocated: `domain/posts/service.go` and `domain/posts/repository.go`
-
-### `/internal/middleware`
-
-Composable middleware functions:
-
-- Each middleware has a single responsibility
-- Order matters (documented in server setup)
-- Can short-circuit request processing
-
-### `/internal/templates`
-
-templ templates for HTML generation:
-
-- Compiled to Go code for type safety
-- Components are reusable across pages
-- Layouts provide consistent structure
+- Colocated: `domain/posts/service.go`, `domain/posts/repository.go`, and `domain/posts/dto.go`
 
 ### `/db`
 

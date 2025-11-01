@@ -100,7 +100,7 @@ func PostURL(slug string) templ.SafeURL {
 
 The server uses a struct-based pattern with dependency injection and builder methods for testability.
 
-### Server Structure (internal/infra/http/server.go)
+### Server Structure (internal/http/server.go)
 
 ```go
 package http
@@ -172,7 +172,7 @@ func (s *Server) ListenAndServe() error {
 }
 ```
 
-### Routes Registration (internal/infra/http/routes.go)
+### Routes Registration (internal/http/routes.go)
 
 ⚠️ **CRITICAL: Middleware Order** - The order of middleware registration matters!
 
@@ -290,7 +290,7 @@ func run() error {
 ### Core Middleware
 
 ```go
-// internal/middleware/core.go
+// internal/http/middleware/core.go
 
 // RequestID generates a unique ID for each request
 func RequestID(next http.Handler) http.Handler {
@@ -360,7 +360,7 @@ Handlers follow a consistent pattern:
 4. **Return HTML by default** - JSON only for `/api/*` endpoints
 
 ```go
-// internal/handlers/auth_handler.go
+// internal/http/handlers/auth_handler.go
 
 // Separate handlers for GET (form) and POST (action)
 func (h *AuthHandler) ShowLoginForm(w http.ResponseWriter, r *http.Request) {
@@ -405,7 +405,7 @@ func (h *AuthHandler) ProcessLogin(w http.ResponseWriter, r *http.Request) {
 ### Content Handlers
 
 ```go
-// internal/handlers/post_handler.go
+// internal/http/handlers/post_handler.go
 
 // Content handlers work with slugs, not IDs
 func (h *PostHandler) Show(w http.ResponseWriter, r *http.Request) {
@@ -539,7 +539,7 @@ func main() {
 ## Testing
 
 ```go
-// internal/handlers/post_handler_test.go
+// internal/http/handlers/post_handler_test.go
 func TestPostHandler_Show(t *testing.T) {
     // Setup
     handler := NewPostHandler(mockService)

@@ -368,8 +368,8 @@ export RATE_LIMIT_LOGIN="5"
 ### DTO Validation
 
 ```go
-// internal/app/dto/user_dto.go
-package dto
+// internal/domain/users/dto.go
+package users
 
 type CreateUserDTO struct {
     Email    string `json:"email" validate:"required,email"`
@@ -386,9 +386,9 @@ type UpdateUserDTO struct {
 ### Validation in Handlers
 
 ```go
-// internal/handlers/user_handler.go
+// internal/http/handlers/user_handler.go
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-    var dto dto.CreateUserDTO
+    var dto users.CreateUserDTO
     dto.Email = r.FormValue("email")
     dto.Name = r.FormValue("name")
     dto.Password = r.FormValue("password")

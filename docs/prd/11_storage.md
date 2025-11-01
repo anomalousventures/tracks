@@ -389,7 +389,7 @@ func (l *LocalStorage) List(ctx context.Context, prefix string) ([]FileInfo, err
 ## File Upload Handler
 
 ```go
-// internal/handlers/upload_handler.go
+// internal/http/handlers/upload_handler.go
 package handlers
 
 import (
@@ -575,8 +575,8 @@ func isAllowedExtension(ext string) bool {
 ## Virus Scanner Integration
 
 ```go
-// internal/services/scanner.go
-package services
+// internal/interfaces/scanner.go
+package interfaces
 
 import (
     "io"
@@ -585,10 +585,26 @@ import (
 type VirusScanner interface {
     Scan(r io.Reader) (infected bool, err error)
 }
+```
+
+```go
+// internal/adapters/scanner/clamav.go
+package scanner
+
+import (
+    "io"
+    "myapp/internal/interfaces"
+)
 
 // ClamAV implementation
 type ClamAVScanner struct {
     endpoint string
+}
+
+func NewClamAVScanner(endpoint string) interfaces.VirusScanner {
+    return &ClamAVScanner{
+        endpoint: endpoint,
+    }
 }
 
 func (c *ClamAVScanner) Scan(r io.Reader) (bool, error) {
@@ -596,6 +612,11 @@ func (c *ClamAVScanner) Scan(r io.Reader) (bool, error) {
     // Can use clamd network protocol or command line
     return false, nil
 }
+```
+
+```go
+// internal/adapters/scanner/cloud.go
+package scanner
 
 // Placeholder for cloud-based scanning (e.g., AWS Malware Protection)
 type CloudScanner struct {
@@ -652,7 +673,7 @@ func NewStorage(cfg StorageConfig, cb *gobreaker.CircuitBreaker[bool]) (storage.
 ## Progress Tracking
 
 ```go
-// internal/handlers/upload_progress.go
+// internal/http/handlers/upload_progress.go
 package handlers
 
 // For large file uploads with progress tracking
