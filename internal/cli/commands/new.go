@@ -20,6 +20,11 @@ type NewCommand struct {
 	generator     interfaces.ProjectGenerator
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
+
+	// Flags
+	dbDriver   string
+	modulePath string
+	noGit      bool
 }
 
 // NewNewCommand creates a new instance of the 'new' command with injected dependencies.
@@ -35,7 +40,7 @@ func NewNewCommand(validator interfaces.Validator, generator interfaces.ProjectG
 
 // Command returns the cobra.Command for the 'new' subcommand.
 func (c *NewCommand) Command() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "new [project-name]",
 		Short: "Create a new Tracks application",
 		Long: `Create a new Tracks application with the specified project name.
@@ -52,26 +57,60 @@ The generated application is production-ready and follows idiomatic Go patterns.
 		Example: `  # Create a new application with default settings
   tracks new myapp
 
-  # Future: Specify database driver
+  # Specify database driver
   tracks new myapp --db postgres
 
-  # Future: Custom Go module path
+  # Custom Go module path
   tracks new myapp --module github.com/myorg/myapp
 
-  # Future: Skip git initialization
-  tracks new myapp --no-git`,
+  # Skip git initialization
+  tracks new myapp --no-git
+
+  # Combine flags
+  tracks new myapp --db postgres --module github.com/myorg/myapp --no-git`,
 		Args: cobra.ExactArgs(1),
 		RunE: c.run,
 	}
+
+	// Add flags
+	cmd.Flags().StringVar(&c.dbDriver, "db", "go-libsql", "Database driver (go-libsql|sqlite3|postgres)")
+	cmd.Flags().StringVar(&c.modulePath, "module", "", "Go module path (e.g., github.com/user/project)")
+	cmd.Flags().BoolVar(&c.noGit, "no-git", false, "Skip git repository initialization")
+
+	return cmd
 }
 
 func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	projectName := args[0]
+
+	// Validate project name
+	if err := c.validator.ValidateProjectName(ctx, projectName); err != nil {
+		return fmt.Errorf("invalid project name: %w", err)
+	}
+
+	// Validate database driver
+	if err := c.validator.ValidateDatabaseDriver(ctx, c.dbDriver); err != nil {
+		return fmt.Errorf("invalid database driver: %w", err)
+	}
+
+	// Validate or generate module path
+	if c.modulePath == "" {
+		// Auto-generate from project name
+		c.modulePath = fmt.Sprintf("example.com/%s", projectName)
+	} else {
+		// Validate provided module path
+		if err := c.validator.ValidateModulePath(ctx, c.modulePath); err != nil {
+			return fmt.Errorf("invalid module path: %w", err)
+		}
+	}
+
 	r := c.newRenderer(cmd)
 
 	r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
 	r.Section(interfaces.Section{
-		Body: "(Full implementation coming soon)",
+		Body: fmt.Sprintf("Database: %s\nModule: %s\nGit: %t\n\n(Full implementation coming soon)",
+			c.dbDriver, c.modulePath, !c.noGit),
 	})
 
 	c.flushRenderer(cmd, r)
