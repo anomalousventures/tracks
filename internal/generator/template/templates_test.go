@@ -191,11 +191,13 @@ func TestTracksYamlTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	tests := []struct {
-		name                  string
-		projectName           string
-		dbDriver              string
-		expectedConnection    string
+		name                   string
+		projectName            string
+		dbDriver               string
+		expectedConnection     string
 		notExpectedConnections []string
+		expectedMaxConn        string
+		expectedMaxIdle        string
 	}{
 		{
 			name:               "go-libsql driver",
@@ -206,6 +208,8 @@ func TestTracksYamlTemplate(t *testing.T) {
 				"${DATABASE_URL:-./",
 				"${DATABASE_URL:-postgres://",
 			},
+			expectedMaxConn: "max_connections: 10",
+			expectedMaxIdle: "max_idle_connections: 2",
 		},
 		{
 			name:               "sqlite3 driver",
@@ -216,6 +220,8 @@ func TestTracksYamlTemplate(t *testing.T) {
 				"${DATABASE_URL:-file:./",
 				"${DATABASE_URL:-postgres://",
 			},
+			expectedMaxConn: "max_connections: 10",
+			expectedMaxIdle: "max_idle_connections: 2",
 		},
 		{
 			name:               "postgres driver",
@@ -226,6 +232,8 @@ func TestTracksYamlTemplate(t *testing.T) {
 				"${DATABASE_URL:-file:./",
 				"${DATABASE_URL:-./webapp.db}",
 			},
+			expectedMaxConn: "max_connections: 25",
+			expectedMaxIdle: "max_idle_connections: 5",
 		},
 	}
 
@@ -254,11 +262,17 @@ func TestTracksYamlTemplate(t *testing.T) {
 			assert.Contains(t, result, "database:")
 			assert.Contains(t, result, "driver: "+tt.dbDriver)
 			assert.Contains(t, result, "connection: "+tt.expectedConnection)
-			assert.Contains(t, result, "max_connections: 25")
-			assert.Contains(t, result, "max_idle_connections: 5")
+			assert.Contains(t, result, tt.expectedMaxConn)
+			assert.Contains(t, result, tt.expectedMaxIdle)
 
 			for _, notExpected := range tt.notExpectedConnections {
-				assert.NotContains(t, result, notExpected, "should not contain connection string for other drivers")
+				assert.NotContains(t, result, notExpected, "should not contain %s (wrong driver)", notExpected)
+			}
+
+			if tt.dbDriver == "go-libsql" || tt.dbDriver == "sqlite3" {
+				assert.Contains(t, result, "File-based databases work better with lower concurrency", "should contain WHY comment for file-based databases")
+			} else if tt.dbDriver == "postgres" {
+				assert.Contains(t, result, "sslmode=disable is safe for local development only", "should contain WHY comment for SSL mode")
 			}
 
 			assert.Contains(t, result, "session:")
