@@ -1,0 +1,15 @@
+package interfaces
+
+import (
+	"context"
+	"time"
+)
+
+type HealthService interface {
+	Check(ctx context.Context) HealthStatus
+}
+
+type HealthStatus struct {
+	Status    string    `json:"status"`
+	Timestamp time.Time `json:"timestamp"`
+}
