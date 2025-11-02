@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 )
 
-// 0755 permissions ensure compatibility across Unix-like systems and Windows.
 func CreateProjectDirectories(config ProjectConfig) error {
 	projectRoot := filepath.Join(config.OutputPath, config.ProjectName)
 
