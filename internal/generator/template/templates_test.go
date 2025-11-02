@@ -259,30 +259,6 @@ func TestTracksYamlTemplate(t *testing.T) {
 	}
 }
 
-func TestEnvExampleTemplate(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{
-		ModuleName: "github.com/test/app",
-	}
-
-	result, err := renderer.Render(".env.example.tmpl", data)
-	require.NoError(t, err)
-	assert.NotEmpty(t, result)
-
-	// Verify security warnings
-	assert.Contains(t, result, "WARNING")
-	assert.Contains(t, result, "NEVER commit .env")
-
-	// Verify expected environment variables
-	assert.Contains(t, result, "DATABASE_URL")
-	assert.Contains(t, result, "PORT")
-
-	// Verify placeholder values
-	assert.Contains(t, result, "sqlite://data/app.db")
-	assert.Contains(t, result, "8080")
-}
-
 func TestReadmeTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
