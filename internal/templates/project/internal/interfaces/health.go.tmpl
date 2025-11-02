@@ -5,13 +5,10 @@ import (
 	"time"
 )
 
-// HealthService provides health check operations
 type HealthService interface {
-	// Check returns the current health status of the application
 	Check(ctx context.Context) HealthStatus
 }
 
-// HealthStatus represents the health state of the application
 type HealthStatus struct {
 	Status    string    `json:"status"`
 	Timestamp time.Time `json:"timestamp"`

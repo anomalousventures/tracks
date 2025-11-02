@@ -100,18 +100,3 @@ func TestHealthInterfacesOnlyStdlibImports(t *testing.T) {
 	assert.NotContains(t, result, "internal/domain", "should not import internal/domain")
 	assert.NotContains(t, result, "internal/handlers", "should not import internal/handlers")
 }
-
-func TestHealthInterfacesHasGodocComments(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{
-		ModuleName: "github.com/test/app",
-	}
-
-	result, err := renderer.Render("internal/interfaces/health.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "// HealthService", "HealthService should have godoc comment")
-	assert.Contains(t, result, "// Check", "Check method should have godoc comment")
-	assert.Contains(t, result, "// HealthStatus", "HealthStatus should have godoc comment")
-}

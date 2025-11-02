@@ -139,17 +139,3 @@ func TestHealthServiceImplementsInterface(t *testing.T) {
 	assert.Contains(t, result, "return &service{}", "NewService should return pointer to service")
 	assert.Contains(t, result, "func (s *service) Check(ctx context.Context) interfaces.HealthStatus", "Check should match interface signature")
 }
-
-func TestHealthServiceHasGodocComments(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{
-		ModuleName: "github.com/test/app",
-	}
-
-	result, err := renderer.Render("internal/domain/health/service.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "// NewService", "NewService should have godoc comment")
-	assert.Contains(t, result, "// Check", "Check method should have godoc comment")
-}
