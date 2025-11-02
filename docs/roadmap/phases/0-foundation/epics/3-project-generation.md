@@ -81,7 +81,7 @@ The following tasks will become GitHub issues, organized by phase:
 
 **Note:** Tasks in this phase create **template files** that the `tracks` generator uses to produce user projects. The "unit tests" here test the template rendering logic in the tracks codebase itself, not the generated code. Generated projects will include their own test files (main_test.go, health_test.go) created from these templates.
 
-1. **Create directory structure (cmd/server, internal/interfaces, internal/domain/health, internal/infra/http, internal/routes, db)** (#109)
+1. **Create directory structure (cmd/server, internal/interfaces, internal/domain/health, internal/infra/http, internal/http/routes, db)** (#109)
 2. **Write unit tests for directory creation** (#110)
 3. **Create go.mod template** (#111)
 4. **Write unit tests for go.mod** (#112)
@@ -95,7 +95,7 @@ The following tasks will become GitHub issues, organized by phase:
 12. **Write unit tests for interfaces template** (#120)
 13. **Create health service template (internal/domain/health/service.go.tmpl)** (#121)
 14. **Write unit tests for health service template** (#122)
-15. **Create routes constants template (internal/routes/routes.go.tmpl)** (#123)
+15. **Create routes constants template (internal/http/routes/routes.go.tmpl)** (#123)
 16. **Write unit tests for routes constants template** (#124)
 17. **Create handler template (internal/infra/http/handlers/health.go.tmpl)** (#125)
 18. **Write unit tests for handler template** (#126)
@@ -307,8 +307,9 @@ myapp/
 │   │   ├── routes.go        # Route registration with markers
 │   │   └── handlers/
 │   │       └── health.go    # Handler methods on server
-│   └── routes/
-│       └── routes.go        # const APIHealth = "/api/health"
+│   ├── http/
+│   │   └── routes/
+│   │       └── routes.go    # const APIHealth = "/api/health"
 ├── db/
 │   ├── db.go                # Connection logic
 │   ├── migrations/          # Empty (for future)
@@ -415,8 +416,9 @@ internal/
 │   ├── routes.go      # Route registration with markers
 │   └── handlers/
 │       └── health.go  # Handler methods
-└── routes/
-    └── routes.go      # Route constants
+└── http/
+    └── routes/
+        └── routes.go  # Route constants
 
 db/
 ├── db.go              # Connection logic
