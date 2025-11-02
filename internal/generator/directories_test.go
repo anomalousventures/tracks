@@ -28,7 +28,7 @@ func TestCreateProjectDirectories(t *testing.T) {
 			filepath.Join(projectRoot, "internal", "interfaces"),
 			filepath.Join(projectRoot, "internal", "domain", "health"),
 			filepath.Join(projectRoot, "internal", "http", "handlers"),
-			filepath.Join(projectRoot, "internal", "routes"),
+			filepath.Join(projectRoot, "internal", "http", "routes"),
 			filepath.Join(projectRoot, "db", "migrations"),
 			filepath.Join(projectRoot, "db", "queries"),
 			filepath.Join(projectRoot, "db", "generated"),
