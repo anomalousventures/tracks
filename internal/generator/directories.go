@@ -6,9 +6,7 @@ import (
 	"path/filepath"
 )
 
-// CreateProjectDirectories creates the complete directory structure for a new project.
-// Uses ProjectConfig.OutputPath and ProjectConfig.ProjectName to determine the base path.
-// All directories are created with 0755 permissions for cross-platform compatibility.
+// 0755 permissions ensure compatibility across Unix-like systems and Windows.
 func CreateProjectDirectories(config ProjectConfig) error {
 	projectRoot := filepath.Join(config.OutputPath, config.ProjectName)
 
