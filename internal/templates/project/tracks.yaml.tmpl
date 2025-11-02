@@ -2,11 +2,18 @@
 # Environment variables take precedence over values in this file
 
 # Application settings
+# environment: Sets the application environment (development, staging, production)
+# log_level: Controls logging verbosity (debug, info, warn, error)
 app:
   environment: development
   log_level: debug
 
 # Server configuration
+# port: HTTP server port
+# host: Interface to bind to (localhost for local only, 0.0.0.0 for all interfaces)
+# read_timeout: Maximum duration for reading the entire request
+# write_timeout: Maximum duration before timing out writes of the response
+# idle_timeout: Maximum amount of time to wait for the next request when keep-alives are enabled
 server:
   port: 8080
   host: localhost
@@ -15,6 +22,10 @@ server:
   idle_timeout: 120s
 
 # Database configuration
+# driver: Database driver to use (go-libsql, sqlite3, postgres)
+# connection: Database connection string (uses DATABASE_URL env var with fallback to default)
+# max_connections: Maximum number of open connections to the database
+# max_idle_connections: Maximum number of connections in the idle connection pool
 database:
   driver: {{.DBDriver}}
 {{- if eq .DBDriver "go-libsql"}}
@@ -28,9 +39,14 @@ database:
   max_idle_connections: 5
 
 # Session configuration
+# lifetime: How long a session stays valid
+# cookie_name: Name of the session cookie
+# cookie_secure: Set to true in production to require HTTPS (SECURITY: false is for development only)
+# cookie_http_only: Prevents JavaScript access to cookies (recommended: true)
+# cookie_same_site: CSRF protection (lax, strict, or none)
 session:
   lifetime: 24h
   cookie_name: session_id
-  cookie_secure: false
+  cookie_secure: false  # WARNING: Set to true in production to require HTTPS
   cookie_http_only: true
   cookie_same_site: lax

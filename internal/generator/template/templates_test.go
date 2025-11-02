@@ -191,28 +191,41 @@ func TestTracksYamlTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	tests := []struct {
-		name               string
-		projectName        string
-		dbDriver           string
-		expectedConnection string
+		name                  string
+		projectName           string
+		dbDriver              string
+		expectedConnection    string
+		notExpectedConnections []string
 	}{
 		{
 			name:               "go-libsql driver",
 			projectName:        "myapp",
 			dbDriver:           "go-libsql",
 			expectedConnection: "${DATABASE_URL:-file:./myapp.db}",
+			notExpectedConnections: []string{
+				"${DATABASE_URL:-./",
+				"${DATABASE_URL:-postgres://",
+			},
 		},
 		{
 			name:               "sqlite3 driver",
 			projectName:        "testapp",
 			dbDriver:           "sqlite3",
 			expectedConnection: "${DATABASE_URL:-./testapp.db}",
+			notExpectedConnections: []string{
+				"${DATABASE_URL:-file:./",
+				"${DATABASE_URL:-postgres://",
+			},
 		},
 		{
 			name:               "postgres driver",
 			projectName:        "webapp",
 			dbDriver:           "postgres",
 			expectedConnection: "${DATABASE_URL:-postgres://localhost/webapp?sslmode=disable}",
+			notExpectedConnections: []string{
+				"${DATABASE_URL:-file:./",
+				"${DATABASE_URL:-./webapp.db}",
+			},
 		},
 	}
 
@@ -244,12 +257,18 @@ func TestTracksYamlTemplate(t *testing.T) {
 			assert.Contains(t, result, "max_connections: 25")
 			assert.Contains(t, result, "max_idle_connections: 5")
 
+			for _, notExpected := range tt.notExpectedConnections {
+				assert.NotContains(t, result, notExpected, "should not contain connection string for other drivers")
+			}
+
 			assert.Contains(t, result, "session:")
 			assert.Contains(t, result, "lifetime: 24h")
 			assert.Contains(t, result, "cookie_name: session_id")
 			assert.Contains(t, result, "cookie_secure: false")
 			assert.Contains(t, result, "cookie_http_only: true")
 			assert.Contains(t, result, "cookie_same_site: lax")
+
+			assert.Contains(t, result, "WARNING: Set to true in production")
 		})
 	}
 }
