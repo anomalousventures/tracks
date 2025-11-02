@@ -33,22 +33,6 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 	return cobraCmd
 }
 
-func setupTestCommandWithMock(t *testing.T) (*cobra.Command, *mocks.MockRenderer) {
-	mockValidator := mocks.NewMockValidator(t)
-	mockGenerator := mocks.NewMockProjectGenerator(t)
-	mockRenderer := mocks.NewMockRenderer(t)
-
-	factory := func(*cobra.Command) interfaces.Renderer {
-		return mockRenderer
-	}
-	flusher := func(*cobra.Command, interfaces.Renderer) {}
-	cmd := NewNewCommand(mockValidator, mockGenerator, factory, flusher)
-	cobraCmd := cmd.Command()
-	cobraCmd.SetOut(new(bytes.Buffer))
-	cobraCmd.SetErr(new(bytes.Buffer))
-	return cobraCmd, mockRenderer
-}
-
 func TestNewNewCommand(t *testing.T) {
 	mockRenderer := mocks.NewMockRenderer(t)
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {

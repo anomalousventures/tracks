@@ -13,7 +13,6 @@ type RendererFactory func(*cobra.Command) interfaces.Renderer
 // RendererFlusher flushes a renderer and handles errors.
 type RendererFlusher func(*cobra.Command, interfaces.Renderer)
 
-// NewCommand represents the 'new' command for creating Tracks applications.
 // Follows ADR-001 dependency injection pattern: command struct with injected dependencies.
 type NewCommand struct {
 	validator     interfaces.Validator
@@ -27,7 +26,6 @@ type NewCommand struct {
 	noGit      bool
 }
 
-// NewNewCommand creates a new instance of the 'new' command with injected dependencies.
 // Follows ADR-001: constructor accepts all dependencies as parameters.
 func NewNewCommand(validator interfaces.Validator, generator interfaces.ProjectGenerator, newRenderer RendererFactory, flushRenderer RendererFlusher) *NewCommand {
 	return &NewCommand{
