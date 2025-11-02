@@ -12,31 +12,87 @@ import (
 func TestGoModTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
+	coreDeps := []string{
+		"github.com/go-chi/chi/v5",
+		"github.com/a-h/templ",
+		"github.com/pressly/goose/v3",
+		"github.com/sqlc-dev/sqlc",
+		"github.com/alexedwards/scs/v2",
+		"github.com/rs/zerolog",
+	}
+
 	tests := []struct {
 		name         string
 		data         TemplateData
 		wantContains []string
+		wantNotContains []string
 	}{
 		{
-			name: "basic go.mod",
+			name: "go-libsql driver",
 			data: TemplateData{
 				ModuleName: "github.com/user/myapp",
 				GoVersion:  "1.25",
+				DBDriver:   "go-libsql",
 			},
-			wantContains: []string{
+			wantContains: append(coreDeps,
 				"module github.com/user/myapp",
 				"go 1.25",
+				"github.com/tursodatabase/libsql-client-go",
+			),
+			wantNotContains: []string{
+				"github.com/mattn/go-sqlite3",
+				"github.com/lib/pq",
 			},
 		},
 		{
-			name: "different module path",
+			name: "sqlite3 driver",
+			data: TemplateData{
+				ModuleName: "github.com/user/myapp",
+				GoVersion:  "1.25",
+				DBDriver:   "sqlite3",
+			},
+			wantContains: append(coreDeps,
+				"module github.com/user/myapp",
+				"go 1.25",
+				"github.com/mattn/go-sqlite3",
+			),
+			wantNotContains: []string{
+				"github.com/tursodatabase/libsql-client-go",
+				"github.com/lib/pq",
+			},
+		},
+		{
+			name: "postgres driver",
+			data: TemplateData{
+				ModuleName: "github.com/user/myapp",
+				GoVersion:  "1.25",
+				DBDriver:   "postgres",
+			},
+			wantContains: append(coreDeps,
+				"module github.com/user/myapp",
+				"go 1.25",
+				"github.com/lib/pq",
+			),
+			wantNotContains: []string{
+				"github.com/tursodatabase/libsql-client-go",
+				"github.com/mattn/go-sqlite3",
+			},
+		},
+		{
+			name: "different module path with postgres",
 			data: TemplateData{
 				ModuleName: "gitlab.com/org/project",
 				GoVersion:  "1.23",
+				DBDriver:   "postgres",
 			},
-			wantContains: []string{
+			wantContains: append(coreDeps,
 				"module gitlab.com/org/project",
 				"go 1.23",
+				"github.com/lib/pq",
+			),
+			wantNotContains: []string{
+				"github.com/tursodatabase/libsql-client-go",
+				"github.com/mattn/go-sqlite3",
 			},
 		},
 	}
@@ -48,7 +104,11 @@ func TestGoModTemplate(t *testing.T) {
 			assert.NotEmpty(t, result)
 
 			for _, want := range tt.wantContains {
-				assert.Contains(t, result, want)
+				assert.Contains(t, result, want, "expected to find: %s", want)
+			}
+
+			for _, notWant := range tt.wantNotContains {
+				assert.NotContains(t, result, notWant, "should not contain: %s", notWant)
 			}
 		})
 	}
