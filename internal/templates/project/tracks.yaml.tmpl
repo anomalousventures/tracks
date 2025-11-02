@@ -1,7 +1,36 @@
-database:
-  driver: {{.DBDriver}}
-  connection: ${DATABASE_URL}
+# Application configuration for {{.ProjectName}}
+# Environment variables take precedence over values in this file
 
+# Application settings
+app:
+  environment: development
+  log_level: debug
+
+# Server configuration
 server:
   port: 8080
   host: localhost
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 120s
+
+# Database configuration
+database:
+  driver: {{.DBDriver}}
+{{- if eq .DBDriver "go-libsql"}}
+  connection: ${DATABASE_URL:-file:./{{.ProjectName}}.db}
+{{- else if eq .DBDriver "sqlite3"}}
+  connection: ${DATABASE_URL:-./{{.ProjectName}}.db}
+{{- else if eq .DBDriver "postgres"}}
+  connection: ${DATABASE_URL:-postgres://localhost/{{.ProjectName}}?sslmode=disable}
+{{- end}}
+  max_connections: 25
+  max_idle_connections: 5
+
+# Session configuration
+session:
+  lifetime: 24h
+  cookie_name: session_id
+  cookie_secure: false
+  cookie_http_only: true
+  cookie_same_site: lax
