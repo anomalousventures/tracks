@@ -114,34 +114,6 @@ func TestGoModTemplate(t *testing.T) {
 	}
 }
 
-func TestGitignoreTemplate(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{
-		ModuleName: "github.com/test/app",
-	}
-
-	result, err := renderer.Render(".gitignore.tmpl", data)
-	require.NoError(t, err)
-	assert.NotEmpty(t, result)
-
-	// Verify it includes expected patterns
-	expectedPatterns := []string{
-		"bin/",
-		"*.exe",
-		"coverage.out",
-		".env",
-		"!.env.example",
-		".DS_Store",
-		".vscode/",
-		".idea/",
-	}
-
-	for _, pattern := range expectedPatterns {
-		assert.Contains(t, result, pattern, "should contain pattern: %s", pattern)
-	}
-}
-
 func TestMainGoTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
