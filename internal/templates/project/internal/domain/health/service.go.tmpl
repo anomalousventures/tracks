@@ -1,0 +1,23 @@
+package health
+
+import (
+	"context"
+	"time"
+
+	"{{.ModuleName}}/internal/interfaces"
+)
+
+type service struct{}
+
+// NewService creates a new health service
+func NewService() interfaces.HealthService {
+	return &service{}
+}
+
+// Check returns the current health status
+func (s *service) Check(ctx context.Context) interfaces.HealthStatus {
+	return interfaces.HealthStatus{
+		Status:    "ok",
+		Timestamp: time.Now(),
+	}
+}
