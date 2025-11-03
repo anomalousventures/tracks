@@ -1,0 +1,62 @@
+package logging
+
+import (
+	"context"
+	"os"
+
+	"github.com/rs/zerolog"
+)
+
+type Logger struct {
+	logger zerolog.Logger
+}
+
+type contextKey string
+
+const requestIDKey contextKey = "request_id"
+
+func NewLogger(environment string) *Logger {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
+	var logger zerolog.Logger
+	if environment == "development" {
+		output := zerolog.ConsoleWriter{Out: os.Stderr}
+		logger = zerolog.New(output).With().Timestamp().Logger()
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
+	return &Logger{logger: logger}
+}
+
+func (l *Logger) loggerWithContext(ctx context.Context) *zerolog.Logger {
+	logger := l.logger
+
+	if requestID, ok := ctx.Value(requestIDKey).(string); ok && requestID != "" {
+		logger = logger.With().Str("request_id", requestID).Logger()
+	}
+
+	return &logger
+}
+
+func (l *Logger) Debug(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Debug()
+}
+
+func (l *Logger) Info(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Info()
+}
+
+func (l *Logger) Warn(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Warn()
+}
+
+func (l *Logger) Error(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Error()
+}
+
+func WithRequestID(ctx context.Context, requestID string) context.Context {
+	return context.WithValue(ctx, requestIDKey, requestID)
+}

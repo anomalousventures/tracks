@@ -1,0 +1,14 @@
+package interfaces
+
+import (
+	"context"
+
+	"github.com/rs/zerolog"
+)
+
+type Logger interface {
+	Info(ctx context.Context) *zerolog.Event
+	Error(ctx context.Context) *zerolog.Event
+	Warn(ctx context.Context) *zerolog.Event
+	Debug(ctx context.Context) *zerolog.Event
+}

@@ -7,41 +7,25 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/go-chi/chi/v5"
+	"{{.ModuleName}}/internal/config"
 	"{{.ModuleName}}/internal/interfaces"
 )
 
 type Server struct {
 	router chi.Router
-	config *Config
+	config *config.ServerConfig
+	logger interfaces.Logger
 
 	healthService interfaces.HealthService
 }
 
-type Config struct {
-	Port            string
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
-	IdleTimeout     time.Duration
-	ShutdownTimeout time.Duration
-}
-
-func NewConfig() *Config {
-	return &Config{
-		Port:            ":8080",
-		ReadTimeout:     15 * time.Second,
-		WriteTimeout:    15 * time.Second,
-		IdleTimeout:     60 * time.Second,
-		ShutdownTimeout: 30 * time.Second,
-	}
-}
-
-func NewServer(cfg *Config) *Server {
+func NewServer(cfg *config.ServerConfig, logger interfaces.Logger) *Server {
 	return &Server{
 		router: chi.NewRouter(),
 		config: cfg,
+		logger: logger,
 	}
 }
 
@@ -64,6 +48,9 @@ func (s *Server) ListenAndServe() error {
 		IdleTimeout:  s.config.IdleTimeout,
 	}
 
+	ctx := context.Background()
+	s.logger.Info(ctx).Str("addr", s.config.Port).Msg("server listening")
+
 	serverErr := make(chan error, 1)
 
 	go func() {
@@ -77,13 +64,19 @@ func (s *Server) ListenAndServe() error {
 
 	select {
 	case <-quit:
-		fmt.Println("Shutting down server...")
+		s.logger.Info(ctx).Msg("shutting down server")
 	case err := <-serverErr:
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), s.config.ShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), s.config.ShutdownTimeout)
 	defer cancel()
 
-	return srv.Shutdown(ctx)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		s.logger.Error(ctx).Err(err).Msg("server shutdown failed")
+		return err
+	}
+
+	s.logger.Info(ctx).Msg("server shutdown complete")
+	return nil
 }

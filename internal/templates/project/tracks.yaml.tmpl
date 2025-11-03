@@ -1,31 +1,27 @@
 # Application configuration for {{.ProjectName}}
 # Environment variables take precedence over values in this file
+# Use APP_ prefix for environment variables (e.g. APP_SERVER_PORT, APP_LOGGING_LEVEL)
 
-app:
-  environment: development
-  log_level: debug
+environment: development
 
 server:
-  port: 8080
-  host: localhost
-  read_timeout: 10s
-  write_timeout: 10s
-  idle_timeout: 120s
+  port: ":8080"
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+  shutdown_timeout: 30s
+
+logging:
+  level: info
+  format: json
 
 database:
-  driver: {{.DBDriver}}
 {{- if eq .DBDriver "go-libsql"}}
-  connection: ${DATABASE_URL:-file:./{{.ProjectName}}.db}
-  max_connections: 10  # File-based databases work better with lower concurrency
-  max_idle_connections: 2
+  url: ${DATABASE_URL:-file:./{{.ProjectName}}.db}
 {{- else if eq .DBDriver "sqlite3"}}
-  connection: ${DATABASE_URL:-./{{.ProjectName}}.db}
-  max_connections: 10  # File-based databases work better with lower concurrency
-  max_idle_connections: 2
+  url: ${DATABASE_URL:-./{{.ProjectName}}.db}
 {{- else if eq .DBDriver "postgres"}}
-  connection: ${DATABASE_URL:-postgres://localhost/{{.ProjectName}}?sslmode=disable}  # sslmode=disable is safe for local development only
-  max_connections: 25
-  max_idle_connections: 5
+  url: ${DATABASE_URL:-postgres://localhost/{{.ProjectName}}?sslmode=disable}
 {{- end}}
 
 session:

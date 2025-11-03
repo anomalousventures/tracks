@@ -48,7 +48,7 @@ func TestHealthHandlerTemplate(t *testing.T) {
 			assert.Contains(t, result, "package handlers")
 			assert.Contains(t, result, tt.wantImport, "should import interfaces package from module")
 			assert.Contains(t, result, "type HealthHandler struct")
-			assert.Contains(t, result, "func NewHealthHandler(svc interfaces.HealthService) *HealthHandler")
+			assert.Contains(t, result, "func NewHealthHandler(svc interfaces.HealthService, logger interfaces.Logger) *HealthHandler")
 			assert.Contains(t, result, "func (h *HealthHandler) Check(w http.ResponseWriter, r *http.Request)")
 			assert.Contains(t, result, `w.Header().Set("Content-Type", "application/json")`)
 			assert.Contains(t, result, "json.NewEncoder(w).Encode(status)")
@@ -149,9 +149,10 @@ func TestHealthHandlerConstructor(t *testing.T) {
 	result, err := renderer.Render("internal/http/handlers/health.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "func NewHealthHandler(svc interfaces.HealthService) *HealthHandler", "NewHealthHandler should accept interface and return pointer")
+	assert.Contains(t, result, "func NewHealthHandler(svc interfaces.HealthService, logger interfaces.Logger) *HealthHandler", "NewHealthHandler should accept interface, logger and return pointer")
 	assert.Contains(t, result, "return &HealthHandler{", "should return pointer to struct")
 	assert.Contains(t, result, "healthService: svc", "should initialize healthService field")
+	assert.Contains(t, result, "logger:        logger", "should initialize logger field")
 }
 
 func TestHealthHandlerCheckMethod(t *testing.T) {
@@ -165,7 +166,8 @@ func TestHealthHandlerCheckMethod(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, result, "func (h *HealthHandler) Check(w http.ResponseWriter, r *http.Request)", "Check should match http.HandlerFunc signature")
-	assert.Contains(t, result, "h.healthService.Check(r.Context())", "should call service with request context")
+	assert.Contains(t, result, "ctx := r.Context()", "should extract context")
+	assert.Contains(t, result, "h.healthService.Check(ctx)", "should call service with context")
 }
 
 func TestHealthHandlerSetsContentType(t *testing.T) {
@@ -192,6 +194,7 @@ func TestHealthHandlerErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, result, "if err := json.NewEncoder(w).Encode(status); err != nil", "should check for encoding errors")
+	assert.Contains(t, result, "h.logger.Error(ctx).Err(err).Msg", "should log error using handler logger")
 	assert.Contains(t, result, `http.Error(w, "Failed to encode response", http.StatusInternalServerError)`, "should handle encoding errors properly")
 	assert.Contains(t, result, "return", "should return after error")
 }

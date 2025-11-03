@@ -55,9 +55,10 @@ func TestEnvExampleTemplate(t *testing.T) {
 			assert.Contains(t, result, tt.expectedURL)
 
 			assert.Contains(t, result, "SECRET_KEY=")
-			assert.Contains(t, result, "APP_ENV=")
-			assert.Contains(t, result, "LOG_LEVEL=")
-			assert.Contains(t, result, "PORT=")
+			assert.Contains(t, result, "APP_ENVIRONMENT=")
+			assert.Contains(t, result, "APP_LOGGING_LEVEL=")
+			assert.Contains(t, result, "APP_LOGGING_FORMAT=")
+			assert.Contains(t, result, "APP_SERVER_PORT=")
 		})
 	}
 }
@@ -100,9 +101,10 @@ func TestEnvExampleRequiredVariables(t *testing.T) {
 	require.NoError(t, err)
 
 	requiredVariables := []string{
-		"APP_ENV=",
-		"LOG_LEVEL=",
-		"PORT=",
+		"APP_ENVIRONMENT=",
+		"APP_LOGGING_LEVEL=",
+		"APP_LOGGING_FORMAT=",
+		"APP_SERVER_PORT=",
 		"DATABASE_URL=",
 		"SECRET_KEY=",
 	}

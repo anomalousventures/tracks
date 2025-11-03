@@ -50,17 +50,17 @@ func TestRenderAllTemplates(t *testing.T) {
 		{
 			template:   "cmd/server/main.go.tmpl",
 			outputPath: filepath.Join("cmd", "server", "main.go"),
-			contains:   []string{"package main", "myapp server starting..."},
+			contains:   []string{"package main", "func run() error", "config.Load()", "logging.NewLogger"},
 		},
 		{
 			template:   "tracks.yaml.tmpl",
 			outputPath: "tracks.yaml",
-			contains:   []string{"database:", "driver: sqlite3", "server:", "port: 8080"},
+			contains:   []string{"database:", "server:", `port: ":8080"`, "logging:"},
 		},
 		{
 			template:   ".env.example.tmpl",
 			outputPath: ".env.example",
-			contains:   []string{"WARNING", "DATABASE_URL", "PORT"},
+			contains:   []string{"WARNING", "DATABASE_URL", "APP_SERVER_PORT"},
 		},
 		{
 			template:   "README.md.tmpl",
@@ -139,7 +139,8 @@ func TestRenderAllTemplatesWithDifferentDrivers(t *testing.T) {
 
 			content, err := os.ReadFile(tracksYamlPath)
 			require.NoError(t, err)
-			assert.Contains(t, string(content), "driver: "+driver)
+			assert.Contains(t, string(content), "database:")
+			assert.Contains(t, string(content), "url:")
 		})
 	}
 }
