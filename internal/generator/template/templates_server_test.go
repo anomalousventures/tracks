@@ -41,23 +41,6 @@ func TestServerValidGoCode(t *testing.T) {
 	assert.NoError(t, err, "Generated server.go should be valid Go code")
 }
 
-func TestNewConfig(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-	data := TemplateData{
-		ModuleName: "github.com/example/testapp",
-	}
-
-	output, err := renderer.Render("internal/http/server.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, output, "func NewConfig() *Config", "should have NewConfig constructor")
-	assert.Contains(t, output, "Port:            \":8080\"", "should have default port")
-	assert.Contains(t, output, "ReadTimeout:     15 * time.Second", "should have default read timeout")
-	assert.Contains(t, output, "WriteTimeout:    15 * time.Second", "should have default write timeout")
-	assert.Contains(t, output, "IdleTimeout:     60 * time.Second", "should have default idle timeout")
-	assert.Contains(t, output, "ShutdownTimeout: 30 * time.Second", "should have default shutdown timeout")
-}
-
 func TestServerStructDefinition(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	data := TemplateData{
@@ -69,25 +52,9 @@ func TestServerStructDefinition(t *testing.T) {
 
 	assert.Contains(t, output, "type Server struct", "should define Server struct")
 	assert.Contains(t, output, "router chi.Router", "should have router field")
-	assert.Contains(t, output, "config *Config", "should have config field")
+	assert.Contains(t, output, "config *config.ServerConfig", "should have config field")
+	assert.Contains(t, output, "logger *zerolog.Logger", "should have logger field")
 	assert.Contains(t, output, "healthService interfaces.HealthService", "should have healthService field")
-}
-
-func TestServerConfigStructDefinition(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-	data := TemplateData{
-		ModuleName: "github.com/example/testapp",
-	}
-
-	output, err := renderer.Render("internal/http/server.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, output, "type Config struct", "should define Config struct")
-	assert.Contains(t, output, "Port            string", "should have Port field")
-	assert.Contains(t, output, "ReadTimeout     time.Duration", "should have ReadTimeout field")
-	assert.Contains(t, output, "WriteTimeout    time.Duration", "should have WriteTimeout field")
-	assert.Contains(t, output, "IdleTimeout     time.Duration", "should have IdleTimeout field")
-	assert.Contains(t, output, "ShutdownTimeout time.Duration", "should have ShutdownTimeout field")
 }
 
 func TestServerConstructor(t *testing.T) {
@@ -99,9 +66,11 @@ func TestServerConstructor(t *testing.T) {
 	output, err := renderer.Render("internal/http/server.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, output, "func NewServer(cfg *Config) *Server", "should have NewServer constructor")
+	assert.Contains(t, output, "func NewServer(cfg *config.ServerConfig, logger *zerolog.Logger) *Server", "should have NewServer constructor with config and logger")
 	assert.Contains(t, output, "return &Server{", "should return Server pointer")
 	assert.Contains(t, output, "router: chi.NewRouter()", "should initialize chi router")
+	assert.Contains(t, output, "config: cfg", "should store config")
+	assert.Contains(t, output, "logger: logger", "should store logger")
 }
 
 func TestServerBuilderPattern(t *testing.T) {
@@ -128,7 +97,7 @@ func TestServerRegisterRoutes(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, output, "func (s *Server) RegisterRoutes() *Server", "should have RegisterRoutes method")
-	assert.Contains(t, output, "s.routes()", "should call routes method")
+	assert.Contains(t, output, "s.routes(s.logger)", "should call routes method with logger")
 }
 
 func TestServerGracefulShutdown(t *testing.T) {
@@ -221,7 +190,7 @@ func TestHTTPRoutesTemplateRender(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, output)
 	assert.Contains(t, output, "package http")
-	assert.Contains(t, output, "func (s *Server) routes()")
+	assert.Contains(t, output, "func (s *Server) routes(logger *zerolog.Logger)")
 }
 
 func TestHTTPRoutesValidGoCode(t *testing.T) {
@@ -248,13 +217,13 @@ func TestHTTPRoutesMiddlewareOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	requestIDIdx := strings.Index(output, "middleware.RequestID")
+	loggerIdx := strings.Index(output, "logging.RequestLogger()")
 	realIPIdx := strings.Index(output, "middleware.RealIP")
-	loggerIdx := strings.Index(output, "middleware.Logger")
-	recovererIdx := strings.Index(output, "middleware.Recoverer")
+	recovererIdx := strings.Index(output, "logging.Recoverer()")
 
-	assert.Greater(t, realIPIdx, requestIDIdx, "RealIP should come after RequestID")
-	assert.Greater(t, loggerIdx, realIPIdx, "Logger should come after RealIP")
-	assert.Greater(t, recovererIdx, loggerIdx, "Recoverer should come after Logger")
+	assert.Greater(t, loggerIdx, requestIDIdx, "RequestLogger should come after RequestID")
+	assert.Greater(t, realIPIdx, loggerIdx, "RealIP should come after RequestLogger")
+	assert.Greater(t, recovererIdx, realIPIdx, "Recoverer should come after RealIP")
 }
 
 func TestHTTPRoutesMarkerSections(t *testing.T) {
@@ -329,7 +298,7 @@ func TestHTTPRoutesHandleHealthCheckHelper(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, output, "func (s *Server) handleHealthCheck() http.HandlerFunc", "should have handleHealthCheck helper")
-	assert.Contains(t, output, "handler := handlers.NewHealthHandler(s.healthService)", "should instantiate handler with DI")
+	assert.Contains(t, output, "handler := handlers.NewHealthHandler(s.healthService, s.logger)", "should instantiate handler with service and logger")
 	assert.Contains(t, output, "return handler.Check", "should return handler method")
 }
 

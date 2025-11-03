@@ -104,39 +104,56 @@ The following tasks will become GitHub issues, organized by phase:
 
 ### Phase 5: Server & Main Files
 
-1. **Create server.go template with dependency injection pattern** (#129)
-2. **Create routes.go template with marker comments** (#130)
-3. **Write unit tests for server and routes templates** (#131)
-4. **Create main.go template with run() pattern and markers** (#132)
-5. **Write unit tests for main.go template** (#133)
-6. **Create db/db.go template with connection logic** (#134)
+1. **Create server.go template with dependency injection pattern** (#129) ✅
+2. **Create routes.go template with marker comments** (#130) ✅
+3. **Write unit tests for server and routes templates** (#131) ✅
+
+### Phase 5.5: Config & Logging System
+
+**Note:** Config and logging must come before main.go and db.go, as both depend on configuration loading and structured logging per PRD 12 (Observability).
+
+1. **Create config package structure (internal/config/config.go.tmpl)** (#132)
+2. **Implement Viper-based config loading with hierarchical precedence (defaults → tracks.yaml → env vars)** (#133)
+3. **Create logging package (internal/logging/logger.go.tmpl) per PRD 12 spec** (#134)
+4. **Implement context-aware logging helpers (Info(ctx), Error(ctx) with automatic request_id extraction)** (#135)
+5. **Create HTTP logging middleware extracting request_id from Chi context** (#136)
+6. **Update tracks.yaml.tmpl with server timeouts and logging config** (#137)
+7. **Update .env.example with LOG_LEVEL and LOG_FORMAT** (#138)
+8. **Write unit tests for config loading and logger initialization** (#139)
+9. **Write unit tests for context-aware logging and middleware** (#140)
+
+### Phase 5.6: Main & Database
+
+1. **Create main.go template with run() pattern, config/logger initialization, and markers** (#141)
+2. **Write unit tests for main.go template** (#142)
+3. **Create db/db.go template with connection logic using config** (#143)
 
 ### Phase 6: Database & Config Files
 
-1. **Create sqlc.yaml template (output: db/generated)** (#135)
-2. **Create README.md template** (#136)
-3. **Write unit tests for config file templates** (#137)
-4. **Create Makefile template with mocks target** (#138)
+1. **Create sqlc.yaml template (output: db/generated)** (#144)
+2. **Create README.md template** (#145)
+3. **Write unit tests for config file templates** (#146)
+4. **Create Makefile template with mocks target** (#147)
 
 ### Phase 7: Git Initialization & Output
 
-1. **Implement git initialization logic (respecting --no-git)** (#139)
-2. **Write unit tests for git init with and without flag** (#140)
-3. **Implement post-generation success output with next steps** (#141)
-4. **Write unit tests for output rendering** (#142)
+1. **Implement git initialization logic (respecting --no-git)** (#148)
+2. **Write unit tests for git init with and without flag** (#149)
+3. **Implement post-generation success output with next steps** (#150)
+4. **Write unit tests for output rendering** (#151)
 
 ### Phase 8: Integration & Runtime Verification
 
 **Note:** These integration tests verify generated projects compile, run, and respond to HTTP requests without requiring database connectivity. The health check endpoint is database-free by design. Database integration testing (migrations, SQLC, queries) will be covered in Epic 4: Generated Project Tooling.
 
-1. **Create integration test that generates full project** (#143)
-2. **Integration test: verify `go mod download` succeeds** (#144)
-3. **Integration test: verify `go test ./...` passes on generated project** (#145)
-4. **Integration test: verify `go build ./cmd/server` succeeds** (#146)
-5. **Integration test: run server binary and verify it starts** (#147)
-6. **Integration test: hit health check endpoint, verify 200 OK response** (#148)
-7. **Add cross-platform integration tests (Linux, macOS, Windows)** (#149)
-8. **Document `tracks new` command and all flags** (#150)
+1. **Create integration test that generates full project** (#152)
+2. **Integration test: verify `go mod download` succeeds** (#153)
+3. **Integration test: verify `go test ./...` passes on generated project** (#154)
+4. **Integration test: verify `go build ./cmd/server` succeeds** (#155)
+5. **Integration test: run server binary and verify it starts** (#156)
+6. **Integration test: hit health check endpoint, verify 200 OK response** (#157)
+7. **Add cross-platform integration tests (Linux, macOS, Windows)** (#158)
+8. **Document `tracks new` command and all flags** (#159)
 
 ## Dependencies
 
@@ -462,13 +479,20 @@ func main() {
 }
 
 func run() error {
+    // Load configuration from tracks.yaml + env vars
     cfg, err := config.Load()
     if err != nil {
         return fmt.Errorf("load config: %w", err)
     }
 
+    // Setup structured logging per PRD 12
+    logging.SetupLogger(cfg.Environment)
+    logger := logging.Logger()
+
+    logger.Info().Msg("server starting")
+
     // TRACKS:DB:BEGIN
-    database, err := db.New(cfg.DatabaseURL)
+    database, err := db.New(cfg.Database.URL)
     if err != nil {
         return fmt.Errorf("connect db: %w", err)
     }
@@ -479,7 +503,7 @@ func run() error {
     healthService := health.NewService()
     // TRACKS:SERVICES:END
 
-    srv := http.NewServer(cfg).
+    srv := http.NewServer(&cfg.Server, logger).
         WithHealthService(healthService).
         RegisterRoutes()
 

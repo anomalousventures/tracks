@@ -117,95 +117,53 @@ func TestGoModTemplate(t *testing.T) {
 func TestMainGoTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
-	tests := []struct {
-		name         string
-		data         TemplateData
-		wantContains []string
-	}{
-		{
-			name: "basic main.go",
-			data: TemplateData{
-				ProjectName: "myapp",
-			},
-			wantContains: []string{
-				"package main",
-				"import",
-				"func main()",
-				"myapp server starting...",
-			},
-		},
-		{
-			name: "different project name",
-			data: TemplateData{
-				ProjectName: "awesome-service",
-			},
-			wantContains: []string{
-				"package main",
-				"awesome-service server starting...",
-			},
-		},
+	data := TemplateData{
+		ModuleName: "github.com/user/myapp",
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := renderer.Render("cmd/server/main.go.tmpl", tt.data)
-			require.NoError(t, err)
-			assert.NotEmpty(t, result)
+	result, err := renderer.Render("cmd/server/main.go.tmpl", data)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result)
 
-			for _, want := range tt.wantContains {
-				assert.Contains(t, result, want)
-			}
-		})
-	}
+	assert.Contains(t, result, "package main")
+	assert.Contains(t, result, "import")
+	assert.Contains(t, result, "func main()")
+	assert.Contains(t, result, "func run() error")
+	assert.Contains(t, result, "config.Load()")
+	assert.Contains(t, result, "logging.SetupLogger(cfg.Environment)")
+	assert.Contains(t, result, `logger.Info().Msg("server starting")`)
+	assert.Contains(t, result, "http.NewServer(&cfg.Server, logger)")
+	assert.Contains(t, result, "WithHealthService(healthService)")
+	assert.Contains(t, result, "RegisterRoutes()")
+	assert.Contains(t, result, "srv.ListenAndServe()")
 }
 
 func TestTracksYamlTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	tests := []struct {
-		name                   string
-		projectName            string
-		dbDriver               string
-		expectedConnection     string
-		notExpectedConnections []string
-		expectedMaxConn        string
-		expectedMaxIdle        string
+		name               string
+		projectName        string
+		dbDriver           string
+		expectedConnection string
 	}{
 		{
 			name:               "go-libsql driver",
 			projectName:        "myapp",
 			dbDriver:           "go-libsql",
 			expectedConnection: "${DATABASE_URL:-file:./myapp.db}",
-			notExpectedConnections: []string{
-				"${DATABASE_URL:-./",
-				"${DATABASE_URL:-postgres://",
-			},
-			expectedMaxConn: "max_connections: 10",
-			expectedMaxIdle: "max_idle_connections: 2",
 		},
 		{
 			name:               "sqlite3 driver",
 			projectName:        "testapp",
 			dbDriver:           "sqlite3",
 			expectedConnection: "${DATABASE_URL:-./testapp.db}",
-			notExpectedConnections: []string{
-				"${DATABASE_URL:-file:./",
-				"${DATABASE_URL:-postgres://",
-			},
-			expectedMaxConn: "max_connections: 10",
-			expectedMaxIdle: "max_idle_connections: 2",
 		},
 		{
 			name:               "postgres driver",
 			projectName:        "webapp",
 			dbDriver:           "postgres",
 			expectedConnection: "${DATABASE_URL:-postgres://localhost/webapp?sslmode=disable}",
-			notExpectedConnections: []string{
-				"${DATABASE_URL:-file:./",
-				"${DATABASE_URL:-./webapp.db}",
-			},
-			expectedMaxConn: "max_connections: 25",
-			expectedMaxIdle: "max_idle_connections: 5",
 		},
 	}
 
@@ -220,32 +178,21 @@ func TestTracksYamlTemplate(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotEmpty(t, result)
 
-			assert.Contains(t, result, "app:")
 			assert.Contains(t, result, "environment: development")
-			assert.Contains(t, result, "log_level: debug")
 
 			assert.Contains(t, result, "server:")
-			assert.Contains(t, result, "port: 8080")
-			assert.Contains(t, result, "host: localhost")
-			assert.Contains(t, result, "read_timeout: 10s")
-			assert.Contains(t, result, "write_timeout: 10s")
-			assert.Contains(t, result, "idle_timeout: 120s")
+			assert.Contains(t, result, `port: ":8080"`)
+			assert.Contains(t, result, "read_timeout: 15s")
+			assert.Contains(t, result, "write_timeout: 15s")
+			assert.Contains(t, result, "idle_timeout: 60s")
+			assert.Contains(t, result, "shutdown_timeout: 30s")
+
+			assert.Contains(t, result, "logging:")
+			assert.Contains(t, result, "level: info")
+			assert.Contains(t, result, "format: json")
 
 			assert.Contains(t, result, "database:")
-			assert.Contains(t, result, "driver: "+tt.dbDriver)
-			assert.Contains(t, result, "connection: "+tt.expectedConnection)
-			assert.Contains(t, result, tt.expectedMaxConn)
-			assert.Contains(t, result, tt.expectedMaxIdle)
-
-			for _, notExpected := range tt.notExpectedConnections {
-				assert.NotContains(t, result, notExpected, "should not contain %s (wrong driver)", notExpected)
-			}
-
-			if tt.dbDriver == "go-libsql" || tt.dbDriver == "sqlite3" {
-				assert.Contains(t, result, "File-based databases work better with lower concurrency", "should contain WHY comment for file-based databases")
-			} else if tt.dbDriver == "postgres" {
-				assert.Contains(t, result, "sslmode=disable is safe for local development only", "should contain WHY comment for SSL mode")
-			}
+			assert.Contains(t, result, "url: "+tt.expectedConnection)
 
 			assert.Contains(t, result, "session:")
 			assert.Contains(t, result, "lifetime: 24h")

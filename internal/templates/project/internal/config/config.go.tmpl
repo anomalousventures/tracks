@@ -1,0 +1,56 @@
+package config
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/spf13/viper"
+)
+
+type Config struct {
+	Environment string         `mapstructure:"environment"`
+	Server      ServerConfig   `mapstructure:"server"`
+	Database    DatabaseConfig `mapstructure:"database"`
+	Logging     LoggingConfig  `mapstructure:"logging"`
+}
+
+type ServerConfig struct {
+	Port            string        `mapstructure:"port"`
+	ReadTimeout     time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout    time.Duration `mapstructure:"write_timeout"`
+	IdleTimeout     time.Duration `mapstructure:"idle_timeout"`
+	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout"`
+}
+
+type DatabaseConfig struct {
+	URL string `mapstructure:"url"`
+}
+
+type LoggingConfig struct {
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
+}
+
+func Load() (*Config, error) {
+	v := viper.New()
+
+	v.SetConfigName("tracks")
+	v.SetConfigType("yaml")
+	v.AddConfigPath(".")
+
+	v.SetEnvPrefix("APP")
+	v.AutomaticEnv()
+
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
+
+	var cfg Config
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return &cfg, nil
+}

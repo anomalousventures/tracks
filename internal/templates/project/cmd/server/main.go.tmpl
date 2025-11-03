@@ -2,9 +2,39 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/internal/domain/health"
+	"{{.ModuleName}}/internal/http"
+	"{{.ModuleName}}/internal/logging"
 )
 
 func main() {
-	fmt.Println("{{.ProjectName}} server starting...")
-	// Server initialization will be added in later epics
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+
+	logging.SetupLogger(cfg.Environment)
+	logger := logging.Logger()
+
+	logger.Info().Msg("server starting")
+
+	// TRACKS:SERVICES:BEGIN
+	healthService := health.NewService()
+	// TRACKS:SERVICES:END
+
+	srv := http.NewServer(&cfg.Server, logger).
+		WithHealthService(healthService).
+		RegisterRoutes()
+
+	return srv.ListenAndServe()
 }

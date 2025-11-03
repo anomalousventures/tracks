@@ -5,15 +5,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/zerolog"
 	"{{.ModuleName}}/internal/http/handlers"
 	"{{.ModuleName}}/internal/http/routes"
+	"{{.ModuleName}}/internal/logging"
 )
 
-func (s *Server) routes() {
+func (s *Server) routes(logger *zerolog.Logger) {
 	s.router.Use(middleware.RequestID)
+	s.router.Use(logging.RequestLogger())
 	s.router.Use(middleware.RealIP)
-	s.router.Use(middleware.Logger)
-	s.router.Use(middleware.Recoverer)
+	s.router.Use(logging.Recoverer())
 
 	// TRACKS:API_ROUTES:BEGIN
 	s.router.Get(routes.APIHealth, s.handleHealthCheck())
@@ -31,6 +33,6 @@ func (s *Server) routes() {
 }
 
 func (s *Server) handleHealthCheck() http.HandlerFunc {
-	handler := handlers.NewHealthHandler(s.healthService)
+	handler := handlers.NewHealthHandler(s.healthService, s.logger)
 	return handler.Check
 }

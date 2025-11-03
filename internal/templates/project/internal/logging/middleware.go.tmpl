@@ -1,0 +1,75 @@
+package logging
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+)
+
+type responseWriter struct {
+	http.ResponseWriter
+	status      int
+	bytesWritten int
+}
+
+func (rw *responseWriter) WriteHeader(status int) {
+	rw.status = status
+	rw.ResponseWriter.WriteHeader(status)
+}
+
+func (rw *responseWriter) Write(b []byte) (int, error) {
+	n, err := rw.ResponseWriter.Write(b)
+	rw.bytesWritten += n
+	return n, err
+}
+
+func RequestLogger() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			requestID := middleware.GetReqID(r.Context())
+			ctx := WithRequestID(r.Context(), requestID)
+
+			Info(ctx).
+				Str("method", r.Method).
+				Str("path", r.URL.Path).
+				Str("remote_addr", r.RemoteAddr).
+				Msg("request started")
+
+			wrapped := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+			next.ServeHTTP(wrapped, r.WithContext(ctx))
+
+			duration := time.Since(start)
+
+			Info(ctx).
+				Str("method", r.Method).
+				Str("path", r.URL.Path).
+				Int("status", wrapped.status).
+				Int("bytes", wrapped.bytesWritten).
+				Dur("duration_ms", duration).
+				Msg("request completed")
+		})
+	}
+}
+
+func Recoverer() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rvr := recover(); rvr != nil {
+					Error(r.Context()).
+						Interface("panic", rvr).
+						Str("method", r.Method).
+						Str("path", r.URL.Path).
+						Msg("panic recovered")
+
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			}()
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
