@@ -161,6 +161,20 @@ func TestServerModuleNameInterpolation(t *testing.T) {
 	}
 }
 
+func TestServerBuilderChain(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "func (s *Server) WithHealthService(svc interfaces.HealthService) *Server", "WithHealthService should return *Server")
+	assert.Contains(t, output, "func (s *Server) RegisterRoutes() *Server", "RegisterRoutes should return *Server")
+	assert.Contains(t, output, "return s", "Builder methods should return self for chaining")
+}
+
 // HTTP Routes Template Tests (internal/http/routes.go.tmpl)
 
 func TestHTTPRoutesTemplateRender(t *testing.T) {

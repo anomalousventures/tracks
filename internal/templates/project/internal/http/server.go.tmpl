@@ -31,7 +31,7 @@ func NewServer(cfg *Config) *Server {
 	}
 }
 
-// Builder pattern enables fluent API and optional service injection for testing
+// Optional service injection allows handlers to be tested with mocks
 func (s *Server) WithHealthService(svc interfaces.HealthService) *Server {
 	s.healthService = svc
 	return s
@@ -42,7 +42,6 @@ func (s *Server) RegisterRoutes() *Server {
 	return s
 }
 
-// Graceful shutdown ensures in-flight requests complete before server stops
 func (s *Server) ListenAndServe() error {
 	srv := &http.Server{
 		Addr:         s.config.Port,
@@ -68,7 +67,7 @@ func (s *Server) ListenAndServe() error {
 	case <-quit:
 		fmt.Println("Shutting down server...")
 	case err := <-serverErr:
-		return fmt.Errorf("server error: %w", err)
+		return fmt.Errorf("failed to start server: %w", err)
 	}
 
 	// 30-second timeout allows in-flight requests to complete
