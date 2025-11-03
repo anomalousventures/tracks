@@ -1,0 +1,36 @@
+package http
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"{{.ModuleName}}/internal/http/handlers"
+	"{{.ModuleName}}/internal/http/routes"
+)
+
+func (s *Server) routes() {
+	s.router.Use(middleware.RequestID)
+	s.router.Use(middleware.RealIP)
+	s.router.Use(middleware.Logger)
+	s.router.Use(middleware.Recoverer)
+
+	// TRACKS:API_ROUTES:BEGIN
+	s.router.Get(routes.APIHealth, s.handleHealthCheck())
+	// TRACKS:API_ROUTES:END
+
+	// TRACKS:WEB_ROUTES:BEGIN
+	// TRACKS:WEB_ROUTES:END
+
+	s.router.Group(func(r chi.Router) {
+		// r.Use(middleware.RequireAuth) // Add auth middleware when ready
+
+		// TRACKS:PROTECTED_ROUTES:BEGIN
+		// TRACKS:PROTECTED_ROUTES:END
+	})
+}
+
+func (s *Server) handleHealthCheck() http.HandlerFunc {
+	handler := handlers.NewHealthHandler(s.healthService)
+	return handler.Check
+}
