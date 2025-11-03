@@ -41,6 +41,23 @@ func TestServerValidGoCode(t *testing.T) {
 	assert.NoError(t, err, "Generated server.go should be valid Go code")
 }
 
+func TestNewConfig(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "func NewConfig() *Config", "should have NewConfig constructor")
+	assert.Contains(t, output, "Port:            \":8080\"", "should have default port")
+	assert.Contains(t, output, "ReadTimeout:     15 * time.Second", "should have default read timeout")
+	assert.Contains(t, output, "WriteTimeout:    15 * time.Second", "should have default write timeout")
+	assert.Contains(t, output, "IdleTimeout:     60 * time.Second", "should have default idle timeout")
+	assert.Contains(t, output, "ShutdownTimeout: 30 * time.Second", "should have default shutdown timeout")
+}
+
 func TestServerStructDefinition(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 	data := TemplateData{
@@ -54,6 +71,23 @@ func TestServerStructDefinition(t *testing.T) {
 	assert.Contains(t, output, "router chi.Router", "should have router field")
 	assert.Contains(t, output, "config *Config", "should have config field")
 	assert.Contains(t, output, "healthService interfaces.HealthService", "should have healthService field")
+}
+
+func TestServerConfigStructDefinition(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "type Config struct", "should define Config struct")
+	assert.Contains(t, output, "Port            string", "should have Port field")
+	assert.Contains(t, output, "ReadTimeout     time.Duration", "should have ReadTimeout field")
+	assert.Contains(t, output, "WriteTimeout    time.Duration", "should have WriteTimeout field")
+	assert.Contains(t, output, "IdleTimeout     time.Duration", "should have IdleTimeout field")
+	assert.Contains(t, output, "ShutdownTimeout time.Duration", "should have ShutdownTimeout field")
 }
 
 func TestServerConstructor(t *testing.T) {
@@ -120,10 +154,10 @@ func TestServerTimeouts(t *testing.T) {
 	output, err := renderer.Render("internal/http/server.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, output, "ReadTimeout:  15 * time.Second", "should set 15s read timeout")
-	assert.Contains(t, output, "WriteTimeout: 15 * time.Second", "should set 15s write timeout")
-	assert.Contains(t, output, "IdleTimeout:  60 * time.Second", "should set 60s idle timeout")
-	assert.Contains(t, output, "context.WithTimeout(context.Background(), 30*time.Second)", "should set 30s shutdown timeout")
+	assert.Contains(t, output, "ReadTimeout:  s.config.ReadTimeout", "should use config read timeout")
+	assert.Contains(t, output, "WriteTimeout: s.config.WriteTimeout", "should use config write timeout")
+	assert.Contains(t, output, "IdleTimeout:  s.config.IdleTimeout", "should use config idle timeout")
+	assert.Contains(t, output, "context.WithTimeout(context.Background(), s.config.ShutdownTimeout)", "should use config shutdown timeout")
 }
 
 func TestServerModuleNameInterpolation(t *testing.T) {

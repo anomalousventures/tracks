@@ -21,7 +21,21 @@ type Server struct {
 }
 
 type Config struct {
-	Port string
+	Port            string
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
+}
+
+func NewConfig() *Config {
+	return &Config{
+		Port:            ":8080",
+		ReadTimeout:     15 * time.Second,
+		WriteTimeout:    15 * time.Second,
+		IdleTimeout:     60 * time.Second,
+		ShutdownTimeout: 30 * time.Second,
+	}
 }
 
 func NewServer(cfg *Config) *Server {
@@ -31,7 +45,6 @@ func NewServer(cfg *Config) *Server {
 	}
 }
 
-// Optional service injection allows handlers to be tested with mocks
 func (s *Server) WithHealthService(svc interfaces.HealthService) *Server {
 	s.healthService = svc
 	return s
@@ -46,9 +59,9 @@ func (s *Server) ListenAndServe() error {
 	srv := &http.Server{
 		Addr:         s.config.Port,
 		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  s.config.ReadTimeout,
+		WriteTimeout: s.config.WriteTimeout,
+		IdleTimeout:  s.config.IdleTimeout,
 	}
 
 	serverErr := make(chan error, 1)
@@ -59,7 +72,6 @@ func (s *Server) ListenAndServe() error {
 		}
 	}()
 
-	// Wait for interrupt signal or server error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -70,8 +82,7 @@ func (s *Server) ListenAndServe() error {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 
-	// 30-second timeout allows in-flight requests to complete
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.ShutdownTimeout)
 	defer cancel()
 
 	return srv.Shutdown(ctx)

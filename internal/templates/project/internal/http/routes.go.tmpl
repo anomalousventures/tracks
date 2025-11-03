@@ -10,13 +10,11 @@ import (
 )
 
 func (s *Server) routes() {
-	// RequestID must be first for tracing; Logger depends on RequestID
 	s.router.Use(middleware.RequestID)
 	s.router.Use(middleware.RealIP)
 	s.router.Use(middleware.Logger)
 	s.router.Use(middleware.Recoverer)
 
-	// Code generator requires these markers to safely inject routes without manual editing
 	// TRACKS:API_ROUTES:BEGIN
 	s.router.Get(routes.APIHealth, s.handleHealthCheck())
 	// TRACKS:API_ROUTES:END
@@ -24,7 +22,6 @@ func (s *Server) routes() {
 	// TRACKS:WEB_ROUTES:BEGIN
 	// TRACKS:WEB_ROUTES:END
 
-	// Authentication middleware applies only to routes within this group
 	s.router.Group(func(r chi.Router) {
 		// r.Use(middleware.RequireAuth) // Add auth middleware when ready
 
