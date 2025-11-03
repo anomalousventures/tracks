@@ -1,0 +1,79 @@
+package http
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"{{.ModuleName}}/internal/interfaces"
+)
+
+type Server struct {
+	router chi.Router
+	config *Config
+
+	healthService interfaces.HealthService
+}
+
+type Config struct {
+	Port string
+}
+
+func NewServer(cfg *Config) *Server {
+	return &Server{
+		router: chi.NewRouter(),
+		config: cfg,
+	}
+}
+
+// Builder pattern enables fluent API and optional service injection for testing
+func (s *Server) WithHealthService(svc interfaces.HealthService) *Server {
+	s.healthService = svc
+	return s
+}
+
+func (s *Server) RegisterRoutes() *Server {
+	s.routes()
+	return s
+}
+
+// Graceful shutdown ensures in-flight requests complete before server stops
+func (s *Server) ListenAndServe() error {
+	srv := &http.Server{
+		Addr:         s.config.Port,
+		Handler:      s.router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	serverErr := make(chan error, 1)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+	}()
+
+	// Wait for interrupt signal or server error
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-quit:
+		fmt.Println("Shutting down server...")
+	case err := <-serverErr:
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	// 30-second timeout allows in-flight requests to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	return srv.Shutdown(ctx)
+}
