@@ -13,8 +13,6 @@ import (
 {{- end}}
 )
 
-// New creates a new database connection using the provided DSN.
-// It verifies the connection is working by calling Ping before returning.
 func New(dsn string) (*sql.DB, error) {
 {{- if eq .DBDriver "go-libsql"}}
 	db, err := sql.Open("libsql", dsn)

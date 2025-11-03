@@ -175,32 +175,6 @@ func TestDBFunctionSignature(t *testing.T) {
 	}
 }
 
-func TestDBGodocComment(t *testing.T) {
-	result := renderDBTemplate(t, "postgres")
-
-	lines := strings.Split(result, "\n")
-	var foundComment bool
-	var foundFunction bool
-
-	for i, line := range lines {
-		if strings.Contains(line, "// New creates") {
-			foundComment = true
-			if i+1 < len(lines) && strings.Contains(lines[i+1], "//") {
-				foundComment = true
-			}
-		}
-		if strings.Contains(line, "func New(") {
-			foundFunction = true
-			if i > 0 && strings.HasPrefix(strings.TrimSpace(lines[i-1]), "//") {
-				assert.True(t, foundComment, "godoc comment should be immediately before function")
-			}
-		}
-	}
-
-	assert.True(t, foundComment, "should have godoc comment for New function")
-	assert.True(t, foundFunction, "should have New function")
-}
-
 func TestDBImports(t *testing.T) {
 	result := renderDBTemplate(t, "postgres")
 
