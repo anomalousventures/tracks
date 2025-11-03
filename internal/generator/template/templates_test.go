@@ -1,6 +1,8 @@
 package template
 
 import (
+	"go/parser"
+	"go/token"
 	"strings"
 	"testing"
 
@@ -114,28 +116,151 @@ func TestGoModTemplate(t *testing.T) {
 	}
 }
 
-func TestMainGoTemplate(t *testing.T) {
+func renderMainGoTemplate(t *testing.T, moduleName string) string {
+	t.Helper()
 	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{
-		ModuleName: "github.com/user/myapp",
-	}
-
+	data := TemplateData{ModuleName: moduleName}
 	result, err := renderer.Render("cmd/server/main.go.tmpl", data)
 	require.NoError(t, err)
-	assert.NotEmpty(t, result)
+	return result
+}
 
-	assert.Contains(t, result, "package main")
-	assert.Contains(t, result, "import")
-	assert.Contains(t, result, "func main()")
-	assert.Contains(t, result, "func run() error")
-	assert.Contains(t, result, "config.Load()")
-	assert.Contains(t, result, "logger := logging.NewLogger(cfg.Environment)")
-	assert.Contains(t, result, `logger.Info(ctx).Msg("server starting")`)
-	assert.Contains(t, result, "http.NewServer(&cfg.Server, logger)")
-	assert.Contains(t, result, "WithHealthService(healthService)")
-	assert.Contains(t, result, "RegisterRoutes()")
-	assert.Contains(t, result, "srv.ListenAndServe()")
+func TestMainGoTemplate(t *testing.T) {
+	result := renderMainGoTemplate(t, "github.com/test/app")
+
+	tests := []struct {
+		name     string
+		contains string
+		message  string
+	}{
+		{"package declaration", "package main", "should have package main"},
+		{"import block", "import", "should have import block"},
+		{"main function", "func main()", "should have main() function"},
+		{"run function", "func run() error", "should have run() error function"},
+		{"main calls run", "if err := run(); err != nil", "main() should call run() and check error"},
+		{"error to stderr", `fmt.Fprintf(os.Stderr, "error: %v\n", err)`, "should print errors to stderr"},
+		{"exit on error", "os.Exit(1)", "should exit with status 1 on error"},
+		{"config load", "cfg, err := config.Load()", "should load config"},
+		{"config error wrap", `return fmt.Errorf("load config: %w", err)`, "should wrap config load error"},
+		{"logger init", "logger := logging.NewLogger(cfg.Environment)", "should initialize logger"},
+		{"server start log", `logger.Info(ctx).Msg("server starting")`, "should log server start"},
+		{"db connection", "database, err := db.New(cfg.DatabaseURL)", "should connect to database"},
+		{"db error wrap", `return fmt.Errorf("connect to database: %w", err)`, "should wrap database connection error"},
+		{"db cleanup", "defer database.Close()", "should have defer database.Close()"},
+		{"health service", "healthService := health.NewService()", "should instantiate health service"},
+		{"server builder", "http.NewServer(&cfg.Server, logger)", "should use NewServer constructor"},
+		{"with health", "WithHealthService(healthService)", "should chain WithHealthService"},
+		{"register routes", "RegisterRoutes()", "should chain RegisterRoutes"},
+		{"listen and serve", "return srv.ListenAndServe()", "run() should return srv.ListenAndServe()"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Contains(t, result, tt.contains, tt.message)
+		})
+	}
+
+	t.Run("wrong packages excluded", func(t *testing.T) {
+		assert.NotContains(t, result, "package http", "should not have 'http' package")
+		assert.NotContains(t, result, "package server", "should not have 'server' package")
+	})
+}
+
+func TestMainGoValidGoCode(t *testing.T) {
+	result := renderMainGoTemplate(t, "github.com/test/app")
+
+	fset := token.NewFileSet()
+	_, err := parser.ParseFile(fset, "main.go", result, parser.AllErrors)
+	require.NoError(t, err, "generated main.go should be valid Go code")
+}
+
+func TestMainGoMarkerSections(t *testing.T) {
+	result := renderMainGoTemplate(t, "github.com/test/app")
+
+	markers := []struct {
+		name  string
+		begin string
+		end   string
+	}{
+		{"DB", "// TRACKS:DB:BEGIN", "// TRACKS:DB:END"},
+		{"REPOSITORIES", "// TRACKS:REPOSITORIES:BEGIN", "// TRACKS:REPOSITORIES:END"},
+		{"SERVICES", "// TRACKS:SERVICES:BEGIN", "// TRACKS:SERVICES:END"},
+	}
+
+	for _, m := range markers {
+		t.Run(m.name, func(t *testing.T) {
+			assert.Contains(t, result, m.begin, "should have %s marker begin", m.name)
+			assert.Contains(t, result, m.end, "should have %s marker end", m.name)
+		})
+	}
+
+	t.Run("REPOSITORIES is empty", func(t *testing.T) {
+		beginIdx := strings.Index(result, "// TRACKS:REPOSITORIES:BEGIN")
+		endIdx := strings.Index(result, "// TRACKS:REPOSITORIES:END")
+		require.NotEqual(t, -1, beginIdx, "should have REPOSITORIES begin marker")
+		require.NotEqual(t, -1, endIdx, "should have REPOSITORIES end marker")
+
+		section := result[beginIdx:endIdx]
+		lines := strings.Split(section, "\n")
+		assert.Len(t, lines, 2, "REPOSITORIES section should only contain begin marker and empty line")
+	})
+
+	t.Run("marker order", func(t *testing.T) {
+		dbIdx := strings.Index(result, "// TRACKS:DB:BEGIN")
+		repoIdx := strings.Index(result, "// TRACKS:REPOSITORIES:BEGIN")
+		servicesIdx := strings.Index(result, "// TRACKS:SERVICES:BEGIN")
+
+		assert.Greater(t, repoIdx, dbIdx, "REPOSITORIES marker should come after DB marker")
+		assert.Greater(t, servicesIdx, repoIdx, "SERVICES marker should come after REPOSITORIES marker")
+	})
+}
+
+func TestMainGoImports(t *testing.T) {
+	result := renderMainGoTemplate(t, "github.com/test/app")
+
+	imports := []string{
+		`"context"`,
+		`"fmt"`,
+		`"os"`,
+		"github.com/test/app/internal/config",
+		"github.com/test/app/internal/db",
+		"github.com/test/app/internal/domain/health",
+		"github.com/test/app/internal/http",
+		"github.com/test/app/internal/logging",
+	}
+
+	for _, imp := range imports {
+		assert.Contains(t, result, imp, "should import %s", imp)
+	}
+}
+
+func TestMainGoModuleNameInterpolation(t *testing.T) {
+	tests := []struct {
+		name       string
+		moduleName string
+	}{
+		{"github module", "github.com/user/project"},
+		{"gitlab module", "gitlab.com/org/service"},
+		{"simple name", "myapp"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := renderMainGoTemplate(t, tt.moduleName)
+
+			imports := []string{
+				tt.moduleName + "/internal/config",
+				tt.moduleName + "/internal/db",
+				tt.moduleName + "/internal/http",
+				tt.moduleName + "/internal/logging",
+				tt.moduleName + "/internal/domain/health",
+			}
+
+			for _, imp := range imports {
+				assert.Contains(t, result, imp, "should interpolate module name in import")
+			}
+		})
+	}
 }
 
 func TestTracksYamlTemplate(t *testing.T) {
