@@ -53,7 +53,7 @@ func TestServerStructDefinition(t *testing.T) {
 	assert.Contains(t, output, "type Server struct", "should define Server struct")
 	assert.Contains(t, output, "router chi.Router", "should have router field")
 	assert.Contains(t, output, "config *config.ServerConfig", "should have config field")
-	assert.Contains(t, output, "logger *zerolog.Logger", "should have logger field")
+	assert.Contains(t, output, "logger interfaces.Logger", "should have logger field")
 	assert.Contains(t, output, "healthService interfaces.HealthService", "should have healthService field")
 }
 
@@ -66,7 +66,7 @@ func TestServerConstructor(t *testing.T) {
 	output, err := renderer.Render("internal/http/server.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, output, "func NewServer(cfg *config.ServerConfig, logger *zerolog.Logger) *Server", "should have NewServer constructor with config and logger")
+	assert.Contains(t, output, "func NewServer(cfg *config.ServerConfig, logger interfaces.Logger) *Server", "should have NewServer constructor with config and logger")
 	assert.Contains(t, output, "return &Server{", "should return Server pointer")
 	assert.Contains(t, output, "router: chi.NewRouter()", "should initialize chi router")
 	assert.Contains(t, output, "config: cfg", "should store config")
@@ -97,7 +97,7 @@ func TestServerRegisterRoutes(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, output, "func (s *Server) RegisterRoutes() *Server", "should have RegisterRoutes method")
-	assert.Contains(t, output, "s.routes(s.logger)", "should call routes method with logger")
+	assert.Contains(t, output, "s.routes()", "should call routes method")
 }
 
 func TestServerGracefulShutdown(t *testing.T) {
@@ -111,7 +111,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 
 	assert.Contains(t, output, "func (s *Server) ListenAndServe() error", "should have ListenAndServe method")
 	assert.Contains(t, output, "signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)", "should handle shutdown signals")
-	assert.Contains(t, output, "srv.Shutdown(ctx)", "should call graceful shutdown")
+	assert.Contains(t, output, "srv.Shutdown(shutdownCtx)", "should call graceful shutdown")
 }
 
 func TestServerTimeouts(t *testing.T) {
@@ -190,7 +190,7 @@ func TestHTTPRoutesTemplateRender(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, output)
 	assert.Contains(t, output, "package http")
-	assert.Contains(t, output, "func (s *Server) routes(logger *zerolog.Logger)")
+	assert.Contains(t, output, "func (s *Server) routes()")
 }
 
 func TestHTTPRoutesValidGoCode(t *testing.T) {
@@ -217,9 +217,9 @@ func TestHTTPRoutesMiddlewareOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	requestIDIdx := strings.Index(output, "middleware.RequestID")
-	loggerIdx := strings.Index(output, "logging.RequestLogger()")
+	loggerIdx := strings.Index(output, "httpmiddleware.NewRequestLogger(s.logger)")
 	realIPIdx := strings.Index(output, "middleware.RealIP")
-	recovererIdx := strings.Index(output, "logging.Recoverer()")
+	recovererIdx := strings.Index(output, "httpmiddleware.NewRecoverer(s.logger)")
 
 	assert.Greater(t, loggerIdx, requestIDIdx, "RequestLogger should come after RequestID")
 	assert.Greater(t, realIPIdx, loggerIdx, "RealIP should come after RequestLogger")

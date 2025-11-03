@@ -7,31 +7,32 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var globalLogger zerolog.Logger
+type Logger struct {
+	logger zerolog.Logger
+}
 
 type contextKey string
 
 const requestIDKey contextKey = "request_id"
 
-func SetupLogger(environment string) {
+func NewLogger(environment string) *Logger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
+	var logger zerolog.Logger
 	if environment == "development" {
 		output := zerolog.ConsoleWriter{Out: os.Stderr}
-		globalLogger = zerolog.New(output).With().Timestamp().Logger()
+		logger = zerolog.New(output).With().Timestamp().Logger()
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	} else {
-		globalLogger = zerolog.New(os.Stdout).With().Timestamp().Logger()
+		logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
+
+	return &Logger{logger: logger}
 }
 
-func Logger() *zerolog.Logger {
-	return &globalLogger
-}
-
-func loggerWithContext(ctx context.Context) *zerolog.Logger {
-	logger := globalLogger
+func (l *Logger) loggerWithContext(ctx context.Context) *zerolog.Logger {
+	logger := l.logger
 
 	if requestID, ok := ctx.Value(requestIDKey).(string); ok && requestID != "" {
 		logger = logger.With().Str("request_id", requestID).Logger()
@@ -40,20 +41,20 @@ func loggerWithContext(ctx context.Context) *zerolog.Logger {
 	return &logger
 }
 
-func Debug(ctx context.Context) *zerolog.Event {
-	return loggerWithContext(ctx).Debug()
+func (l *Logger) Debug(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Debug()
 }
 
-func Info(ctx context.Context) *zerolog.Event {
-	return loggerWithContext(ctx).Info()
+func (l *Logger) Info(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Info()
 }
 
-func Warn(ctx context.Context) *zerolog.Event {
-	return loggerWithContext(ctx).Warn()
+func (l *Logger) Warn(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Warn()
 }
 
-func Error(ctx context.Context) *zerolog.Event {
-	return loggerWithContext(ctx).Error()
+func (l *Logger) Error(ctx context.Context) *zerolog.Event {
+	return l.loggerWithContext(ctx).Error()
 }
 
 func WithRequestID(ctx context.Context, requestID string) context.Context {

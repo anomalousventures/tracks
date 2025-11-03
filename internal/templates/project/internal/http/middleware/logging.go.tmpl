@@ -1,10 +1,12 @@
-package logging
+package middleware
 
 import (
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"{{.ModuleName}}/internal/interfaces"
+	"{{.ModuleName}}/internal/logging"
 )
 
 type responseWriter struct {
@@ -24,15 +26,15 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func RequestLogger() func(next http.Handler) http.Handler {
+func NewRequestLogger(logger interfaces.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
 			requestID := middleware.GetReqID(r.Context())
-			ctx := WithRequestID(r.Context(), requestID)
+			ctx := logging.WithRequestID(r.Context(), requestID)
 
-			Info(ctx).
+			logger.Info(ctx).
 				Str("method", r.Method).
 				Str("path", r.URL.Path).
 				Str("remote_addr", r.RemoteAddr).
@@ -43,7 +45,7 @@ func RequestLogger() func(next http.Handler) http.Handler {
 
 			duration := time.Since(start)
 
-			Info(ctx).
+			logger.Info(ctx).
 				Str("method", r.Method).
 				Str("path", r.URL.Path).
 				Int("status", wrapped.status).
@@ -54,15 +56,16 @@ func RequestLogger() func(next http.Handler) http.Handler {
 	}
 }
 
-func Recoverer() func(next http.Handler) http.Handler {
+func NewRecoverer(logger interfaces.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if rvr := recover(); rvr != nil {
-					Error(r.Context()).
+					logger.Error(r.Context()).
 						Interface("panic", rvr).
 						Str("method", r.Method).
 						Str("path", r.URL.Path).
+						Stack().
 						Msg("panic recovered")
 
 					w.WriteHeader(http.StatusInternalServerError)

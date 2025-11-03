@@ -5,17 +5,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog"
 	"{{.ModuleName}}/internal/http/handlers"
+	httpmiddleware "{{.ModuleName}}/internal/http/middleware"
 	"{{.ModuleName}}/internal/http/routes"
-	"{{.ModuleName}}/internal/logging"
 )
 
-func (s *Server) routes(logger *zerolog.Logger) {
+func (s *Server) routes() {
 	s.router.Use(middleware.RequestID)
-	s.router.Use(logging.RequestLogger())
+	s.router.Use(httpmiddleware.NewRequestLogger(s.logger))
 	s.router.Use(middleware.RealIP)
-	s.router.Use(logging.Recoverer())
+	s.router.Use(httpmiddleware.NewRecoverer(s.logger))
 
 	// TRACKS:API_ROUTES:BEGIN
 	s.router.Get(routes.APIHealth, s.handleHealthCheck())

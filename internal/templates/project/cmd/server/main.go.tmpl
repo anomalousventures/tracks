@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -23,10 +24,10 @@ func run() error {
 		return fmt.Errorf("load config: %w", err)
 	}
 
-	logging.SetupLogger(cfg.Environment)
-	logger := logging.Logger()
+	logger := logging.NewLogger(cfg.Environment)
 
-	logger.Info().Msg("server starting")
+	ctx := context.Background()
+	logger.Info(ctx).Msg("server starting")
 
 	// TRACKS:SERVICES:BEGIN
 	healthService := health.NewService()

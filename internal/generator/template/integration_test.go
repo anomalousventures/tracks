@@ -50,7 +50,7 @@ func TestRenderAllTemplates(t *testing.T) {
 		{
 			template:   "cmd/server/main.go.tmpl",
 			outputPath: filepath.Join("cmd", "server", "main.go"),
-			contains:   []string{"package main", "func run() error", "config.Load()", "logging.SetupLogger"},
+			contains:   []string{"package main", "func run() error", "config.Load()", "logging.NewLogger"},
 		},
 		{
 			template:   "tracks.yaml.tmpl",
