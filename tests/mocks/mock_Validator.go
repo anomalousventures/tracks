@@ -151,6 +151,63 @@ func (_c *MockValidator_ValidateDirectory_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ValidateEnvPrefix provides a mock function for the type MockValidator
+func (_mock *MockValidator) ValidateEnvPrefix(ctx context.Context, prefix string) error {
+	ret := _mock.Called(ctx, prefix)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidateEnvPrefix")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, prefix)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockValidator_ValidateEnvPrefix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateEnvPrefix'
+type MockValidator_ValidateEnvPrefix_Call struct {
+	*mock.Call
+}
+
+// ValidateEnvPrefix is a helper method to define mock.On call
+//   - ctx context.Context
+//   - prefix string
+func (_e *MockValidator_Expecter) ValidateEnvPrefix(ctx interface{}, prefix interface{}) *MockValidator_ValidateEnvPrefix_Call {
+	return &MockValidator_ValidateEnvPrefix_Call{Call: _e.mock.On("ValidateEnvPrefix", ctx, prefix)}
+}
+
+func (_c *MockValidator_ValidateEnvPrefix_Call) Run(run func(ctx context.Context, prefix string)) *MockValidator_ValidateEnvPrefix_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockValidator_ValidateEnvPrefix_Call) Return(err error) *MockValidator_ValidateEnvPrefix_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockValidator_ValidateEnvPrefix_Call) RunAndReturn(run func(ctx context.Context, prefix string) error) *MockValidator_ValidateEnvPrefix_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ValidateModulePath provides a mock function for the type MockValidator
 func (_mock *MockValidator) ValidateModulePath(ctx context.Context, path string) error {
 	ret := _mock.Called(ctx, path)

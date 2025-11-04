@@ -55,7 +55,7 @@ func Load() (*Config, error) {
 	v.SetConfigFile(".env")
 	_ = v.ReadInConfig()
 
-	v.SetEnvPrefix("APP")
+	v.SetEnvPrefix("{{.EnvPrefix}}")
 	v.AutomaticEnv()
 
 	var cfg Config

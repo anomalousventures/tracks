@@ -12,3 +12,4 @@ project:
   tracks_version: "dev"  # Will be replaced with actual version in production builds
   last_upgraded_version: "dev"
   database_driver: "{{.DBDriver}}"  # go-libsql, sqlite3, or postgres
+  env_prefix: "{{.EnvPrefix}}"      # Environment variable prefix (e.g., APP, MYAPP)

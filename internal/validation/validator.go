@@ -22,6 +22,7 @@ const (
 var (
 	projectNameRegex = regexp.MustCompile(`^[a-z0-9_-]+$`)
 	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
+	envPrefixRegex   = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 )
 
 type validatorImpl struct {
@@ -224,6 +225,37 @@ func (v *validatorImpl) ValidateDatabaseDriver(ctx context.Context, driver strin
 			Value:   driver,
 			Message: "must be one of: go-libsql, sqlite3, postgres",
 			Err:     ErrInvalidDatabaseDriver,
+		}
+	}
+
+	return nil
+}
+
+func (v *validatorImpl) ValidateEnvPrefix(ctx context.Context, prefix string) error {
+	if prefix == "" {
+		return &ValidationError{
+			Field:   "env_prefix",
+			Value:   prefix,
+			Message: "cannot be empty",
+			Err:     ErrInvalidEnvPrefix,
+		}
+	}
+
+	if len(prefix) > 50 {
+		return &ValidationError{
+			Field:   "env_prefix",
+			Value:   prefix,
+			Message: "must be 50 characters or less",
+			Err:     ErrInvalidEnvPrefix,
+		}
+	}
+
+	if !envPrefixRegex.MatchString(prefix) {
+		return &ValidationError{
+			Field:   "env_prefix",
+			Value:   prefix,
+			Message: "must start with uppercase letter and contain only uppercase letters, digits, and underscores (e.g., APP, MYAPP, USER_SERVICE)",
+			Err:     ErrInvalidEnvPrefix,
 		}
 	}
 

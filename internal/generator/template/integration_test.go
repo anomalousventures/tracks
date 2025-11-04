@@ -30,6 +30,7 @@ func TestRenderAllTemplates(t *testing.T) {
 		DBDriver:    "sqlite3",
 		GoVersion:   "1.25",
 		Year:        2025,
+		EnvPrefix:   "APP",
 	}
 
 	templateFiles := []struct {
@@ -60,7 +61,7 @@ func TestRenderAllTemplates(t *testing.T) {
 		{
 			template:   ".env.example.tmpl",
 			outputPath: ".env.example",
-			contains:   []string{"WARNING", "DATABASE_URL", "APP_SERVER_PORT"},
+			contains:   []string{"WARNING", "APP_DATABASE_URL", "APP_SERVER_PORT"},
 		},
 		{
 			template:   "README.md.tmpl",
@@ -131,6 +132,7 @@ func TestRenderAllTemplatesWithDifferentDrivers(t *testing.T) {
 				DBDriver:    driver,
 				GoVersion:   "1.25",
 				Year:        2025,
+				EnvPrefix:   "APP",
 			}
 
 			tracksYamlPath := filepath.Join(tmpDir, ".tracks.yaml")
@@ -154,6 +156,7 @@ func TestRenderAllTemplatesConsistency(t *testing.T) {
 		DBDriver:    "postgres",
 		GoVersion:   "1.25",
 		Year:        2025,
+		EnvPrefix:   "APP",
 	}
 
 	tmpDir1 := t.TempDir()
