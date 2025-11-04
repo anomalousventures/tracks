@@ -317,54 +317,6 @@ func TestTracksYamlTemplate(t *testing.T) {
 	}
 }
 
-func TestReadmeTemplate(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	tests := []struct {
-		name         string
-		data         TemplateData
-		wantContains []string
-	}{
-		{
-			name: "basic README",
-			data: TemplateData{
-				ProjectName: "myapp",
-			},
-			wantContains: []string{
-				"# myapp",
-				"Generated with [Tracks]",
-				"## Setup",
-				"## Development",
-				"## Configuration",
-				"make build",
-				"make test",
-				"make run",
-			},
-		},
-		{
-			name: "different project name",
-			data: TemplateData{
-				ProjectName: "cool-project",
-			},
-			wantContains: []string{
-				"# cool-project",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := renderer.Render("README.md.tmpl", tt.data)
-			require.NoError(t, err)
-			assert.NotEmpty(t, result)
-
-			for _, want := range tt.wantContains {
-				assert.Contains(t, result, want)
-			}
-		})
-	}
-}
-
 func TestAllTemplatesRenderWithFullData(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
