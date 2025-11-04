@@ -66,7 +66,8 @@ func TestReadmeDatabasePrerequisites(t *testing.T) {
 		{
 			driver: "sqlite3",
 			shouldContain: []string{
-				"Pure Go SQLite implementation (no CGO required)",
+				"CGO enabled (for sqlite3 driver)",
+				"GCC (Linux) or Xcode (macOS)",
 			},
 		},
 	}
