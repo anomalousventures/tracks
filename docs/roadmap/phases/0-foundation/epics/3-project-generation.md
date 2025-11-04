@@ -27,7 +27,7 @@ Implement the `tracks new` command to generate complete project structures. This
 - Module name flag (`--module github.com/user/app`)
 - Git initialization flag (`--no-git`)
 - Complete directory structure creation
-- Configuration file generation (go.mod, tracks.yaml, .env.example)
+- Configuration file generation (go.mod, .tracks.yaml, .env.example)
 - Basic server implementation with health check endpoint
 - Test file generation (main_test.go, health_test.go)
 - Validation (project name, module name, existing directories)
@@ -179,7 +179,7 @@ The following tasks will become GitHub issues, organized by phase:
 - [ ] `tracks new myapp --no-git` skips git initialization
 - [ ] Generated go.mod has correct module name and Go version
 - [ ] Generated project directory matches PRD structure
-- [ ] Generated tracks.yaml has sensible defaults
+- [ ] Generated .tracks.yaml has sensible defaults (CLI metadata)
 
 ### Validation
 
@@ -408,7 +408,7 @@ Use `filepath` package functions for cross-platform compatibility:
 ```go
 // Use filepath.Join for building paths
 projectDir := filepath.Join(baseDir, projectName)
-configFile := filepath.Join(projectDir, "tracks.yaml")
+configFile := filepath.Join(projectDir, ".tracks.yaml")
 
 // Use filepath.FromSlash for template paths
 templatePath := filepath.FromSlash("internal/templates/project")
@@ -479,7 +479,7 @@ func main() {
 }
 
 func run() error {
-    // Load configuration from tracks.yaml + env vars
+    // Load configuration from .env + environment variables
     cfg, err := config.Load()
     if err != nil {
         return fmt.Errorf("load config: %w", err)
