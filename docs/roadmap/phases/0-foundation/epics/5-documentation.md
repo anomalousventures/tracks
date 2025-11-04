@@ -123,7 +123,7 @@ $ make lint   # Run linters
 
 ## Configuration
 
-[Explain tracks.yaml and environment variables]
+[Explain .tracks.yaml (CLI metadata) vs .env (runtime config) separation per ADR-007]
 ```
 
 ### Docusaurus Pages to Create/Update

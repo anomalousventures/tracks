@@ -39,7 +39,7 @@ Establish the foundational CLI tool using Cobra framework. This epic creates the
 - Actual command implementations (new, generate, etc.) - those come in later epics
 - Full TUI implementation - deferred to Phase 4
 - Structured logging with zerolog - initially deferred, later added in Epic 0.5 for developer debugging (dual-output strategy: Renderer for stdout, zerolog for stderr)
-- Configuration file loading from tracks.yaml - deferred to later phases (Viper infrastructure ready)
+- Configuration file loading from .tracks.yaml - deferred to later phases (Viper infrastructure ready)
 - Advanced CLI features (autocomplete, etc.)
 - Dependency injection pattern - established later in Epic 0.5
 - Interface placement in consumer packages - moved later in Epic 0.5 per ADR-002
