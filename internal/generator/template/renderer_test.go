@@ -415,8 +415,8 @@ func TestValidate(t *testing.T) {
 			wantErr:      false,
 		},
 		{
-			name:         "valid template - tracks.yaml",
-			templateName: "tracks.yaml.tmpl",
+			name:         "valid template - .tracks.yaml",
+			templateName: ".tracks.yaml.tmpl",
 			wantErr:      false,
 		},
 		{

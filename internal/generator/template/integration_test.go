@@ -15,7 +15,7 @@ var productionTemplates = []string{
 	"go.mod.tmpl",
 	".gitignore.tmpl",
 	"cmd/server/main.go.tmpl",
-	"tracks.yaml.tmpl",
+	".tracks.yaml.tmpl",
 	".env.example.tmpl",
 	"README.md.tmpl",
 }
@@ -53,9 +53,9 @@ func TestRenderAllTemplates(t *testing.T) {
 			contains:   []string{"package main", "func run() error", "config.Load()", "logging.NewLogger"},
 		},
 		{
-			template:   "tracks.yaml.tmpl",
-			outputPath: "tracks.yaml",
-			contains:   []string{"database:", "server:", `port: ":8080"`, "logging:"},
+			template:   ".tracks.yaml.tmpl",
+			outputPath: ".tracks.yaml",
+			contains:   []string{"schema_version:", "project:", "name:", "module_path:", "database_driver:"},
 		},
 		{
 			template:   ".env.example.tmpl",
@@ -103,7 +103,7 @@ func TestRenderAllTemplates(t *testing.T) {
 			"go.mod",
 			".gitignore",
 			filepath.Join("cmd", "server", "main.go"),
-			"tracks.yaml",
+			".tracks.yaml",
 			".env.example",
 			"README.md",
 		}
@@ -133,14 +133,14 @@ func TestRenderAllTemplatesWithDifferentDrivers(t *testing.T) {
 				Year:        2025,
 			}
 
-			tracksYamlPath := filepath.Join(tmpDir, "tracks.yaml")
-			err := renderer.RenderToFile("tracks.yaml.tmpl", data, tracksYamlPath)
+			tracksYamlPath := filepath.Join(tmpDir, ".tracks.yaml")
+			err := renderer.RenderToFile(".tracks.yaml.tmpl", data, tracksYamlPath)
 			require.NoError(t, err)
 
 			content, err := os.ReadFile(tracksYamlPath)
 			require.NoError(t, err)
-			assert.Contains(t, string(content), "database:")
-			assert.Contains(t, string(content), "url:")
+			assert.Contains(t, string(content), "schema_version:")
+			assert.Contains(t, string(content), `database_driver: "`+driver+`"`)
 		})
 	}
 }

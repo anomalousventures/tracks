@@ -144,7 +144,7 @@ func TestMainGoTemplate(t *testing.T) {
 		{"config error wrap", `return fmt.Errorf("load config: %w", err)`, "should wrap config load error"},
 		{"logger init", "logger := logging.NewLogger(cfg.Environment)", "should initialize logger"},
 		{"server start log", `logger.Info(ctx).Msg("server starting")`, "should log server start"},
-		{"db connection", "database, err := db.New(cfg.DatabaseURL)", "should connect to database"},
+		{"db connection", "database, err := db.New(ctx, cfg.Database)", "should connect to database"},
 		{"db error wrap", `return fmt.Errorf("connect to database: %w", err)`, "should wrap database connection error"},
 		{"db cleanup", "defer database.Close()", "should have defer database.Close()"},
 		{"health service", "healthService := health.NewService()", "should instantiate health service"},
@@ -267,28 +267,28 @@ func TestTracksYamlTemplate(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	tests := []struct {
-		name               string
-		projectName        string
-		dbDriver           string
-		expectedConnection string
+		name        string
+		projectName string
+		moduleName  string
+		dbDriver    string
 	}{
 		{
-			name:               "go-libsql driver",
-			projectName:        "myapp",
-			dbDriver:           "go-libsql",
-			expectedConnection: "${DATABASE_URL:-file:./myapp.db}",
+			name:        "go-libsql driver",
+			projectName: "myapp",
+			moduleName:  "github.com/user/myapp",
+			dbDriver:    "go-libsql",
 		},
 		{
-			name:               "sqlite3 driver",
-			projectName:        "testapp",
-			dbDriver:           "sqlite3",
-			expectedConnection: "${DATABASE_URL:-./testapp.db}",
+			name:        "sqlite3 driver",
+			projectName: "testapp",
+			moduleName:  "github.com/user/testapp",
+			dbDriver:    "sqlite3",
 		},
 		{
-			name:               "postgres driver",
-			projectName:        "webapp",
-			dbDriver:           "postgres",
-			expectedConnection: "${DATABASE_URL:-postgres://localhost/webapp?sslmode=disable}",
+			name:        "postgres driver",
+			projectName: "webapp",
+			moduleName:  "github.com/user/webapp",
+			dbDriver:    "postgres",
 		},
 	}
 
@@ -296,37 +296,23 @@ func TestTracksYamlTemplate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data := TemplateData{
 				ProjectName: tt.projectName,
+				ModuleName:  tt.moduleName,
 				DBDriver:    tt.dbDriver,
 			}
 
-			result, err := renderer.Render("tracks.yaml.tmpl", data)
+			result, err := renderer.Render(".tracks.yaml.tmpl", data)
 			require.NoError(t, err)
 			assert.NotEmpty(t, result)
 
-			assert.Contains(t, result, "environment: development")
+			assert.Contains(t, result, "# Tracks CLI Project Metadata")
+			assert.Contains(t, result, "schema_version: \"1.0\"")
 
-			assert.Contains(t, result, "server:")
-			assert.Contains(t, result, `port: ":8080"`)
-			assert.Contains(t, result, "read_timeout: 15s")
-			assert.Contains(t, result, "write_timeout: 15s")
-			assert.Contains(t, result, "idle_timeout: 60s")
-			assert.Contains(t, result, "shutdown_timeout: 30s")
-
-			assert.Contains(t, result, "logging:")
-			assert.Contains(t, result, "level: info")
-			assert.Contains(t, result, "format: json")
-
-			assert.Contains(t, result, "database:")
-			assert.Contains(t, result, "url: "+tt.expectedConnection)
-
-			assert.Contains(t, result, "session:")
-			assert.Contains(t, result, "lifetime: 24h")
-			assert.Contains(t, result, "cookie_name: session_id")
-			assert.Contains(t, result, "cookie_secure: false")
-			assert.Contains(t, result, "cookie_http_only: true")
-			assert.Contains(t, result, "cookie_same_site: lax")
-
-			assert.Contains(t, result, "WARNING: Set to true in production")
+			assert.Contains(t, result, "project:")
+			assert.Contains(t, result, "name: \""+tt.projectName+"\"")
+			assert.Contains(t, result, "module_path: \""+tt.moduleName+"\"")
+			assert.Contains(t, result, "tracks_version: \"dev\"")
+			assert.Contains(t, result, "last_upgraded_version: \"dev\"")
+			assert.Contains(t, result, "database_driver: \""+tt.dbDriver+"\"")
 		})
 	}
 }
@@ -397,7 +383,7 @@ func TestAllTemplatesRenderWithFullData(t *testing.T) {
 		{"go.mod", "go.mod.tmpl"},
 		{".gitignore", ".gitignore.tmpl"},
 		{"main.go", "cmd/server/main.go.tmpl"},
-		{"tracks.yaml", "tracks.yaml.tmpl"},
+		{".tracks.yaml", ".tracks.yaml.tmpl"},
 		{".env.example", ".env.example.tmpl"},
 		{"README.md", "README.md.tmpl"},
 	}
@@ -423,7 +409,7 @@ func TestTemplatesWithEmptyData(t *testing.T) {
 		{"go.mod", "go.mod.tmpl"},
 		{".gitignore", ".gitignore.tmpl"},
 		{"main.go", "cmd/server/main.go.tmpl"},
-		{"tracks.yaml", "tracks.yaml.tmpl"},
+		{".tracks.yaml", ".tracks.yaml.tmpl"},
 		{".env.example", ".env.example.tmpl"},
 		{"README.md", "README.md.tmpl"},
 	}
