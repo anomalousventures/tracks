@@ -16,4 +16,16 @@ Generated with [Tracks](https://github.com/anomalousventures/tracks)
 
 ## Configuration
 
-See `tracks.yaml` and `.env.example` for configuration options.
+This project uses separate configuration files for different purposes:
+
+- **`.tracks.yaml`** - Tracks CLI project metadata (database driver, module path) - committed to git
+- **`.env`** - Application runtime configuration (copy from `.env.example`) - NOT committed
+
+For runtime configuration, copy `.env.example` to `.env` and customize:
+
+```bash
+cp .env.example .env
+# Edit .env with your values
+```
+
+See `.env.example` for all available configuration options.

@@ -193,7 +193,8 @@ Sensible defaults with escape hatches:
 - Standard project structure and file organization
 - Generators follow consistent patterns
 - Override defaults when needed
-- Configuration via environment variables and YAML
+- `.tracks.yaml` for CLI metadata (committed), `.env` for runtime config (secrets)
+- Hierarchical config: defaults → .env → environment variables
 
 ## Technology Stack
 
