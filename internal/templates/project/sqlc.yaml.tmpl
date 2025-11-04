@@ -1,0 +1,16 @@
+# SQLC configuration for type-safe database code generation
+# Docs: https://docs.sqlc.dev/en/latest/reference/config.html
+
+version: "2"
+sql:
+  - schema: "db/migrations/{{if eq .DBDriver "postgres"}}postgres{{else}}sqlite{{end}}"
+    queries: "db/queries"
+    engine: "{{if eq .DBDriver "postgres"}}postgresql{{else}}sqlite{{end}}"
+    gen:
+      go:
+        package: "generated"
+        out: "db/generated"
+        sql_package: "database/sql"
+        emit_json_tags: true
+        emit_interface: true
+        emit_empty_slices: true
