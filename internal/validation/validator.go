@@ -62,6 +62,16 @@ func NewValidator() interfaces.Validator {
 		panic(fmt.Sprintf("failed to register module_path validator: %v", err))
 	}
 
+	if err := v.RegisterValidation("env_prefix", func(fl validator.FieldLevel) bool {
+		prefix := fl.Field().String()
+		if prefix == "" || len(prefix) > 50 {
+			return false
+		}
+		return envPrefixRegex.MatchString(prefix)
+	}); err != nil {
+		panic(fmt.Sprintf("failed to register env_prefix validator: %v", err))
+	}
+
 	return &validatorImpl{
 		validate: v,
 	}
@@ -232,25 +242,31 @@ func (v *validatorImpl) ValidateDatabaseDriver(ctx context.Context, driver strin
 }
 
 func (v *validatorImpl) ValidateEnvPrefix(ctx context.Context, prefix string) error {
-	if prefix == "" {
-		return &ValidationError{
-			Field:   "env_prefix",
-			Value:   prefix,
-			Message: "cannot be empty",
-			Err:     ErrInvalidEnvPrefix,
-		}
+	cfg := generator.ProjectConfig{
+		ProjectName:    "placeholder",
+		ModulePath:     "placeholder",
+		DatabaseDriver: "go-libsql",
+		EnvPrefix:      prefix,
+		OutputPath:     "placeholder",
 	}
 
-	if len(prefix) > 50 {
-		return &ValidationError{
-			Field:   "env_prefix",
-			Value:   prefix,
-			Message: "must be 50 characters or less",
-			Err:     ErrInvalidEnvPrefix,
+	if err := v.validate.StructPartial(cfg, "EnvPrefix"); err != nil {
+		if prefix == "" {
+			return &ValidationError{
+				Field:   "env_prefix",
+				Value:   prefix,
+				Message: "cannot be empty",
+				Err:     ErrInvalidEnvPrefix,
+			}
 		}
-	}
-
-	if !envPrefixRegex.MatchString(prefix) {
+		if len(prefix) > 50 {
+			return &ValidationError{
+				Field:   "env_prefix",
+				Value:   prefix,
+				Message: "must be 50 characters or less",
+				Err:     ErrInvalidEnvPrefix,
+			}
+		}
 		return &ValidationError{
 			Field:   "env_prefix",
 			Value:   prefix,
