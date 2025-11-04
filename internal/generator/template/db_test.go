@@ -38,8 +38,9 @@ func TestDBTemplate(t *testing.T) {
 			result := renderDBTemplate(t, tt.driver)
 
 			assert.Contains(t, result, "package db", "should have package db")
-			assert.Contains(t, result, "func New(dsn string) (*sql.DB, error)", "should have New function with correct signature")
-			assert.Contains(t, result, "db.Ping()", "should call Ping to verify connection")
+			assert.Contains(t, result, "func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error)", "should have New function with correct signature")
+			assert.Contains(t, result, "db.PingContext(", "should call PingContext to verify connection")
+			assert.Contains(t, result, "db.SetMaxOpenConns(cfg.MaxOpenConns)", "should configure connection pool")
 			assert.NotEmpty(t, result, "template should render")
 		})
 	}
@@ -109,9 +110,9 @@ func TestDBDriverNames(t *testing.T) {
 		driver       string
 		wantOpenCall string
 	}{
-		{"go-libsql", `sql.Open("libsql", dsn)`},
-		{"sqlite3", `sql.Open("sqlite3", dsn)`},
-		{"postgres", `sql.Open("postgres", dsn)`},
+		{"go-libsql", `sql.Open("libsql", cfg.URL)`},
+		{"sqlite3", `sql.Open("sqlite3", cfg.URL)`},
+		{"postgres", `sql.Open("postgres", cfg.URL)`},
 	}
 
 	for _, tt := range tests {
@@ -144,14 +145,15 @@ func TestDBErrorHandling(t *testing.T) {
 func TestDBConnectionVerification(t *testing.T) {
 	result := renderDBTemplate(t, "postgres")
 
-	assert.Contains(t, result, "db.Ping()", "should call Ping to verify connection")
+	assert.Contains(t, result, "db.PingContext(", "should call PingContext to verify connection")
+	assert.Contains(t, result, "context.WithTimeout(ctx, cfg.ConnectTimeout)", "should use timeout for ping")
 
 	openIdx := strings.Index(result, "sql.Open(")
-	pingIdx := strings.Index(result, "db.Ping()")
+	pingIdx := strings.Index(result, "db.PingContext(")
 
 	require.NotEqual(t, -1, openIdx, "should have sql.Open call")
-	require.NotEqual(t, -1, pingIdx, "should have Ping call")
-	assert.Greater(t, pingIdx, openIdx, "Ping should be called after Open")
+	require.NotEqual(t, -1, pingIdx, "should have PingContext call")
+	assert.Greater(t, pingIdx, openIdx, "PingContext should be called after Open")
 }
 
 func TestDBFunctionSignature(t *testing.T) {
@@ -162,10 +164,11 @@ func TestDBFunctionSignature(t *testing.T) {
 		contains string
 	}{
 		{"function name", "func New("},
-		{"parameter", "dsn string"},
+		{"context parameter", "ctx context.Context"},
+		{"config parameter", "cfg config.DatabaseConfig"},
 		{"return pointer", "(*sql.DB"},
 		{"return error", "error)"},
-		{"full signature", "func New(dsn string) (*sql.DB, error)"},
+		{"full signature", "func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error)"},
 	}
 
 	for _, tt := range tests {
@@ -179,12 +182,28 @@ func TestDBImports(t *testing.T) {
 	result := renderDBTemplate(t, "postgres")
 
 	imports := []string{
+		`"context"`,
 		`"database/sql"`,
 		`"fmt"`,
+		`"github.com/test/app/internal/config"`,
 	}
 
 	for _, imp := range imports {
 		assert.Contains(t, result, imp, "should import %s", imp)
+	}
+}
+
+func TestDBConnectionPoolConfiguration(t *testing.T) {
+	result := renderDBTemplate(t, "postgres")
+
+	poolSettings := []string{
+		"db.SetMaxOpenConns(cfg.MaxOpenConns)",
+		"db.SetMaxIdleConns(cfg.MaxIdleConns)",
+		"db.SetConnMaxLifetime(cfg.ConnMaxLifetime)",
+	}
+
+	for _, setting := range poolSettings {
+		assert.Contains(t, result, setting, "should configure %s", setting)
 	}
 }
 

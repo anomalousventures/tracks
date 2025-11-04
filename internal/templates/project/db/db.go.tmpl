@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -11,21 +12,30 @@ import (
 {{- else if eq .DBDriver "postgres"}}
 	_ "github.com/lib/pq"
 {{- end}}
+
+	"{{.ModuleName}}/internal/config"
 )
 
-func New(dsn string) (*sql.DB, error) {
+func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error) {
 {{- if eq .DBDriver "go-libsql"}}
-	db, err := sql.Open("libsql", dsn)
+	db, err := sql.Open("libsql", cfg.URL)
 {{- else if eq .DBDriver "sqlite3"}}
-	db, err := sql.Open("sqlite3", dsn)
+	db, err := sql.Open("sqlite3", cfg.URL)
 {{- else if eq .DBDriver "postgres"}}
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open("postgres", cfg.URL)
 {{- end}}
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	if err := db.Ping(); err != nil {
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+
+	pingCtx, cancel := context.WithTimeout(ctx, cfg.ConnectTimeout)
+	defer cancel()
+
+	if err := db.PingContext(pingCtx); err != nil {
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
