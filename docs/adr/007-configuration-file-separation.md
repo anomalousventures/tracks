@@ -43,13 +43,22 @@ The CLI needs to track which version of Tracks created/last upgraded the project
 
 ## Decision
 
-We will **separate configuration into two distinct files**:
+We will **separate configuration into two distinct files** with a clear principle:
 
-### 1. `.tracks.yaml` (dotfile) - Tracks CLI Project Metadata
+### Core Principle: Configuration for Generation, Not State Reflection
 
-**Purpose:** Machine-readable project registry for Tracks CLI tooling
-**Read by:** `tracks` CLI commands (`generate`, `db migrate`, `upgrade`, etc.)
-**Written by:** `tracks new`, `tracks generate`, `tracks upgrade`
+**`.tracks.yaml` contains settings for HOW to build, not WHAT was built.**
+
+- ✅ Store: Tooling preferences, generation configuration, developer workflow settings
+- ❌ Don't store: Lists of generated resources, insertion point locations, file manifests
+
+**Why?** Code is the source of truth. When developers edit generated code (which they should!), a resource registry in `.tracks.yaml` becomes stale immediately. Instead, we use AST parsing and comment markers to discover what exists.
+
+### 1. `.tracks.yaml` (dotfile) - Tracks CLI Project Metadata & Tooling Configuration
+
+**Purpose:** Machine-readable project metadata and generation/tooling preferences
+**Read by:** `tracks` CLI commands (`generate`, `db migrate`, `upgrade`, TUI, etc.)
+**Written by:** `tracks new` (initial), `tracks config` (updates), developers (manual)
 **Committed to Git:** ✅ Yes
 **Contains secrets:** ❌ No
 
@@ -85,7 +94,7 @@ project:
 - `tracks version` - **READS** `tracks_version` to check compatibility
 - All future commands - **READ** `database_driver` to generate correct SQL
 
-### Phase 4 (Generation - v0.5.0)
+### Phase 4 (TUI & Generation - v0.5.0+)
 
 ```yaml
 schema_version: "1.0"
@@ -93,42 +102,43 @@ schema_version: "1.0"
 project:
   # ... (same as Phase 0)
 
-# Resource registry - tracks generated code for incremental generation
+# TUI preferences (mix console configuration)
+tui:
+  theme: "dark"                    # UI color scheme
+  default_view: "dashboard"        # Start view: dashboard, logs, db, jobs
+  log_filter_level: "info"         # Default log level filter
+  refresh_interval: "1s"           # Live update frequency
+
+# Code generation preferences
 generation:
   template_version: "v0.5.0"
-  last_generated: "2025-11-03T14:30:00Z"
+  custom_templates:
+    service: "~/.tracks/templates/service.go.tmpl"     # User-provided template
+    repository: "~/.tracks/templates/repository.go.tmpl"
+    handler: ""                                         # Empty = use built-in
 
-  resources:
-    - name: "post"
-      type: "resource"
-      fields:
-        - name: "title"
-          type: "string"
-          validation: "required,min=1,max=200"
-        - name: "slug"
-          type: "string"
-          validation: "required,slug"
-      routes:
-        - path: "/posts"
-          methods: ["GET", "POST"]
-        - path: "/posts/{slug}"
-          methods: ["GET", "PUT", "DELETE"]
-      generated_at: "2025-11-03T14:25:00Z"
+  conventions:
+    naming_style: "snake_case"     # File naming: snake_case, kebab-case, camel_case
+    test_suffix: "_test"           # Test file suffix
+    mock_prefix: "Mock"            # Mock struct prefix
 
-  # Code insertion markers - updated automatically during generation
-  markers:
-    "cmd/server/main.go":
-      SERVICES: {begin: 15, end: 20}
-      REPOSITORIES: {begin: 25, end: 30}
-    "internal/http/routes.go":
-      API_ROUTES: {begin: 40, end: 50}
+  defaults:
+    include_opentelemetry: true    # Always add tracing
+    use_repository_pattern: true   # Generate repository layer
+    generate_tests: true           # Auto-generate test files
+
+# Developer workflow preferences
+dev:
+  hot_reload: true                 # Use Air for hot reload
+  default_db: "development"        # Default database for commands
+  auto_migrate: false              # Run migrations automatically
 ```
 
 **Commands that interact:**
 
-- `tracks generate resource post` - **WRITES** to `resources[]`, **UPDATES** `markers`
-- `tracks generate list` - **READS** `resources[]` to display
-- `tracks destroy resource post` - **REMOVES** from `resources[]`
+- `tracks config set tui.theme light` - **WRITES** TUI preferences
+- `tracks generate` (in TUI) - **READS** generation defaults
+- `tracks` (no args) - **READS** TUI preferences for dashboard layout
 
 ### Phase 2 (Data Layer - v0.3.0)
 
@@ -164,6 +174,23 @@ features:
 mcp:
   enabled: true
   port: 3000
+
+# Extension system
+extensions:
+  enabled:
+    - "tracks-graphql"             # Enable GraphQL extension
+    - "tracks-websockets"          # Enable WebSocket support
+
+  # Extension-specific configuration
+  graphql:
+    schema_path: "schema.graphql"
+    playground: true
+
+# Custom middleware configuration
+middleware:
+  custom_chains:
+    api: ["cors", "auth", "ratelimit", "logging"]
+    web: ["csrf", "session", "logging"]
 ```
 
 ## `.env` Schema
@@ -220,6 +247,86 @@ Additional sections to be added as features are implemented:
 - Rate limiting (Phase 5)
 - OAuth credentials (Phase 3)
 - Observability endpoints (Phase 6)
+
+## Code Discovery Strategy
+
+### Why NOT Store Generated Resources in `.tracks.yaml`
+
+**Problem with resource registries:** They become stale the moment a developer edits generated code (which they should!).
+
+**Example of the problem:**
+
+```yaml
+# .tracks.yaml says this exists:
+resources:
+  - name: "post"
+    handlers: ["Create", "Show", "Update", "Delete"]
+
+# But developer deleted DeletePost handler and added CustomAction handler
+# .tracks.yaml is now wrong - creates drift and confusion
+```
+
+### Our Approach: Code is the Source of Truth
+
+We use **two complementary strategies** to discover what exists in the codebase:
+
+#### 1. Comment Markers for Insertion Points
+
+Generated code includes special comments that mark where to insert new code:
+
+```go
+// cmd/server/main.go
+func run() error {
+    // TRACKS:DB:BEGIN
+    database, err := db.New(ctx, cfg.Database)
+    // TRACKS:DB:END
+
+    // TRACKS:REPOSITORIES:BEGIN
+    // Generated repositories will be inserted here
+    // TRACKS:REPOSITORIES:END
+
+    // TRACKS:SERVICES:BEGIN
+    healthService := health.NewService()
+    // TRACKS:SERVICES:END
+}
+```
+
+**Benefits:**
+
+- Self-documenting in the code itself
+- Can't get out of sync with the file they're in
+- Works regardless of what's between the markers
+- Developers can customize the marker names if desired (stored in `.tracks.yaml`)
+
+#### 2. AST Parsing for Resource Discovery
+
+When we need to know what resources exist, we parse the actual Go code:
+
+```go
+// tracks generate service user --depends-on post
+// Step 1: Parse internal/domain/*/service.go to find existing services
+// Step 2: Analyze imports and dependencies
+// Step 3: Generate new code that integrates correctly
+```
+
+**What we discover via AST parsing:**
+
+- Existing domain services and their interfaces
+- Repository implementations
+- Handler functions and their routes
+- DTO structs and validation tags
+- Database models and relationships
+
+**Benefits:**
+
+- Always accurate (parses actual code)
+- Handles manual edits gracefully
+- Enables intelligent code generation
+- No drift between config and reality
+
+### Hybrid Approach for Performance
+
+For frequently-used data (like custom template paths or generation preferences), store in `.tracks.yaml`. For code structure discovery, always parse the actual files.
 
 ## Configuration Loading Pattern
 
@@ -286,10 +393,11 @@ Example:
 
 | File | Purpose | Read By | Contains | Committed to Git | Has Secrets |
 |------|---------|---------|----------|------------------|-------------|
-| `.tracks.yaml` | Tracks CLI project metadata | `tracks` CLI | Driver, module, resources, markers, versions | ✅ Yes | ❌ No |
+| `.tracks.yaml` | Tracks CLI metadata & tooling prefs | `tracks` CLI | Driver, module, versions, TUI prefs, gen config | ✅ Yes | ❌ No |
 | `.env` | Development runtime config | Generated app | DB URLs, ports, timeouts, keys | ❌ No | ✅ Yes |
 | `.env.example` | Runtime config template | Developers | Placeholder values, documentation | ✅ Yes | ❌ No |
 | Environment variables | Production runtime config | Generated app (via Viper) | All runtime settings | N/A | ✅ Yes |
+| Source code | What was actually generated | AST parser | Resources, handlers, services, repos | ✅ Yes | ❌ No |
 
 ## Version Tracking and Migration Strategy
 
@@ -342,8 +450,10 @@ $ tracks upgrade
 3. **Follows 12-factor app principles**: Configuration via environment
 4. **Better DX**: Developers know where to look for each type of setting
 5. **Migration support**: Version tracking enables safe upgrades
-6. **Incremental generation**: Resource registry enables smart code generation
+6. **No drift**: AST parsing ensures code is source of truth, not config files
 7. **Dotfile convention**: `.tracks.yaml` clearly indicates tooling metadata
+8. **Customization**: TUI preferences and custom templates support advanced workflows
+9. **DAW metaphor**: Mix console preferences align with project vision
 
 ### Negative
 
