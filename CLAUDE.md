@@ -209,11 +209,31 @@ if err != nil {
 
 ## Configuration
 
+Tracks uses separate configuration files for different purposes. See [ADR-007](./docs/adr/007-configuration-file-separation.md) for complete details.
+
+### CLI Project Metadata (`.tracks.yaml`)
+
+**Purpose:** Machine-readable metadata for Tracks CLI commands
+**Committed to Git:** ✅ Yes
+**Contains secrets:** ❌ No
+
+Contains: Database driver, module path, project name, version info, resource registry (future)
+
+Read by: `tracks` CLI commands (`new`, `generate`, `db migrate`, `upgrade`)
+
+### Application Runtime Configuration (`.env`)
+
+**Purpose:** Environment-specific runtime configuration for generated applications
+**Committed to Git:** ❌ No (`.env.example` is committed as template)
+**Contains secrets:** ✅ Yes (database URLs, session keys, API credentials)
+
 Hierarchical configuration (lowest to highest priority):
 
-1. Default values in code
-2. Configuration file (`tracks.yaml`)
-3. Environment variables (prefixed with `APP_`)
+1. Default values in code (`viper.SetDefault()`)
+2. `.env` file (development only, gitignored)
+3. Environment variables (production, prefixed with `APP_`)
+
+Generated applications do NOT read `.tracks.yaml` for runtime configuration.
 
 ## Development Workflow Tips
 

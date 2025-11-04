@@ -27,7 +27,7 @@ Implement the `tracks new` command to generate complete project structures. This
 - Module name flag (`--module github.com/user/app`)
 - Git initialization flag (`--no-git`)
 - Complete directory structure creation
-- Configuration file generation (go.mod, tracks.yaml, .env.example)
+- Configuration file generation (go.mod, .tracks.yaml, .env.example)
 - Basic server implementation with health check endpoint
 - Test file generation (main_test.go, health_test.go)
 - Validation (project name, module name, existing directories)
@@ -85,8 +85,8 @@ The following tasks will become GitHub issues, organized by phase:
 2. **Write unit tests for directory creation** (#110)
 3. **Create go.mod template** (#111)
 4. **Write unit tests for go.mod** (#112)
-5. **Create tracks.yaml template** (#113)
-6. **Write unit tests for tracks.yaml** (#114)
+5. **Create .tracks.yaml template (CLI metadata: driver, module, version)** (#113)
+6. **Write unit tests for .tracks.yaml (not runtime config)** (#114)
 7. **Create .gitignore template** (#115)
 8. **Write unit tests for .gitignore** (#116)
 9. **Create .env.example template** (#117)
@@ -113,11 +113,11 @@ The following tasks will become GitHub issues, organized by phase:
 **Note:** Config and logging must come before main.go and db.go, as both depend on configuration loading and structured logging per PRD 12 (Observability).
 
 1. **Create config package structure (internal/config/config.go.tmpl)** (#132)
-2. **Implement Viper-based config loading with hierarchical precedence (defaults → tracks.yaml → env vars)** (#133)
+2. **Implement Viper-based config loading with hierarchical precedence (defaults → .env → env vars)** (#133)
 3. **Create logging package (internal/logging/logger.go.tmpl) per PRD 12 spec** (#134)
 4. **Implement context-aware logging helpers (Info(ctx), Error(ctx) with automatic request_id extraction)** (#135)
 5. **Create HTTP logging middleware extracting request_id from Chi context** (#136)
-6. **Update tracks.yaml.tmpl with server timeouts and logging config** (#137)
+6. **Update .env.example.tmpl with server timeouts and logging config** (#137)
 7. **Update .env.example with LOG_LEVEL and LOG_FORMAT** (#138)
 8. **Write unit tests for config loading and logger initialization** (#139)
 9. **Write unit tests for context-aware logging and middleware** (#140)
@@ -179,7 +179,7 @@ The following tasks will become GitHub issues, organized by phase:
 - [ ] `tracks new myapp --no-git` skips git initialization
 - [ ] Generated go.mod has correct module name and Go version
 - [ ] Generated project directory matches PRD structure
-- [ ] Generated tracks.yaml has sensible defaults
+- [ ] Generated .tracks.yaml has sensible defaults (CLI metadata)
 
 ### Validation
 
@@ -333,14 +333,14 @@ myapp/
 │   ├── queries/             # Empty (for future)
 │   └── generated/           # Empty (for future SQLC)
 ├── test/mocks/              # Empty (mockery generates here)
-├── go.mod
-├── tracks.yaml
-├── .mockery.yaml            # Mockery configuration
-├── sqlc.yaml                # SQLC configuration
+├── .env.example             # Application runtime config template
 ├── .gitignore
-├── .env.example
+├── .mockery.yaml            # Mockery configuration
+├── .tracks.yaml             # Tracks CLI project metadata (driver, module, resources)
+├── go.mod
 ├── Makefile                 # Includes 'make mocks' target
-└── README.md
+├── README.md
+└── sqlc.yaml                # SQLC configuration
 ```
 
 **Key Points:**
@@ -408,7 +408,7 @@ Use `filepath` package functions for cross-platform compatibility:
 ```go
 // Use filepath.Join for building paths
 projectDir := filepath.Join(baseDir, projectName)
-configFile := filepath.Join(projectDir, "tracks.yaml")
+configFile := filepath.Join(projectDir, ".tracks.yaml")
 
 // Use filepath.FromSlash for template paths
 templatePath := filepath.FromSlash("internal/templates/project")
@@ -479,7 +479,7 @@ func main() {
 }
 
 func run() error {
-    // Load configuration from tracks.yaml + env vars
+    // Load configuration from .env + environment variables
     cfg, err := config.Load()
     if err != nil {
         return fmt.Errorf("load config: %w", err)

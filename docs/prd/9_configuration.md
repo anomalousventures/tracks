@@ -8,6 +8,8 @@ Configuration management in Tracks uses **Viper** for parsing and validation (a 
 
 **Important:** This section describes configuration for the **generated application**, not the Tracks CLI/TUI.
 
+For Tracks CLI project metadata (`.tracks.yaml`), see [ADR-007](../adr/007-configuration-file-separation.md). Generated applications use `.env` for runtime configuration and do NOT read `.tracks.yaml`.
+
 ## Goals
 
 - Viper for all configuration parsing and validation (Framework Choice)
@@ -199,12 +201,13 @@ func Load() (*Config, error) {
     v.SetDefault("MAILPIT_HOST", "localhost")
     v.SetDefault("MAILPIT_PORT", 1025)
 
-    // Development: try to load .env file
+    // Read from .env file (development only, gitignored)
+    // Note: Do NOT read .tracks.yaml - that's for CLI metadata only
     v.SetConfigFile(".env")
     v.SetConfigType("env")
-    v.ReadInConfig() // Ignore error if file doesn't exist
+    _ = v.ReadInConfig() // Ignore error if file doesn't exist
 
-    // Always read from environment (overrides .env)
+    // Environment variables override everything (production)
     v.AutomaticEnv()
 
     // Unmarshal into config struct
@@ -281,8 +284,11 @@ func (c *Config) Validate() error {
 ## Development Configuration
 
 ```bash
-# .env - Application runtime config (development only)
+# ============================================================================
+# .env - Application Runtime Configuration (development only)
 # DO NOT commit this file - add to .gitignore
+# For CLI project metadata, see .tracks.yaml (committed to git)
+# ============================================================================
 
 # Required
 # Database URL format depends on driver:

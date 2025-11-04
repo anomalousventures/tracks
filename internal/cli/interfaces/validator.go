@@ -11,4 +11,5 @@ type Validator interface {
 	ValidateModulePath(ctx context.Context, path string) error
 	ValidateDirectory(ctx context.Context, path string) error
 	ValidateDatabaseDriver(ctx context.Context, driver string) error
+	ValidateEnvPrefix(ctx context.Context, prefix string) error
 }

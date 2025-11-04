@@ -259,14 +259,14 @@ myapp/
 │   └── terraform/         # Infrastructure as code
 │
 ├── .air.toml              # Air hot-reload config
-├── .env.example           # Example environment variables
+├── .env.example           # Application runtime config template (copy to .env)
 ├── .gitignore            # Git ignore patterns
+├── .tracks.yaml          # Tracks CLI project metadata (driver, module, resources)
 ├── go.mod                # Go module definition
 ├── go.sum                # Go module checksums
 ├── Makefile              # Build automation
 ├── README.md             # Project documentation
 ├── sqlc.yaml             # SQLC configuration
-├── tracks.yaml           # Tracks framework config
 └── embed.go              # Asset embedding
 ```
 
@@ -442,11 +442,13 @@ Tracks parses these markers and inserts new code BEFORE the END marker, preservi
 
 ## Configuration Loading
 
-The application uses a hierarchical configuration system:
+The application uses a hierarchical configuration system for runtime settings:
 
-1. **Default values** (in code)
-2. **Configuration file** (tracks.yaml)
-3. **Environment variables** (override everything)
+1. **Default values** (in code via `viper.SetDefault()`)
+2. **`.env` file** (development only, gitignored)
+3. **Environment variables** (production, override everything)
+
+**Note:** Applications do NOT read `.tracks.yaml` for runtime configuration. That file contains CLI project metadata only.
 
 ```go
 // internal/config/loader.go
@@ -454,20 +456,25 @@ func Load() (*Config, error) {
     v := viper.New()
 
     // Set defaults
-    v.SetDefault("port", 8080)
+    v.SetDefault("server.port", ":8080")
     v.SetDefault("environment", "production")
+    v.SetDefault("logging.level", "info")
 
-    // Load from file
-    v.SetConfigName("tracks")
-    v.SetConfigType("yaml")
-    v.AddConfigPath(".")
+    // Read from .env file (development only)
+    v.SetConfigFile(".env")
+    v.SetConfigType("env")
+    _ = v.ReadInConfig() // Ignore error if file doesn't exist
 
-    // Override with env vars
-    v.AutomaticEnv()
+    // Environment variables override everything (production)
     v.SetEnvPrefix("APP")
+    v.AutomaticEnv()
 
     var cfg Config
-    return &cfg, v.Unmarshal(&cfg)
+    if err := v.Unmarshal(&cfg); err != nil {
+        return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+    }
+
+    return &cfg, nil
 }
 ```
 

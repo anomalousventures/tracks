@@ -22,6 +22,7 @@ const (
 var (
 	projectNameRegex = regexp.MustCompile(`^[a-z0-9_-]+$`)
 	modulePathRegex  = regexp.MustCompile(`^[a-zA-Z0-9._/-]+$`)
+	envPrefixRegex   = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 )
 
 type validatorImpl struct {
@@ -59,6 +60,16 @@ func NewValidator() interfaces.Validator {
 		return modulePathRegex.MatchString(path)
 	}); err != nil {
 		panic(fmt.Sprintf("failed to register module_path validator: %v", err))
+	}
+
+	if err := v.RegisterValidation("env_prefix", func(fl validator.FieldLevel) bool {
+		prefix := fl.Field().String()
+		if prefix == "" || len(prefix) > 50 {
+			return false
+		}
+		return envPrefixRegex.MatchString(prefix)
+	}); err != nil {
+		panic(fmt.Sprintf("failed to register env_prefix validator: %v", err))
 	}
 
 	return &validatorImpl{
@@ -224,6 +235,43 @@ func (v *validatorImpl) ValidateDatabaseDriver(ctx context.Context, driver strin
 			Value:   driver,
 			Message: "must be one of: go-libsql, sqlite3, postgres",
 			Err:     ErrInvalidDatabaseDriver,
+		}
+	}
+
+	return nil
+}
+
+func (v *validatorImpl) ValidateEnvPrefix(ctx context.Context, prefix string) error {
+	cfg := generator.ProjectConfig{
+		ProjectName:    "placeholder",
+		ModulePath:     "placeholder",
+		DatabaseDriver: "go-libsql",
+		EnvPrefix:      prefix,
+		OutputPath:     "placeholder",
+	}
+
+	if err := v.validate.StructPartial(cfg, "EnvPrefix"); err != nil {
+		if prefix == "" {
+			return &ValidationError{
+				Field:   "env_prefix",
+				Value:   prefix,
+				Message: "cannot be empty",
+				Err:     ErrInvalidEnvPrefix,
+			}
+		}
+		if len(prefix) > 50 {
+			return &ValidationError{
+				Field:   "env_prefix",
+				Value:   prefix,
+				Message: "must be 50 characters or less",
+				Err:     ErrInvalidEnvPrefix,
+			}
+		}
+		return &ValidationError{
+			Field:   "env_prefix",
+			Value:   prefix,
+			Message: "must start with uppercase letter and contain only uppercase letters, digits, and underscores (e.g., APP, MYAPP, USER_SERVICE)",
+			Err:     ErrInvalidEnvPrefix,
 		}
 	}
 

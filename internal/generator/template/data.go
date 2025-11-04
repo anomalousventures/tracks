@@ -22,4 +22,9 @@ type TemplateData struct {
 	// Year is the current year, used for copyright notices in generated files.
 	// Example: 2025
 	Year int
+
+	// EnvPrefix is the prefix for environment variables (used with Viper's SetEnvPrefix).
+	// Default: "APP"
+	// Example: "MYAPP" results in MYAPP_DATABASE_URL, MYAPP_SERVER_PORT, etc.
+	EnvPrefix string
 }

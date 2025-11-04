@@ -20,6 +20,9 @@ var (
 
 	// ErrInvalidDatabaseDriver is returned when database driver is not supported.
 	ErrInvalidDatabaseDriver = errors.New("invalid database driver")
+
+	// ErrInvalidEnvPrefix is returned when environment variable prefix is invalid.
+	ErrInvalidEnvPrefix = errors.New("invalid environment variable prefix")
 )
 
 // ValidationError wraps validation failures with context.

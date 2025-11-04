@@ -267,6 +267,32 @@ func TestValidateDatabaseDriver(t *testing.T) {
 	testStringValidator(t, tests, v.ValidateDatabaseDriver, "ValidateDatabaseDriver", "database_driver")
 }
 
+func TestValidateEnvPrefix(t *testing.T) {
+	v := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"valid APP", "APP", false},
+		{"valid MYAPP", "MYAPP", false},
+		{"valid USER_SERVICE", "USER_SERVICE", false},
+		{"valid with numbers", "API2", false},
+		{"valid with multiple underscores", "MY_LONG_PREFIX", false},
+		{"invalid lowercase", "app", true},
+		{"invalid mixed case", "MyApp", true},
+		{"invalid starts with number", "2APP", true},
+		{"invalid starts with underscore", "_APP", true},
+		{"invalid contains hyphen", "MY-APP", true},
+		{"invalid contains special chars", "APP!", true},
+		{"invalid empty", "", true},
+		{"invalid too long", "VERYLONGPREFIXTHATISWAYMORETHANFIFTYCHARACTERSLONGX", true},
+	}
+
+	testStringValidator(t, tests, v.ValidateEnvPrefix, "ValidateEnvPrefix", "env_prefix")
+}
+
 func TestValidationErrorMessages(t *testing.T) {
 	ctx := context.Background()
 	v := NewValidator()

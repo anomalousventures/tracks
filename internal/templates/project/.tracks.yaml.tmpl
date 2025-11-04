@@ -1,0 +1,15 @@
+# Tracks CLI Project Metadata
+# This file is used by the Tracks CLI for code generation and tooling.
+# For application runtime configuration, use .env (see .env.example)
+
+# Schema version for .tracks.yaml format
+schema_version: "1.0"
+
+# Project metadata
+project:
+  name: "{{.ProjectName}}"
+  module_path: "{{.ModuleName}}"
+  tracks_version: "dev"  # Will be replaced with actual version in production builds
+  last_upgraded_version: "dev"
+  database_driver: "{{.DBDriver}}"  # go-libsql, sqlite3, or postgres
+  env_prefix: "{{.EnvPrefix}}"      # Environment variable prefix (e.g., APP, MYAPP)
