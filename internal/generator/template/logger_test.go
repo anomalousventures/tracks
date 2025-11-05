@@ -1,190 +1,125 @@
 package template
 
 import (
-	"go/parser"
-	"go/token"
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/templates"
+	"github.com/anomalousventures/tracks/tests/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestLoggerTemplate(t *testing.T) {
+func renderLoggerTemplate(t *testing.T) string {
+	t.Helper()
 	renderer := NewRenderer(templates.FS)
-
 	data := TemplateData{}
-
 	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
 	require.NoError(t, err)
+	return result
+}
+
+func TestLoggerTemplate(t *testing.T) {
+	result := renderLoggerTemplate(t)
 	assert.NotEmpty(t, result)
 }
 
 func TestLoggerValidGoCode(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	fset := token.NewFileSet()
-	_, err = parser.ParseFile(fset, "logger.go", result, parser.AllErrors)
-	require.NoError(t, err, "generated logger.go should be valid Go code")
+	result := renderLoggerTemplate(t)
+	helpers.AssertValidGoCode(t, result, "logger.go")
 }
 
 func TestLoggerImports(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	requiredImports := []string{
+	helpers.AssertContainsAll(t, result, []string{
 		`"context"`,
 		`"os"`,
 		`"github.com/rs/zerolog"`,
-	}
-
-	for _, imp := range requiredImports {
-		assert.Contains(t, result, imp, "should import %s", imp)
-	}
+	})
 }
 
 func TestLoggerStruct(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "type Logger struct")
-	assert.Contains(t, result, "logger zerolog.Logger")
+	helpers.AssertContainsAll(t, result, []string{
+		"type Logger struct",
+		"logger zerolog.Logger",
+	})
 }
 
 func TestLoggerNewLoggerFunction(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "func NewLogger(environment string) *Logger")
-	assert.Contains(t, result, "zerolog.TimeFieldFormat = zerolog.TimeFormatUnix")
-	assert.Contains(t, result, "return &Logger{logger: logger}")
+	helpers.AssertContainsAll(t, result, []string{
+		"func NewLogger(environment string) *Logger",
+		"zerolog.TimeFieldFormat = zerolog.TimeFormatUnix",
+		"return &Logger{logger: logger}",
+	})
 }
 
 func TestLoggerEnvironmentLevels(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	developmentChecks := []string{
+	helpers.AssertContainsAll(t, result, []string{
 		`if environment == "development"`,
 		"zerolog.ConsoleWriter{Out: os.Stderr}",
 		"zerolog.SetGlobalLevel(zerolog.DebugLevel)",
-	}
-
-	for _, check := range developmentChecks {
-		assert.Contains(t, result, check, "should configure development logger: %s", check)
-	}
-
-	productionChecks := []string{
 		"zerolog.New(os.Stdout)",
 		"zerolog.SetGlobalLevel(zerolog.InfoLevel)",
-	}
-
-	for _, check := range productionChecks {
-		assert.Contains(t, result, check, "should configure production logger: %s", check)
-	}
+	})
 }
 
 func TestLoggerContextMethods(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	contextMethods := []string{
+	helpers.AssertContainsAll(t, result, []string{
 		"func (l *Logger) Debug(ctx context.Context) *zerolog.Event",
 		"func (l *Logger) Info(ctx context.Context) *zerolog.Event",
 		"func (l *Logger) Warn(ctx context.Context) *zerolog.Event",
 		"func (l *Logger) Error(ctx context.Context) *zerolog.Event",
-	}
-
-	for _, method := range contextMethods {
-		assert.Contains(t, result, method, "should have method: %s", method)
-	}
-
-	assert.Contains(t, result, "return l.loggerWithContext(ctx).Debug()")
-	assert.Contains(t, result, "return l.loggerWithContext(ctx).Info()")
-	assert.Contains(t, result, "return l.loggerWithContext(ctx).Warn()")
-	assert.Contains(t, result, "return l.loggerWithContext(ctx).Error()")
+		"return l.loggerWithContext(ctx).Debug()",
+		"return l.loggerWithContext(ctx).Info()",
+		"return l.loggerWithContext(ctx).Warn()",
+		"return l.loggerWithContext(ctx).Error()",
+	})
 }
 
 func TestLoggerContextKey(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "type contextKey string")
-	assert.Contains(t, result, `const requestIDKey contextKey = "request_id"`)
+	helpers.AssertContainsAll(t, result, []string{
+		"type contextKey string",
+		`const requestIDKey contextKey = "request_id"`,
+	})
 }
 
 func TestLoggerWithRequestID(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "func WithRequestID(ctx context.Context, requestID string) context.Context")
-	assert.Contains(t, result, "return context.WithValue(ctx, requestIDKey, requestID)")
+	helpers.AssertContainsAll(t, result, []string{
+		"func WithRequestID(ctx context.Context, requestID string) context.Context",
+		"return context.WithValue(ctx, requestIDKey, requestID)",
+	})
 }
 
 func TestLoggerWithContext(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
+	result := renderLoggerTemplate(t)
 
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
-
-	assert.Contains(t, result, "func (l *Logger) loggerWithContext(ctx context.Context) *zerolog.Logger")
-	assert.Contains(t, result, "if requestID, ok := ctx.Value(requestIDKey).(string); ok && requestID != \"\"")
-	assert.Contains(t, result, `logger = logger.With().Str("request_id", requestID).Logger()`)
+	helpers.AssertContainsAll(t, result, []string{
+		"func (l *Logger) loggerWithContext(ctx context.Context) *zerolog.Logger",
+		"if requestID, ok := ctx.Value(requestIDKey).(string); ok && requestID != \"\"",
+		`logger = logger.With().Str("request_id", requestID).Logger()`,
+	})
 }
 
 func TestLoggerTimestamp(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
+	result := renderLoggerTemplate(t)
 
 	assert.Contains(t, result, ".With().Timestamp().Logger()")
 }
 
 func TestLoggerPackageDeclaration(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{}
-
-	result, err := renderer.Render("internal/logging/logger.go.tmpl", data)
-	require.NoError(t, err)
+	result := renderLoggerTemplate(t)
 
 	assert.Contains(t, result, "package logging")
 }
