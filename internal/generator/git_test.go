@@ -141,13 +141,13 @@ func TestInitializeGit_ConfiguresUser(t *testing.T) {
 	err = InitializeGit(tmpDir, false)
 	require.NoError(t, err)
 
-	cmd := exec.Command("git", "config", "user.name")
+	cmd := exec.Command("git", "config", "--local", "user.name")
 	cmd.Dir = tmpDir
 	output, err := cmd.Output()
 	require.NoError(t, err)
 	assert.Equal(t, "Tracks\n", string(output))
 
-	cmd = exec.Command("git", "config", "user.email")
+	cmd = exec.Command("git", "config", "--local", "user.email")
 	cmd.Dir = tmpDir
 	output, err = cmd.Output()
 	require.NoError(t, err)

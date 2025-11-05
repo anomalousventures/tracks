@@ -14,11 +14,11 @@ func InitializeGit(projectPath string, skipGit bool) error {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
 	}
 
-	if err := runGitCommand(projectPath, "config", "user.name", "Tracks"); err != nil {
+	if err := runGitCommand(projectPath, "config", "--local", "user.name", "Tracks"); err != nil {
 		return fmt.Errorf("failed to configure git user name: %w", err)
 	}
 
-	if err := runGitCommand(projectPath, "config", "user.email", "tracks@tracks.local"); err != nil {
+	if err := runGitCommand(projectPath, "config", "--local", "user.email", "tracks@tracks.local"); err != nil {
 		return fmt.Errorf("failed to configure git user email: %w", err)
 	}
 
