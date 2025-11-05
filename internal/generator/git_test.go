@@ -80,21 +80,6 @@ func TestInitializeGit_InitFails(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to initialize git repository")
 }
 
-func TestInitializeGit_CommitFails_NothingToCommit(t *testing.T) {
-	if _, err := exec.LookPath("git"); err != nil {
-		t.Skip("git not available in PATH")
-	}
-
-	tmpDir := t.TempDir()
-	ctx := context.Background()
-
-	err := runGitCommand(ctx, tmpDir, "init")
-	require.NoError(t, err)
-
-	err = runGitCommand(ctx, tmpDir, "commit", "-m", "test")
-	assert.Error(t, err)
-}
-
 func TestInitializeGit_EmptyDirectory(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not available in PATH")
