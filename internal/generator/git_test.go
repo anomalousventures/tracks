@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,8 +13,9 @@ import (
 
 func TestInitializeGit_SkipGit(t *testing.T) {
 	tmpDir := t.TempDir()
+	ctx := context.Background()
 
-	err := InitializeGit(tmpDir, true)
+	err := InitializeGit(ctx, tmpDir, true)
 	require.NoError(t, err)
 
 	gitDir := filepath.Join(tmpDir, ".git")
@@ -27,12 +29,13 @@ func TestInitializeGit_Success(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
+	ctx := context.Background()
 
 	testFile := filepath.Join(tmpDir, "test.txt")
 	err := os.WriteFile(testFile, []byte("test content"), 0644)
 	require.NoError(t, err)
 
-	err = InitializeGit(tmpDir, false)
+	err = InitializeGit(ctx, tmpDir, false)
 	require.NoError(t, err)
 
 	gitDir := filepath.Join(tmpDir, ".git")
@@ -53,12 +56,13 @@ func TestInitializeGit_GitNotFound(t *testing.T) {
 	os.Setenv("PATH", "")
 
 	tmpDir := t.TempDir()
+	ctx := context.Background()
 
 	testFile := filepath.Join(tmpDir, "test.txt")
 	err := os.WriteFile(testFile, []byte("test content"), 0644)
 	require.NoError(t, err)
 
-	err = InitializeGit(tmpDir, false)
+	err = InitializeGit(ctx, tmpDir, false)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to initialize git repository")
 }
@@ -69,49 +73,25 @@ func TestInitializeGit_InitFails(t *testing.T) {
 	}
 
 	invalidPath := "/this/path/definitely/does/not/exist/and/cannot/be/created"
+	ctx := context.Background()
 
-	err := InitializeGit(invalidPath, false)
+	err := InitializeGit(ctx, invalidPath, false)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to initialize git repository")
 }
 
-func TestInitializeGit_AddFails(t *testing.T) {
+func TestInitializeGit_CommitFails_NothingToCommit(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not available in PATH")
 	}
 
 	tmpDir := t.TempDir()
+	ctx := context.Background()
 
-	err := runGitCommand(tmpDir, "init")
+	err := runGitCommand(ctx, tmpDir, "init")
 	require.NoError(t, err)
 
-	unreadableFile := filepath.Join(tmpDir, "unreadable.txt")
-	err = os.WriteFile(unreadableFile, []byte("content"), 0644)
-	require.NoError(t, err)
-
-	err = os.Chmod(unreadableFile, 0000)
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Chmod(unreadableFile, 0644)
-	}()
-
-	err = runGitCommand(tmpDir, "add", ".")
-	if err != nil {
-		assert.Error(t, err)
-	}
-}
-
-func TestInitializeGit_CommitFails(t *testing.T) {
-	if _, err := exec.LookPath("git"); err != nil {
-		t.Skip("git not available in PATH")
-	}
-
-	tmpDir := t.TempDir()
-
-	err := runGitCommand(tmpDir, "init")
-	require.NoError(t, err)
-
-	err = runGitCommand(tmpDir, "commit", "-m", "test")
+	err = runGitCommand(ctx, tmpDir, "commit", "-m", "test")
 	assert.Error(t, err)
 }
 
@@ -121,8 +101,9 @@ func TestInitializeGit_EmptyDirectory(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
+	ctx := context.Background()
 
-	err := InitializeGit(tmpDir, false)
+	err := InitializeGit(ctx, tmpDir, false)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create initial commit")
 }
@@ -133,12 +114,13 @@ func TestInitializeGit_ConfiguresUser(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
+	ctx := context.Background()
 
 	testFile := filepath.Join(tmpDir, "test.txt")
 	err := os.WriteFile(testFile, []byte("test content"), 0644)
 	require.NoError(t, err)
 
-	err = InitializeGit(tmpDir, false)
+	err = InitializeGit(ctx, tmpDir, false)
 	require.NoError(t, err)
 
 	cmd := exec.Command("git", "config", "--local", "user.name")
