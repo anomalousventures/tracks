@@ -2,7 +2,6 @@ package generator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -16,23 +15,23 @@ func InitializeGit(ctx context.Context, projectPath string, skipGit bool) error 
 	}
 
 	if err := runGitCommand(ctx, projectPath, "init"); err != nil {
-		return errors.New("failed to initialize git repository")
+		return fmt.Errorf("failed to initialize git repository: %w", err)
 	}
 
 	if err := runGitCommand(ctx, projectPath, "config", "--local", "user.name", "Tracks"); err != nil {
-		return errors.New("failed to configure git user")
+		return fmt.Errorf("failed to configure git user: %w", err)
 	}
 
 	if err := runGitCommand(ctx, projectPath, "config", "--local", "user.email", "tracks@tracks.local"); err != nil {
-		return errors.New("failed to configure git user")
+		return fmt.Errorf("failed to configure git user: %w", err)
 	}
 
 	if err := runGitCommand(ctx, projectPath, "add", "."); err != nil {
-		return errors.New("failed to stage files")
+		return fmt.Errorf("failed to stage files: %w", err)
 	}
 
 	if err := runGitCommand(ctx, projectPath, "commit", "-m", "Initial commit from Tracks"); err != nil {
-		return errors.New("failed to create initial commit")
+		return fmt.Errorf("failed to create initial commit: %w", err)
 	}
 
 	return nil
