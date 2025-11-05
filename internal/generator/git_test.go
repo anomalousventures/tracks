@@ -126,3 +126,30 @@ func TestInitializeGit_EmptyDirectory(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create initial commit")
 }
+
+func TestInitializeGit_ConfiguresUser(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available in PATH")
+	}
+
+	tmpDir := t.TempDir()
+
+	testFile := filepath.Join(tmpDir, "test.txt")
+	err := os.WriteFile(testFile, []byte("test content"), 0644)
+	require.NoError(t, err)
+
+	err = InitializeGit(tmpDir, false)
+	require.NoError(t, err)
+
+	cmd := exec.Command("git", "config", "user.name")
+	cmd.Dir = tmpDir
+	output, err := cmd.Output()
+	require.NoError(t, err)
+	assert.Equal(t, "Tracks\n", string(output))
+
+	cmd = exec.Command("git", "config", "user.email")
+	cmd.Dir = tmpDir
+	output, err = cmd.Output()
+	require.NoError(t, err)
+	assert.Equal(t, "tracks@tracks.local\n", string(output))
+}
