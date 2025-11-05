@@ -131,8 +131,6 @@ func TestConfigDefaults(t *testing.T) {
 	})
 }
 
-// TestConfigEnvPrefixInterpolation verifies that env prefix template variable is correctly
-// interpolated and that non-default values don't accidentally include the default.
 func TestConfigEnvPrefixInterpolation(t *testing.T) {
 	tests := []struct {
 		name      string
