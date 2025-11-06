@@ -18,7 +18,7 @@ func renderDBTemplate(t *testing.T, driver string) string {
 		ModuleName: "github.com/test/app",
 		DBDriver:   driver,
 	}
-	result, err := renderer.Render("db/db.go.tmpl", data)
+	result, err := renderer.Render("internal/db/db.go.tmpl", data)
 	require.NoError(t, err)
 	return result
 }

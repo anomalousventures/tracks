@@ -56,7 +56,7 @@ func TestProjectGenerator_Generate_Success(t *testing.T) {
 		"internal/http/routes/routes.go",
 		"internal/http/handlers/health.go",
 		"internal/http/middleware/logging.go",
-		"db/db.go",
+		"internal/db/db.go",
 	}
 
 	for _, file := range expectedFiles {
@@ -203,7 +203,7 @@ func TestProjectGenerator_Generate_AllDatabaseDrivers(t *testing.T) {
 			require.NoError(t, err)
 
 			projectRoot := filepath.Join(tmpDir, "testapp")
-			dbPath := filepath.Join(projectRoot, "db/db.go")
+			dbPath := filepath.Join(projectRoot, "internal/db/db.go")
 
 			content, err := os.ReadFile(dbPath)
 			require.NoError(t, err)

@@ -89,7 +89,7 @@ Tracks generates applications with clean layered architecture:
   - **Middleware** (`middleware/`) - Single-responsibility composable functions (auth, security, logging, etc.)
   - **Views** (`views/`) - templ components compiled to Go
 - **Domain Services** (`internal/domain/*/service.go`) - Business logic, implements `interfaces.*Service`
-- **Domain Repositories** (`internal/domain/*/repository.go`) - Data access, wraps `db/generated` SQLC code, implements `interfaces.*Repository`
+- **Domain Repositories** (`internal/domain/*/repository.go`) - Data access, wraps `internal/db/generated` SQLC code, implements `interfaces.*Repository`
 - **Domain DTOs** (`internal/domain/*/dto.go`) - Request/response data transfer objects
 - **Interfaces** (`internal/interfaces/`) - Service and repository contracts (zero implementations, prevents import cycles)
 

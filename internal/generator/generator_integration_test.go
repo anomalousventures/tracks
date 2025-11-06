@@ -94,7 +94,7 @@ func TestGenerateFullProject(t *testing.T) {
 				"internal/http/routes/routes.go",
 				"internal/http/handlers/health.go",
 				"internal/http/middleware/logging.go",
-				"db/db.go",
+				"internal/db/db.go",
 			}
 
 			for _, file := range expectedFiles {
@@ -135,9 +135,9 @@ func TestGenerateFullProject(t *testing.T) {
 			assert.Contains(t, string(content), tt.modulePath, "go.mod should contain module path")
 			assert.Contains(t, string(content), "go 1.25", "go.mod should contain Go version")
 
-			dbPath := filepath.Join(projectRoot, "db/db.go")
+			dbPath := filepath.Join(projectRoot, "internal/db/db.go")
 			dbContent, err := os.ReadFile(dbPath)
-			require.NoError(t, err, "should be able to read db/db.go")
+			require.NoError(t, err, "should be able to read internal/db/db.go")
 
 			driverMapping := map[string]string{
 				"go-libsql": "libsql",
@@ -306,7 +306,15 @@ func TestGoTestPasses(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			// Use go mod tidy to download deps and populate go.sum
+			// Download all dependencies from require block first
+			downloadCmd := exec.Command("go", "mod", "download")
+			downloadCmd.Dir = projectRoot
+			if output, err := downloadCmd.CombinedOutput(); err != nil {
+				t.Logf("go mod download output:\n%s", string(output))
+				t.Logf("go mod download failed (non-fatal for test): %v", err)
+			}
+
+			// Use go mod tidy to populate go.sum
 			tidyCmd := exec.Command("go", "mod", "tidy", "-e")
 			tidyCmd.Dir = projectRoot
 			if output, err := tidyCmd.CombinedOutput(); err != nil {
@@ -359,7 +367,15 @@ func TestGoBuildSucceeds(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			// Use go mod tidy to download deps and populate go.sum
+			// Download all dependencies from require block first
+			downloadCmd := exec.Command("go", "mod", "download")
+			downloadCmd.Dir = projectRoot
+			if output, err := downloadCmd.CombinedOutput(); err != nil {
+				t.Logf("go mod download output:\n%s", string(output))
+				t.Logf("go mod download failed (non-fatal for test): %v", err)
+			}
+
+			// Use go mod tidy to populate go.sum
 			tidyCmd := exec.Command("go", "mod", "tidy", "-e")
 			tidyCmd.Dir = projectRoot
 			if output, err := tidyCmd.CombinedOutput(); err != nil {
@@ -422,7 +438,15 @@ func TestServerRuns(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			// Use go mod tidy to download deps and populate go.sum
+			// Download all dependencies from require block first
+			downloadCmd := exec.Command("go", "mod", "download")
+			downloadCmd.Dir = projectRoot
+			if output, err := downloadCmd.CombinedOutput(); err != nil {
+				t.Logf("go mod download output:\n%s", string(output))
+				t.Logf("go mod download failed (non-fatal for test): %v", err)
+			}
+
+			// Use go mod tidy to populate go.sum
 			tidyCmd := exec.Command("go", "mod", "tidy", "-e")
 			tidyCmd.Dir = projectRoot
 			if output, err := tidyCmd.CombinedOutput(); err != nil {
@@ -496,7 +520,15 @@ func TestHealthCheckEndpoint(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			// Use go mod tidy to download deps and populate go.sum
+			// Download all dependencies from require block first
+			downloadCmd := exec.Command("go", "mod", "download")
+			downloadCmd.Dir = projectRoot
+			if output, err := downloadCmd.CombinedOutput(); err != nil {
+				t.Logf("go mod download output:\n%s", string(output))
+				t.Logf("go mod download failed (non-fatal for test): %v", err)
+			}
+
+			// Use go mod tidy to populate go.sum
 			tidyCmd := exec.Command("go", "mod", "tidy", "-e")
 			tidyCmd.Dir = projectRoot
 			if output, err := tidyCmd.CombinedOutput(); err != nil {
@@ -517,7 +549,7 @@ func TestHealthCheckEndpoint(t *testing.T) {
 			port := "18080"
 			cmd := exec.Command(binaryPath)
 			cmd.Dir = projectRoot
-			cmd.Env = append(os.Environ(), fmt.Sprintf("PORT=%s", port))
+			cmd.Env = append(os.Environ(), fmt.Sprintf("APP_SERVER_PORT=:%s", port))
 
 			err = cmd.Start()
 			require.NoError(t, err)

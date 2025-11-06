@@ -91,7 +91,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/routes/routes.go.tmpl":        "internal/http/routes/routes.go",
 		"internal/http/handlers/health.go.tmpl":      "internal/http/handlers/health.go",
 		"internal/http/middleware/logging.go.tmpl":   "internal/http/middleware/logging.go",
-		"db/db.go.tmpl":                              "db/db.go",
+		"internal/db/db.go.tmpl":                     "internal/db/db.go",
 	}
 
 	logger.Info().

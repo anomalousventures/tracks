@@ -31,7 +31,7 @@ func TestMakefileTargets(t *testing.T) {
 		items []string
 	}{
 		{"phony declarations", []string{
-			".PHONY: help test build dev mocks sqlc lint clean",
+			".PHONY: help test build dev generate mocks sqlc lint clean",
 		}},
 		{"help target", []string{
 			"help: ## Show this help message",
@@ -79,14 +79,15 @@ func TestMakefileHelpText(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
 	helpers.AssertContainsAll(t, result, []string{
-		"help   - Show this help message",
-		"test   - Run all tests",
-		"build  - Build the server binary",
-		"dev    - Start development server with hot reload",
-		"mocks  - Generate mocks from interfaces",
-		"sqlc   - Generate type-safe SQL code",
-		"lint   - Run linters",
-		"clean  - Remove build artifacts",
+		"help     - Show this help message",
+		"test     - Run all tests",
+		"build    - Build the server binary",
+		"dev      - Start development server with hot reload",
+		"generate - Generate mocks and SQL code",
+		"mocks    - Generate mocks from interfaces",
+		"sqlc     - Generate type-safe SQL code",
+		"lint     - Run linters",
+		"clean    - Remove build artifacts",
 	})
 }
 

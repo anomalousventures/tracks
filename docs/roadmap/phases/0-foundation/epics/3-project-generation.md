@@ -126,11 +126,11 @@ The following tasks will become GitHub issues, organized by phase:
 
 1. **Create main.go template with run() pattern, config/logger initialization, and markers** (#141)
 2. **Write unit tests for main.go template** (#142)
-3. **Create db/db.go template with connection logic using config** (#143)
+3. **Create internal/db/db.go template with connection logic using config** (#143)
 
 ### Phase 6: Database & Config Files
 
-1. **Create sqlc.yaml template (output: db/generated)** (#144)
+1. **Create sqlc.yaml template (output: internal/db/generated)** (#144)
 2. **Create README.md template** (#145)
 3. **Write unit tests for config file templates** (#146)
 4. **Create Makefile template with mocks target** (#147)
@@ -327,11 +327,11 @@ myapp/
 │   ├── http/
 │   │   └── routes/
 │   │       └── routes.go    # const APIHealth = "/api/health"
-├── db/
-│   ├── db.go                # Connection logic
-│   ├── migrations/          # Empty (for future)
-│   ├── queries/             # Empty (for future)
-│   └── generated/           # Empty (for future SQLC)
+│   └── db/
+│       ├── db.go            # Connection logic
+│       ├── migrations/      # Empty (for future)
+│       ├── queries/         # Empty (for future)
+│       └── generated/       # Empty (for future SQLC)
 ├── test/mocks/              # Empty (mockery generates here)
 ├── .env.example             # Application runtime config template
 ├── .gitignore
@@ -538,7 +538,7 @@ func run() error {
 ### Database Package
 
 ```go
-// db/db.go
+// internal/db/db.go
 package db
 
 import "database/sql"
@@ -557,13 +557,13 @@ func New(dsn string) (*sql.DB, error) {
 ```yaml
 version: "2"
 sql:
-  - schema: "db/migrations"
-    queries: "db/queries"
+  - schema: "internal/db/migrations"
+    queries: "internal/db/queries"
     engine: "sqlite"
     gen:
       go:
         package: "generated"
-        out: "db/generated"
+        out: "internal/db/generated"
 ```
 
 **Mockery Configuration** (.mockery.yaml):

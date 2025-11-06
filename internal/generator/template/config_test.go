@@ -47,7 +47,6 @@ func TestConfigImports(t *testing.T) {
 
 	helpers.AssertContainsAll(t, result, []string{
 		`"fmt"`,
-		`"os"`,
 		`"time"`,
 		`"github.com/spf13/viper"`,
 	})

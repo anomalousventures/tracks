@@ -1,15 +1,16 @@
-.PHONY: help test build dev mocks sqlc lint clean
+.PHONY: help test build dev generate mocks sqlc lint clean
 
 help: ## Show this help message
 	@echo "Available targets:"
-	@echo "  help   - Show this help message"
-	@echo "  test   - Run all tests"
-	@echo "  build  - Build the server binary"
-	@echo "  dev    - Start development server with hot reload"
-	@echo "  mocks  - Generate mocks from interfaces"
-	@echo "  sqlc   - Generate type-safe SQL code"
-	@echo "  lint   - Run linters"
-	@echo "  clean  - Remove build artifacts"
+	@echo "  help     - Show this help message"
+	@echo "  test     - Run all tests"
+	@echo "  build    - Build the server binary"
+	@echo "  dev      - Start development server with hot reload"
+	@echo "  generate - Generate mocks and SQL code"
+	@echo "  mocks    - Generate mocks from interfaces"
+	@echo "  sqlc     - Generate type-safe SQL code"
+	@echo "  lint     - Run linters"
+	@echo "  clean    - Remove build artifacts"
 
 test: ## Run tests
 	go test ./...
@@ -20,6 +21,8 @@ build: ## Build server binary
 
 dev: ## Start development server with hot reload
 	go tool air -c .air.toml
+
+generate: mocks sqlc ## Generate mocks and SQL code
 
 mocks: ## Generate mocks from interfaces
 	go tool mockery
