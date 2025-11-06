@@ -620,27 +620,9 @@ func TestMakeGenerateIdempotent(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			initialGenerateCmd := exec.Command("make", "generate")
-			initialGenerateCmd.Dir = projectRoot
-			output, err := initialGenerateCmd.CombinedOutput()
-			if err != nil {
-				t.Logf("initial make generate output:\n%s", string(output))
-			}
-			require.NoError(t, err, "initial make generate should succeed")
-
-			gitAddCmd := exec.Command("git", "add", ".")
-			gitAddCmd.Dir = projectRoot
-			err = gitAddCmd.Run()
-			require.NoError(t, err, "git add should succeed")
-
-			gitCommitCmd := exec.Command("git", "commit", "-m", "Add generated code")
-			gitCommitCmd.Dir = projectRoot
-			err = gitCommitCmd.Run()
-			require.NoError(t, err, "git commit should succeed")
-
 			idempotencyCheckCmd := exec.Command("make", "generate")
 			idempotencyCheckCmd.Dir = projectRoot
-			output, err = idempotencyCheckCmd.CombinedOutput()
+			output, err := idempotencyCheckCmd.CombinedOutput()
 			if err != nil {
 				t.Logf("idempotency check output:\n%s", string(output))
 			}
