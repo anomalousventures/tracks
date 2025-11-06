@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
 	"github.com/anomalousventures/tracks/internal/generator"
@@ -130,8 +131,30 @@ func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate project: %w", err)
 	}
 
+	projectPath, err := generator.GetAbsolutePath(cfg.OutputPath, projectName)
+	if err != nil {
+		projectPath = fmt.Sprintf("./%s", projectName)
+	}
+
+	gitInitialized := cfg.InitGit
+	if cfg.InitGit {
+		gitDir := fmt.Sprintf("%s/.git", projectPath)
+		if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+			gitInitialized = false
+		}
+	}
+
+	successOutput := generator.RenderSuccessOutput(generator.SuccessOutput{
+		ProjectName:    projectName,
+		ProjectPath:    projectPath,
+		ModulePath:     c.modulePath,
+		DatabaseDriver: c.dbDriver,
+		GitInitialized: gitInitialized,
+		NoColor:        false,
+	})
+
 	r.Section(interfaces.Section{
-		Body: fmt.Sprintf("✓ Project '%s' created successfully!", projectName),
+		Body: successOutput,
 	})
 
 	c.flushRenderer(cmd, r)
