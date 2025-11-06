@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/anomalousventures/tracks/internal/cli/interfaces"
+	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/spf13/cobra"
 )
 
@@ -107,8 +108,30 @@ func (c *NewCommand) run(cmd *cobra.Command, args []string) error {
 
 	r.Title(fmt.Sprintf("Creating new Tracks application: %s", projectName))
 	r.Section(interfaces.Section{
-		Body: fmt.Sprintf("Database: %s\nModule: %s\nGit: %t\n\n(Full implementation coming soon)",
+		Body: fmt.Sprintf("Database: %s\nModule: %s\nGit: %t",
 			c.dbDriver, c.modulePath, !c.noGit),
+	})
+
+	// Generate the project
+	cfg := generator.ProjectConfig{
+		ProjectName:    projectName,
+		ModulePath:     c.modulePath,
+		DatabaseDriver: c.dbDriver,
+		EnvPrefix:      "APP",
+		InitGit:        !c.noGit,
+		OutputPath:     ".",
+	}
+
+	if err := c.generator.Validate(cfg); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
+	}
+
+	if err := c.generator.Generate(ctx, cfg); err != nil {
+		return fmt.Errorf("failed to generate project: %w", err)
+	}
+
+	r.Section(interfaces.Section{
+		Body: fmt.Sprintf("✓ Project '%s' created successfully!", projectName),
 	})
 
 	c.flushRenderer(cmd, r)

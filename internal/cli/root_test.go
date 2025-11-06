@@ -371,6 +371,10 @@ func TestNewCommand(t *testing.T) {
 	ctx := WithViper(context.Background(), v)
 	rootCmd.SetArgs([]string{"new", "testproject"})
 
+	t.Cleanup(func() {
+		os.RemoveAll("testproject")
+	})
+
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("new command failed: %v", err)
 	}
@@ -591,6 +595,10 @@ func TestNewCommandWithFlags(t *testing.T) {
 	}
 	ctx := WithViper(context.Background(), v)
 	rootCmd.SetArgs([]string{"--json", "new", "testproject"})
+
+	t.Cleanup(func() {
+		os.RemoveAll("testproject")
+	})
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		t.Fatalf("new command with flags failed: %v", err)
