@@ -32,6 +32,30 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Set integration test timeouts
+        shell: bash
+        run: |
+          case "${{ matrix.os }}" in
+            ubuntu-latest)
+              # Fastest runner - use defaults (2s, 10s, 15s)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=15s" >> $GITHUB_ENV
+              ;;
+            macos-latest|macos-latest-large)
+              # macOS runners - 2x slower
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=4s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=20s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
+              ;;
+            windows-latest)
+              # Slowest runner - 3x slower
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=6s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=45s" >> $GITHUB_ENV
+              ;;
+          esac
+
       - name: Run tests
         run: make test-coverage
 

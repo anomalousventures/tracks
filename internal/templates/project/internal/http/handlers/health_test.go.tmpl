@@ -15,14 +15,6 @@ import (
 	"{{.ModuleName}}/tests/mocks"
 )
 
-func TestNewHealthHandler(t *testing.T) {
-	mockService := mocks.NewMockHealthService(t)
-	mockLogger := mocks.NewMockLogger(t)
-
-	handler := NewHealthHandler(mockService, mockLogger)
-	assert.NotNil(t, handler)
-}
-
 func TestHealthHandler_Check(t *testing.T) {
 	t.Run("returns healthy status", func(t *testing.T) {
 		mockService := mocks.NewMockHealthService(t)

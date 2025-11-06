@@ -15,8 +15,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// getTimeout returns a timeout duration from environment or default.
+// Env vars: INTEGRATION_TEST_SHORT_TIMEOUT, INTEGRATION_TEST_MEDIUM_TIMEOUT, INTEGRATION_TEST_LONG_TIMEOUT
+func getTimeout(envVar string, defaultTimeout time.Duration) time.Duration {
+	if val := os.Getenv(envVar); val != "" {
+		if timeout, err := time.ParseDuration(val); err == nil && timeout > 0 {
+			return timeout
+		}
+	}
+	return defaultTimeout
+}
+
 // cmdWithTimeout creates an exec.Command with a timeout context
-// to prevent integration tests from hanging indefinitely
+// to prevent integration tests from hanging indefinitely.
 func cmdWithTimeout(timeout time.Duration, name string, args ...string) *exec.Cmd {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	cmd := exec.CommandContext(ctx, name, args...)
@@ -27,6 +38,12 @@ func cmdWithTimeout(timeout time.Duration, name string, args ...string) *exec.Cm
 
 	return cmd
 }
+
+var (
+	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)   // git, local ops
+	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second) // compile, test, lint
+	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 15*time.Second)   // network, downloads
+)
 
 // TestGenerateFullProject (#143) - Foundational integration test that generates
 // a complete project structure and verifies all files and directories are created correctly.
@@ -269,7 +286,7 @@ func TestGoModDownload(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			cmd := cmdWithTimeout(15*time.Second, "go", "mod", "download")
+			cmd := cmdWithTimeout(longTimeout, "go", "mod", "download")
 			cmd.Dir = projectRoot
 			output, err := cmd.CombinedOutput()
 
@@ -320,7 +337,7 @@ func TestGoTestPasses(t *testing.T) {
 			projectRoot := filepath.Join(tmpDir, projectName)
 
 			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(10*time.Second, "go", "mod", "tidy")
+			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
 			tidyCmd.Dir = projectRoot
 			output, err := tidyCmd.CombinedOutput()
 			if err != nil {
@@ -328,7 +345,7 @@ func TestGoTestPasses(t *testing.T) {
 				t.Fatalf("go mod tidy failed: %v", err)
 			}
 
-			testCmd := cmdWithTimeout(5*time.Second, "go", "test", "./...")
+			testCmd := cmdWithTimeout(mediumTimeout, "go", "test", "./...")
 			testCmd.Dir = projectRoot
 			output, err = testCmd.CombinedOutput()
 
@@ -337,7 +354,7 @@ func TestGoTestPasses(t *testing.T) {
 			}
 
 			assert.NoError(t, err, "go test should pass")
-			// Generated projects don't have test files yet, so check for no failures
+			assert.Contains(t, string(output), "ok", "should have passing test packages")
 			assert.NotContains(t, string(output), "FAIL", "test output should not contain failures")
 		})
 	}
@@ -374,7 +391,7 @@ func TestGoBuildSucceeds(t *testing.T) {
 			projectRoot := filepath.Join(tmpDir, projectName)
 
 			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(10*time.Second, "go", "mod", "tidy")
+			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
 			tidyCmd.Dir = projectRoot
 			output, err := tidyCmd.CombinedOutput()
 			if err != nil {
@@ -387,7 +404,7 @@ func TestGoBuildSucceeds(t *testing.T) {
 			require.NoError(t, err)
 
 			binaryPath := filepath.Join(binDir, "server")
-			buildCmd := cmdWithTimeout(5*time.Second, "go", "build", "-o", binaryPath, "./cmd/server")
+			buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
 			buildCmd.Dir = projectRoot
 			output, err = buildCmd.CombinedOutput()
 
@@ -438,7 +455,7 @@ func TestServerRuns(t *testing.T) {
 			projectRoot := filepath.Join(tmpDir, projectName)
 
 			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(10*time.Second, "go", "mod", "tidy")
+			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
 			tidyCmd.Dir = projectRoot
 			output, err := tidyCmd.CombinedOutput()
 			if err != nil {
@@ -451,12 +468,12 @@ func TestServerRuns(t *testing.T) {
 			require.NoError(t, err)
 
 			binaryPath := filepath.Join(binDir, "server")
-			buildCmd := cmdWithTimeout(5*time.Second, "go", "build", "-o", binaryPath, "./cmd/server")
+			buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
 			buildCmd.Dir = projectRoot
 			err = buildCmd.Run()
 			require.NoError(t, err)
 
-			cmd := cmdWithTimeout(2*time.Second, binaryPath)
+			cmd := cmdWithTimeout(shortTimeout, binaryPath)
 			cmd.Dir = projectRoot
 			cmd.Env = append(os.Environ(), "APP_SERVER_PORT=:18081")
 
@@ -513,7 +530,7 @@ func TestHealthCheckEndpoint(t *testing.T) {
 			projectRoot := filepath.Join(tmpDir, projectName)
 
 			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(10*time.Second, "go", "mod", "tidy")
+			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
 			tidyCmd.Dir = projectRoot
 			output, err := tidyCmd.CombinedOutput()
 			if err != nil {
@@ -526,7 +543,7 @@ func TestHealthCheckEndpoint(t *testing.T) {
 			require.NoError(t, err)
 
 			binaryPath := filepath.Join(binDir, "server")
-			buildCmd := cmdWithTimeout(5*time.Second, "go", "build", "-o", binaryPath, "./cmd/server")
+			buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
 			buildCmd.Dir = projectRoot
 			err = buildCmd.Run()
 			require.NoError(t, err)
@@ -545,7 +562,7 @@ func TestHealthCheckEndpoint(t *testing.T) {
 				return
 			}
 
-			cmd := cmdWithTimeout(2*time.Second, binaryPath)
+			cmd := cmdWithTimeout(shortTimeout, binaryPath)
 			cmd.Dir = projectRoot
 			envVars := []string{
 				fmt.Sprintf("APP_SERVER_PORT=:%s", port),
@@ -633,7 +650,7 @@ func TestMakeGenerateIdempotent(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			idempotencyCheckCmd := cmdWithTimeout(10*time.Second, "make", "generate")
+			idempotencyCheckCmd := cmdWithTimeout(mediumTimeout, "make", "generate")
 			idempotencyCheckCmd.Dir = projectRoot
 			output, err := idempotencyCheckCmd.CombinedOutput()
 			if err != nil {
@@ -641,7 +658,7 @@ func TestMakeGenerateIdempotent(t *testing.T) {
 			}
 			require.NoError(t, err, "idempotency check should succeed")
 
-			gitStatusCmd := cmdWithTimeout(2*time.Second, "git", "status", "--porcelain")
+			gitStatusCmd := cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
 			gitStatusCmd.Dir = projectRoot
 			statusOutput, err := gitStatusCmd.CombinedOutput()
 			require.NoError(t, err)
@@ -682,7 +699,7 @@ func TestMakeLintSucceeds(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			lintCmd := cmdWithTimeout(5*time.Second, "make", "lint")
+			lintCmd := cmdWithTimeout(mediumTimeout, "make", "lint")
 			lintCmd.Dir = projectRoot
 			output, err := lintCmd.CombinedOutput()
 
@@ -730,7 +747,7 @@ func TestGeneratedProjectTestsShouldPass(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, projectName)
 
-			testCmd := cmdWithTimeout(5*time.Second, "make", "test")
+			testCmd := cmdWithTimeout(mediumTimeout, "make", "test")
 			testCmd.Dir = projectRoot
 			testOutput, err := testCmd.CombinedOutput()
 

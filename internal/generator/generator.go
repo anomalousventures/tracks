@@ -23,8 +23,6 @@ type projectGenerator struct {
 	renderer generatorinterfaces.TemplateRenderer
 }
 
-// NewProjectGenerator returns a fully functional project generator that orchestrates
-// directory creation, template rendering, and git initialization.
 func NewProjectGenerator() interfaces.ProjectGenerator {
 	return &projectGenerator{
 		renderer: template.NewRenderer(templates.FS),

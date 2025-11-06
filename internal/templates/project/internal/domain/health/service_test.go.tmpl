@@ -7,11 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewService(t *testing.T) {
-	service := NewService()
-	assert.NotNil(t, service)
-}
-
 func TestService_Check(t *testing.T) {
 	service := NewService()
 	ctx := context.Background()

@@ -29,28 +29,11 @@ func TestLogger_ContextMethods(t *testing.T) {
 	logger := NewLogger("production")
 	ctx := context.Background()
 
-	t.Run("Info can be called", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			logger.Info(ctx).Msg("test")
-		})
-	})
-
-	t.Run("Error can be called", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			logger.Error(ctx).Msg("test")
-		})
-	})
-
-	t.Run("Debug can be called", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			logger.Debug(ctx).Msg("test")
-		})
-	})
-
-	t.Run("Warn can be called", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			logger.Warn(ctx).Msg("test")
-		})
+	assert.NotPanics(t, func() {
+		logger.Info(ctx).Msg("test")
+		logger.Error(ctx).Msg("test")
+		logger.Debug(ctx).Msg("test")
+		logger.Warn(ctx).Msg("test")
 	})
 }
 
