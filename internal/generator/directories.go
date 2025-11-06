@@ -15,10 +15,11 @@ func CreateProjectDirectories(config ProjectConfig) error {
 		filepath.Join(projectRoot, "internal", "domain", "health"),
 		filepath.Join(projectRoot, "internal", "http", "handlers"),
 		filepath.Join(projectRoot, "internal", "http", "routes"),
-		filepath.Join(projectRoot, "db", "migrations"),
-		filepath.Join(projectRoot, "db", "queries"),
-		filepath.Join(projectRoot, "db", "generated"),
-		filepath.Join(projectRoot, "test", "mocks"),
+		filepath.Join(projectRoot, "internal", "db", "migrations", "sqlite"),
+		filepath.Join(projectRoot, "internal", "db", "migrations", "postgres"),
+		filepath.Join(projectRoot, "internal", "db", "queries"),
+		filepath.Join(projectRoot, "internal", "db", "generated"),
+		filepath.Join(projectRoot, "tests", "mocks"),
 	}
 
 	for _, dir := range directories {

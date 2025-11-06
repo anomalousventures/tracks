@@ -1,15 +1,21 @@
-# Mockery auto-generates test mocks from interfaces to eliminate hand-rolled duplicates
+# Mockery Configuration
+# Mockery v3 auto-generates test mocks from interfaces
 # Docs: https://vektra.github.io/mockery/latest/configuration/
 
-# Expecter pattern provides fluent mock expectations API for more readable tests
-with-expecter: true
+# Generate all mocks in centralized tests/mocks directory
+dir: 'tests/mocks'
 
-# Discover interfaces in internal/interfaces (consumer-package pattern prevents import cycles)
-dir: "internal/interfaces"
+# Filename pattern for generated mocks
+filename: 'mock_{{"{{"}} .InterfaceName {{"}}"}}.go'
 
-# Centralized mocks directory simplifies imports across all test files
-output: "test/mocks/{{"{{"}} .InterfaceName {{"}}"}}.go"
-outpkg: mocks
+# Package name for generated mocks
+pkgname: 'mocks'
 
-# Auto-discover all interfaces (no manual registration, convention over configuration)
-all: true
+# Use goimports for formatting
+formatter: goimports
+
+# Package-based discovery - automatically finds all interfaces in internal/interfaces
+packages:
+  {{.ModuleName}}/internal/interfaces:
+    config:
+      all: true

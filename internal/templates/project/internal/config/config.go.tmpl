@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -44,6 +46,11 @@ func Load() (*Config, error) {
 	v.SetDefault("server.write_timeout", "15s")
 	v.SetDefault("server.idle_timeout", "60s")
 	v.SetDefault("server.shutdown_timeout", "30s")
+{{- if or (eq .DBDriver "go-libsql") (eq .DBDriver "sqlite3")}}
+	v.SetDefault("database.url", ":memory:")
+{{- else if eq .DBDriver "postgres"}}
+	v.SetDefault("database.url", "postgres://localhost:5432/myapp?sslmode=disable")
+{{- end}}
 	v.SetDefault("database.connect_timeout", "10s")
 	v.SetDefault("database.max_open_conns", 25)
 	v.SetDefault("database.max_idle_conns", 5)
@@ -51,10 +58,15 @@ func Load() (*Config, error) {
 	v.SetDefault("logging.level", "info")
 	v.SetDefault("logging.format", "json")
 
-	v.SetConfigFile(".env")
-	_ = v.ReadInConfig()
+	if _, err := os.Stat(".env"); err == nil {
+		v.SetConfigFile(".env")
+		if err := v.ReadInConfig(); err != nil {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
 
 	v.SetEnvPrefix("{{.EnvPrefix}}")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
 	var cfg Config

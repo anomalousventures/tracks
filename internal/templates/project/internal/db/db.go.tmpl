@@ -5,15 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 
+	"{{.ModuleName}}/internal/config"
 {{- if eq .DBDriver "go-libsql"}}
+
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 {{- else if eq .DBDriver "sqlite3"}}
+
 	_ "github.com/mattn/go-sqlite3"
 {{- else if eq .DBDriver "postgres"}}
+
 	_ "github.com/lib/pq"
 {{- end}}
-
-	"{{.ModuleName}}/internal/config"
 )
 
 func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error) {

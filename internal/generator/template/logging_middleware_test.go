@@ -89,7 +89,7 @@ func TestLoggingMiddlewareResponseWriter(t *testing.T) {
 	helpers.AssertContainsAll(t, result, []string{
 		"type responseWriter struct",
 		"http.ResponseWriter",
-		"status      int",
+		"status       int",
 		"bytesWritten int",
 	})
 }

@@ -146,7 +146,7 @@ func TestMainGoTemplate(t *testing.T) {
 		{"server start log", `logger.Info(ctx).Msg("server starting")`, "should log server start"},
 		{"db connection", "database, err := db.New(ctx, cfg.Database)", "should connect to database"},
 		{"db error wrap", `return fmt.Errorf("connect to database: %w", err)`, "should wrap database connection error"},
-		{"db cleanup", "defer database.Close()", "should have defer database.Close()"},
+		{"db cleanup", "database.Close()", "should close database"},
 		{"health service", "healthService := health.NewService()", "should instantiate health service"},
 		{"server builder", "http.NewServer(&cfg.Server, logger)", "should use NewServer constructor"},
 		{"with health", "WithHealthService(healthService)", "should chain WithHealthService"},

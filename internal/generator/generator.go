@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -92,6 +93,8 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/handlers/health.go.tmpl":      "internal/http/handlers/health.go",
 		"internal/http/middleware/logging.go.tmpl":   "internal/http/middleware/logging.go",
 		"internal/db/db.go.tmpl":                     "internal/db/db.go",
+		"internal/db/queries/.gitkeep.tmpl":          "internal/db/queries/.gitkeep",
+		"internal/db/queries/example.sql.tmpl":       "internal/db/queries/example.sql",
 	}
 
 	logger.Info().
@@ -117,6 +120,18 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 	}
 
 	logger.Info().Msg("all templates rendered successfully")
+
+	logger.Info().Msg("tidying dependencies")
+	tidyCmd := exec.CommandContext(ctx, "go", "mod", "tidy")
+	tidyCmd.Dir = projectRoot
+	if output, err := tidyCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("go mod tidy failed - continuing anyway")
+	} else {
+		logger.Info().Msg("dependencies tidied and go.sum populated")
+	}
 
 	if projectCfg.InitGit {
 		logger.Info().

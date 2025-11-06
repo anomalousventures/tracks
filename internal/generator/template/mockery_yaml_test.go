@@ -50,27 +50,14 @@ func TestMockeryYamlRequiredFields(t *testing.T) {
 	err = yaml.Unmarshal([]byte(result), &config)
 	require.NoError(t, err)
 
-	requiredFields := []string{"with-expecter", "dir", "output", "outpkg", "all"}
+	requiredFields := []string{"dir", "filename", "pkgname", "packages"}
 	for _, field := range requiredFields {
 		assert.Contains(t, config, field, "should contain required field: %s", field)
 	}
 }
 
 func TestMockeryYamlWithExpecterTrue(t *testing.T) {
-	renderer := NewRenderer(templates.FS)
-
-	data := TemplateData{
-		ModuleName: "github.com/test/app",
-	}
-
-	result, err := renderer.Render(".mockery.yaml.tmpl", data)
-	require.NoError(t, err)
-
-	var config map[string]interface{}
-	err = yaml.Unmarshal([]byte(result), &config)
-	require.NoError(t, err)
-
-	assert.Equal(t, true, config["with-expecter"], "with-expecter should be true")
+	t.Skip("mockery v3 always generates expecter methods, no config needed")
 }
 
 func TestMockeryYamlDirectoryPath(t *testing.T) {
@@ -87,7 +74,7 @@ func TestMockeryYamlDirectoryPath(t *testing.T) {
 	err = yaml.Unmarshal([]byte(result), &config)
 	require.NoError(t, err)
 
-	assert.Equal(t, "internal/interfaces", config["dir"], "dir should be internal/interfaces")
+	assert.Equal(t, "tests/mocks", config["dir"], "dir should be tests/mocks")
 }
 
 func TestMockeryYamlOutputPath(t *testing.T) {
@@ -104,10 +91,10 @@ func TestMockeryYamlOutputPath(t *testing.T) {
 	err = yaml.Unmarshal([]byte(result), &config)
 	require.NoError(t, err)
 
-	output, ok := config["output"].(string)
-	require.True(t, ok, "output should be a string")
-	assert.Contains(t, output, "test/mocks/", "output should include test/mocks/ directory")
-	assert.Contains(t, output, ".InterfaceName", "output should include .InterfaceName placeholder")
+	filename, ok := config["filename"].(string)
+	require.True(t, ok, "filename should be a string")
+	assert.Contains(t, filename, "mock_", "filename should include mock_ prefix")
+	assert.Contains(t, filename, ".InterfaceName", "filename should include .InterfaceName placeholder")
 }
 
 func TestMockeryYamlPackageName(t *testing.T) {
@@ -124,7 +111,7 @@ func TestMockeryYamlPackageName(t *testing.T) {
 	err = yaml.Unmarshal([]byte(result), &config)
 	require.NoError(t, err)
 
-	assert.Equal(t, "mocks", config["outpkg"], "outpkg should be mocks")
+	assert.Equal(t, "mocks", config["pkgname"], "pkgname should be mocks")
 }
 
 func TestMockeryYamlAutoDiscovery(t *testing.T) {
@@ -141,22 +128,28 @@ func TestMockeryYamlAutoDiscovery(t *testing.T) {
 	err = yaml.Unmarshal([]byte(result), &config)
 	require.NoError(t, err)
 
-	assert.Equal(t, true, config["all"], "all should be true for auto-discovery")
+	packages, ok := config["packages"].(map[string]interface{})
+	require.True(t, ok, "packages should exist")
+
+	packageKey := "github.com/test/app/internal/interfaces"
+	packageCfg, ok := packages[packageKey].(map[string]interface{})
+	require.True(t, ok, "should have package config for %s", packageKey)
+
+	cfg, ok := packageCfg["config"].(map[string]interface{})
+	require.True(t, ok, "should have config section")
+
+	assert.Equal(t, true, cfg["all"], "all should be true for auto-discovery")
 }
 
-func TestMockeryYamlIsStatic(t *testing.T) {
+func TestMockeryYamlModuleNameInterpolation(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	data1 := TemplateData{
-		ModuleName:  "github.com/test/app1",
-		ProjectName: "project1",
-		DBDriver:    "postgres",
+		ModuleName: "github.com/test/app1",
 	}
 
 	data2 := TemplateData{
-		ModuleName:  "gitlab.com/org/app2",
-		ProjectName: "project2",
-		DBDriver:    "sqlite3",
+		ModuleName: "gitlab.com/org/app2",
 	}
 
 	result1, err := renderer.Render(".mockery.yaml.tmpl", data1)
@@ -165,5 +158,7 @@ func TestMockeryYamlIsStatic(t *testing.T) {
 	result2, err := renderer.Render(".mockery.yaml.tmpl", data2)
 	require.NoError(t, err)
 
-	assert.Equal(t, result1, result2, "template should produce identical output regardless of template data")
+	assert.NotEqual(t, result1, result2, "template should interpolate module name")
+	assert.Contains(t, result1, "github.com/test/app1/internal/interfaces", "should contain first module name")
+	assert.Contains(t, result2, "gitlab.com/org/app2/internal/interfaces", "should contain second module name")
 }

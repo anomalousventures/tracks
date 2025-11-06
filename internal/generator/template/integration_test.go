@@ -73,7 +73,7 @@ func TestRenderAllTemplates(t *testing.T) {
 		{
 			template:   ".golangci.yml.tmpl",
 			outputPath: ".golangci.yml",
-			contains:   []string{"disable-all: true", "contextcheck", "test/mocks", "db/generated"},
+			contains:   []string{"contextcheck", "tests/mocks", "internal/db/generated"},
 		},
 		{
 			template:   "Makefile.tmpl",

@@ -72,9 +72,9 @@ func TestSqlcYamlSchemaPath(t *testing.T) {
 		driver         string
 		expectedSchema string
 	}{
-		{"go-libsql", "db/migrations/sqlite"},
-		{"sqlite3", "db/migrations/sqlite"},
-		{"postgres", "db/migrations/postgres"},
+		{"go-libsql", "internal/db/migrations/sqlite"},
+		{"sqlite3", "internal/db/migrations/sqlite"},
+		{"postgres", "internal/db/migrations/postgres"},
 	}
 
 	for _, tt := range tests {
@@ -162,7 +162,7 @@ func TestSqlcYamlQueriesPath(t *testing.T) {
 			sqlConfig, ok := sql[0].(map[string]interface{})
 			require.True(t, ok, "sql[0] should be a map")
 
-			assert.Equal(t, "db/queries", sqlConfig["queries"], "queries path should be db/queries for %s", driver)
+			assert.Equal(t, "internal/db/queries", sqlConfig["queries"], "queries path should be internal/db/queries for %s", driver)
 		})
 	}
 }
@@ -197,7 +197,7 @@ func TestSqlcYamlOutputPath(t *testing.T) {
 			goGen, ok := gen["go"].(map[string]interface{})
 			require.True(t, ok, "gen.go should be a map")
 
-			assert.Equal(t, "db/generated", goGen["out"], "output path should be db/generated for %s", driver)
+			assert.Equal(t, "internal/db/generated", goGen["out"], "output path should be internal/db/generated for %s", driver)
 		})
 	}
 }
