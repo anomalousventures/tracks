@@ -75,7 +75,7 @@ test: ## Run Go unit tests
 
 test-coverage: ## Run tests with coverage
 	@echo "Running tests with coverage..."
-	@go test -v -race -coverprofile=coverage.out ./...
+	@go test -v -race -coverprofile=coverage.out -p 1 ./...
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
