@@ -1,0 +1,42 @@
+package config
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestLoad(t *testing.T) {
+	t.Run("loads default configuration", func(t *testing.T) {
+		cfg, err := Load()
+		require.NoError(t, err)
+		assert.NotNil(t, cfg)
+		assert.Equal(t, "production", cfg.Environment)
+		assert.Equal(t, ":8080", cfg.Server.Port)
+		assert.Equal(t, 15*time.Second, cfg.Server.ReadTimeout)
+	})
+
+	t.Run("reads environment variables", func(t *testing.T) {
+		t.Setenv("{{.EnvPrefix}}_ENVIRONMENT", "development")
+		t.Setenv("{{.EnvPrefix}}_SERVER_PORT", ":3000")
+
+		cfg, err := Load()
+		require.NoError(t, err)
+		assert.Equal(t, "development", cfg.Environment)
+		assert.Equal(t, ":3000", cfg.Server.Port)
+	})
+
+	t.Run("applies default database configuration", func(t *testing.T) {
+		cfg, err := Load()
+		require.NoError(t, err)
+{{- if or (eq .DBDriver "go-libsql") (eq .DBDriver "sqlite3")}}
+		assert.Equal(t, ":memory:", cfg.Database.URL)
+{{- else if eq .DBDriver "postgres"}}
+		assert.Contains(t, cfg.Database.URL, "postgres://")
+{{- end}}
+		assert.Equal(t, 10*time.Second, cfg.Database.ConnectTimeout)
+		assert.Equal(t, 25, cfg.Database.MaxOpenConns)
+	})
+}

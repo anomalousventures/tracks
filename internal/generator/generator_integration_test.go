@@ -702,3 +702,52 @@ func TestMakeLintSucceeds(t *testing.T) {
 		})
 	}
 }
+
+// TestGeneratedProjectTestsShouldPass verifies that generated projects include
+// working tests that pass. Project generation now includes running make generate
+// before writing test files, so tests can import generated mocks.
+func TestGeneratedProjectTestsShouldPass(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	drivers := []string{"go-libsql", "sqlite3"}
+
+	for _, driver := range drivers {
+		t.Run(driver, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			projectName := "testapp"
+
+			cfg := ProjectConfig{
+				ProjectName:    projectName,
+				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
+				DatabaseDriver: driver,
+				EnvPrefix:      "APP",
+				InitGit:        true,
+				OutputPath:     tmpDir,
+			}
+
+			gen := NewProjectGenerator()
+			ctx := context.Background()
+
+			err := gen.Generate(ctx, cfg)
+			require.NoError(t, err)
+
+			projectRoot := filepath.Join(tmpDir, projectName)
+
+			testCmd := exec.Command("make", "test")
+			testCmd.Dir = projectRoot
+			testOutput, err := testCmd.CombinedOutput()
+
+			if err != nil {
+				t.Logf("make test output:\n%s", string(testOutput))
+			}
+
+			require.NoError(t, err, "make test should succeed")
+
+			outputStr := string(testOutput)
+			assert.Contains(t, outputStr, "ok", "test output should show passing tests")
+			assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
+		})
+	}
+}

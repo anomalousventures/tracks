@@ -71,37 +71,44 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		return fmt.Errorf("failed to create project directories: %w", err)
 	}
 
-	templates := map[string]string{
-		".env.example.tmpl":                          ".env.example",
-		".gitignore.tmpl":                            ".gitignore",
-		".golangci.yml.tmpl":                         ".golangci.yml",
-		".mockery.yaml.tmpl":                         ".mockery.yaml",
-		".tracks.yaml.tmpl":                          ".tracks.yaml",
-		"go.mod.tmpl":                                "go.mod",
-		"Makefile.tmpl":                              "Makefile",
-		"README.md.tmpl":                             "README.md",
-		"sqlc.yaml.tmpl":                             "sqlc.yaml",
-		"cmd/server/main.go.tmpl":                    "cmd/server/main.go",
-		"internal/config/config.go.tmpl":             "internal/config/config.go",
-		"internal/interfaces/health.go.tmpl":         "internal/interfaces/health.go",
-		"internal/interfaces/logger.go.tmpl":         "internal/interfaces/logger.go",
-		"internal/logging/logger.go.tmpl":            "internal/logging/logger.go",
-		"internal/domain/health/service.go.tmpl":     "internal/domain/health/service.go",
-		"internal/http/server.go.tmpl":               "internal/http/server.go",
-		"internal/http/routes.go.tmpl":               "internal/http/routes.go",
-		"internal/http/routes/routes.go.tmpl":        "internal/http/routes/routes.go",
-		"internal/http/handlers/health.go.tmpl":      "internal/http/handlers/health.go",
-		"internal/http/middleware/logging.go.tmpl":   "internal/http/middleware/logging.go",
-		"internal/db/db.go.tmpl":                     "internal/db/db.go",
-		"internal/db/queries/.gitkeep.tmpl":          "internal/db/queries/.gitkeep",
-		"internal/db/queries/example.sql.tmpl":       "internal/db/queries/example.sql",
+	appTemplates := map[string]string{
+		".env.example.tmpl":                           ".env.example",
+		".gitignore.tmpl":                             ".gitignore",
+		".golangci.yml.tmpl":                          ".golangci.yml",
+		".mockery.yaml.tmpl":                          ".mockery.yaml",
+		".tracks.yaml.tmpl":                           ".tracks.yaml",
+		"go.mod.tmpl":                                 "go.mod",
+		"Makefile.tmpl":                               "Makefile",
+		"README.md.tmpl":                              "README.md",
+		"sqlc.yaml.tmpl":                              "sqlc.yaml",
+		"cmd/server/main.go.tmpl":                     "cmd/server/main.go",
+		"internal/config/config.go.tmpl":              "internal/config/config.go",
+		"internal/interfaces/health.go.tmpl":          "internal/interfaces/health.go",
+		"internal/interfaces/logger.go.tmpl":          "internal/interfaces/logger.go",
+		"internal/logging/logger.go.tmpl":             "internal/logging/logger.go",
+		"internal/domain/health/service.go.tmpl":      "internal/domain/health/service.go",
+		"internal/http/server.go.tmpl":                "internal/http/server.go",
+		"internal/http/routes.go.tmpl":                "internal/http/routes.go",
+		"internal/http/routes/routes.go.tmpl":         "internal/http/routes/routes.go",
+		"internal/http/handlers/health.go.tmpl":       "internal/http/handlers/health.go",
+		"internal/http/middleware/logging.go.tmpl":    "internal/http/middleware/logging.go",
+		"internal/db/db.go.tmpl":                      "internal/db/db.go",
+		"internal/db/queries/.gitkeep.tmpl":           "internal/db/queries/.gitkeep",
+		"internal/db/queries/example.sql.tmpl":        "internal/db/queries/example.sql",
+	}
+
+	testTemplates := map[string]string{
+		"internal/config/config_test.go.tmpl":         "internal/config/config_test.go",
+		"internal/logging/logger_test.go.tmpl":        "internal/logging/logger_test.go",
+		"internal/domain/health/service_test.go.tmpl": "internal/domain/health/service_test.go",
+		"internal/http/handlers/health_test.go.tmpl":  "internal/http/handlers/health_test.go",
 	}
 
 	logger.Info().
-		Int("template_count", len(templates)).
-		Msg("rendering templates")
+		Int("template_count", len(appTemplates)).
+		Msg("rendering application templates")
 
-	for templateName, outputFile := range templates {
+	for templateName, outputFile := range appTemplates {
 		outputPath := filepath.Join(projectRoot, outputFile)
 
 		logger.Debug().
@@ -119,7 +126,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		}
 	}
 
-	logger.Info().Msg("all templates rendered successfully")
+	logger.Info().Msg("application templates rendered successfully")
 
 	logger.Info().Msg("tidying dependencies")
 	tidyCmd := exec.CommandContext(ctx, "go", "mod", "tidy")
@@ -130,8 +137,57 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 			Str("output", string(output)).
 			Msg("go mod tidy failed - continuing anyway")
 	} else {
-		logger.Info().Msg("dependencies tidied and go.sum populated")
+		logger.Info().Msg("dependencies tidied")
 	}
+
+	logger.Info().Msg("downloading all dependencies including tools")
+	downloadCmd := exec.CommandContext(ctx, "go", "mod", "download", "all")
+	downloadCmd.Dir = projectRoot
+	if output, err := downloadCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("go mod download all failed - continuing anyway")
+	} else {
+		logger.Info().Msg("all dependencies downloaded and go.sum populated")
+	}
+
+	logger.Info().Msg("generating mocks and SQL code")
+	generateCmd := exec.CommandContext(ctx, "make", "generate")
+	generateCmd.Dir = projectRoot
+	if output, err := generateCmd.CombinedOutput(); err != nil {
+		logger.Error().
+			Err(err).
+			Str("output", string(output)).
+			Msg("make generate failed")
+		return fmt.Errorf("failed to generate mocks and SQL code: %w", err)
+	} else {
+		logger.Info().Msg("mocks and SQL code generated successfully")
+	}
+
+	logger.Info().
+		Int("template_count", len(testTemplates)).
+		Msg("rendering test templates")
+
+	for templateName, outputFile := range testTemplates {
+		outputPath := filepath.Join(projectRoot, outputFile)
+
+		logger.Debug().
+			Str("template", templateName).
+			Str("output", outputPath).
+			Msg("rendering template")
+
+		if err := g.renderer.RenderToFile(templateName, data, outputPath); err != nil {
+			logger.Error().
+				Err(err).
+				Str("template", templateName).
+				Str("output", outputPath).
+				Msg("template rendering failed")
+			return fmt.Errorf("failed to render %s: %w", templateName, err)
+		}
+	}
+
+	logger.Info().Msg("test templates rendered successfully")
 
 	if projectCfg.InitGit {
 		logger.Info().

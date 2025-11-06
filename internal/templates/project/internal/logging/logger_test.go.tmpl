@@ -1,0 +1,72 @@
+package logging
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNewLogger(t *testing.T) {
+	tests := []struct {
+		name        string
+		environment string
+	}{
+		{"development environment", "development"},
+		{"production environment", "production"},
+		{"staging environment", "staging"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := NewLogger(tt.environment)
+			assert.NotNil(t, logger)
+		})
+	}
+}
+
+func TestLogger_ContextMethods(t *testing.T) {
+	logger := NewLogger("production")
+	ctx := context.Background()
+
+	t.Run("Info can be called", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			logger.Info(ctx).Msg("test")
+		})
+	})
+
+	t.Run("Error can be called", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			logger.Error(ctx).Msg("test")
+		})
+	})
+
+	t.Run("Debug can be called", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			logger.Debug(ctx).Msg("test")
+		})
+	})
+
+	t.Run("Warn can be called", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			logger.Warn(ctx).Msg("test")
+		})
+	})
+}
+
+func TestWithRequestID(t *testing.T) {
+	ctx := context.Background()
+	requestID := "test-request-id"
+
+	newCtx := WithRequestID(ctx, requestID)
+	assert.NotNil(t, newCtx)
+
+	retrievedID := GetRequestID(newCtx)
+	assert.Equal(t, requestID, retrievedID)
+}
+
+func TestGetRequestID_EmptyWhenNotSet(t *testing.T) {
+	ctx := context.Background()
+	requestID := GetRequestID(ctx)
+	assert.Empty(t, requestID)
+}
