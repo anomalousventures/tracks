@@ -56,22 +56,6 @@ jobs:
               ;;
           esac
 
-      - name: Set up Docker Compose (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          if command -v docker &> /dev/null; then
-            sudo ln -sf $(which docker) /usr/local/bin/docker-compose || true
-          fi
-
-      - name: Set up Docker Compose (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          if (Get-Command docker -ErrorAction SilentlyContinue) {
-            Copy-Item (Get-Command docker).Source "$env:ProgramFiles\docker\docker-compose.exe" -ErrorAction SilentlyContinue
-          }
-
       - name: Run tests
         run: make test-coverage
 

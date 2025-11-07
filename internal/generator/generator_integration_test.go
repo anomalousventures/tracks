@@ -375,19 +375,19 @@ func runE2ETest(t *testing.T, driver string) {
 		t.Logf("6.5. Using sqlite3 database: %s", dbURL)
 
 	case "go-libsql":
-		t.Log("6.5. Starting docker-compose services for go-libsql...")
-		composeUpCmd, cancel8 := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
+		t.Log("6.5. Starting docker compose services for go-libsql...")
+		composeUpCmd, cancel8 := cmdWithTimeout(longTimeout, "docker", "compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
 		defer cancel8()
 		output, err = composeUpCmd.CombinedOutput()
 		if err != nil {
-			t.Logf("docker-compose up output:\n%s", string(output))
+			t.Logf("docker compose up output:\n%s", string(output))
 		}
-		require.NoError(t, err, "docker-compose up should succeed")
+		require.NoError(t, err, "docker compose up should succeed")
 
 		defer func() {
-			t.Log("Stopping docker-compose services...")
-			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			t.Log("Stopping docker compose services...")
+			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker", "compose", "down", "-v")
 			defer cancel()
 			composeDownCmd.Dir = projectRoot
 			_ = composeDownCmd.Run()
@@ -399,19 +399,19 @@ func runE2ETest(t *testing.T, driver string) {
 		dbURL = "http://localhost:8080"
 
 	case "postgres":
-		t.Log("6.5. Starting docker-compose services for postgres...")
-		composeUpCmd, cancel9 := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
+		t.Log("6.5. Starting docker compose services for postgres...")
+		composeUpCmd, cancel9 := cmdWithTimeout(longTimeout, "docker", "compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
 		defer cancel9()
 		output, err = composeUpCmd.CombinedOutput()
 		if err != nil {
-			t.Logf("docker-compose up output:\n%s", string(output))
+			t.Logf("docker compose up output:\n%s", string(output))
 		}
-		require.NoError(t, err, "docker-compose up should succeed")
+		require.NoError(t, err, "docker compose up should succeed")
 
 		defer func() {
-			t.Log("Stopping docker-compose services...")
-			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			t.Log("Stopping docker compose services...")
+			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker", "compose", "down", "-v")
 			defer cancel()
 			composeDownCmd.Dir = projectRoot
 			_ = composeDownCmd.Run()
