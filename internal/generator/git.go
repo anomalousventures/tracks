@@ -22,7 +22,7 @@ func InitializeGit(ctx context.Context, projectPath string, skipGit bool) error 
 		return fmt.Errorf("failed to configure git user: %w", err)
 	}
 
-	if err := runGitCommand(ctx, projectPath, "config", "--local", "user.email", "tracks@tracks.local"); err != nil {
+	if err := runGitCommand(ctx, projectPath, "config", "--local", "user.email", "info@anomalous.ventures"); err != nil {
 		return fmt.Errorf("failed to configure git user: %w", err)
 	}
 

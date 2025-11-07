@@ -9,7 +9,12 @@ type HealthService interface {
 	Check(ctx context.Context) HealthStatus
 }
 
+type HealthRepository interface {
+	HealthCheck(ctx context.Context) error
+}
+
 type HealthStatus struct {
 	Status    string    `json:"status"`
+	Database  string    `json:"database,omitempty"`
 	Timestamp time.Time `json:"timestamp"`
 }

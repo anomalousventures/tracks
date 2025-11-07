@@ -1,0 +1,23 @@
+package health
+
+import (
+	"context"
+
+	"{{.ModuleName}}/internal/db/generated"
+	"{{.ModuleName}}/internal/interfaces"
+)
+
+type repository struct {
+	queries *generated.Queries
+}
+
+func NewRepository(queries *generated.Queries) interfaces.HealthRepository {
+	return &repository{
+		queries: queries,
+	}
+}
+
+func (r *repository) HealthCheck(ctx context.Context) error {
+	_, err := r.queries.HealthCheck(ctx)
+	return err
+}

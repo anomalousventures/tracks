@@ -7,15 +7,34 @@ import (
 	"{{.ModuleName}}/internal/interfaces"
 )
 
-type service struct{}
+const (
+	StatusOK       = "ok"
+	StatusDegraded = "degraded"
+	StatusDown     = "down"
+)
 
-func NewService() interfaces.HealthService {
-	return &service{}
+type service struct {
+	repo interfaces.HealthRepository
+}
+
+func NewService(repo interfaces.HealthRepository) interfaces.HealthService {
+	return &service{
+		repo: repo,
+	}
 }
 
 func (s *service) Check(ctx context.Context) interfaces.HealthStatus {
-	return interfaces.HealthStatus{
-		Status:    "ok",
+	status := interfaces.HealthStatus{
+		Status:    StatusOK,
 		Timestamp: time.Now(),
 	}
+
+	if err := s.repo.HealthCheck(ctx); err != nil {
+		status.Status = StatusDegraded
+		status.Database = "error: " + err.Error()
+	} else {
+		status.Database = StatusOK
+	}
+
+	return status
 }

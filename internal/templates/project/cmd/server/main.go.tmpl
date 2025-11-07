@@ -7,6 +7,7 @@ import (
 
 	"{{.ModuleName}}/internal/config"
 	"{{.ModuleName}}/internal/db"
+	"{{.ModuleName}}/internal/db/generated"
 	"{{.ModuleName}}/internal/domain/health"
 	"{{.ModuleName}}/internal/http"
 	"{{.ModuleName}}/internal/logging"
@@ -43,10 +44,12 @@ func run() error {
 	// TRACKS:DB:END
 
 	// TRACKS:REPOSITORIES:BEGIN
+	queries := generated.New(database)
+	healthRepo := health.NewRepository(queries)
 	// TRACKS:REPOSITORIES:END
 
 	// TRACKS:SERVICES:BEGIN
-	healthService := health.NewService()
+	healthService := health.NewService(healthRepo)
 	// TRACKS:SERVICES:END
 
 	srv := http.NewServer(&cfg.Server, logger).

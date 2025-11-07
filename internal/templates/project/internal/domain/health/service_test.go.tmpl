@@ -2,15 +2,38 @@ package health
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"{{.ModuleName}}/tests/mocks"
 )
 
 func TestService_Check(t *testing.T) {
-	service := NewService()
-	ctx := context.Background()
-	status := service.Check(ctx)
-	assert.Equal(t, "ok", status.Status)
-	assert.False(t, status.Timestamp.IsZero())
+	t.Run("returns ok when database is healthy", func(t *testing.T) {
+		mockRepo := mocks.NewMockHealthRepository(t)
+		mockRepo.EXPECT().HealthCheck(context.Background()).Return(nil)
+
+		service := NewService(mockRepo)
+		ctx := context.Background()
+		status := service.Check(ctx)
+
+		assert.Equal(t, StatusOK, status.Status)
+		assert.Equal(t, StatusOK, status.Database)
+		assert.False(t, status.Timestamp.IsZero())
+	})
+
+	t.Run("returns degraded when health check fails", func(t *testing.T) {
+		mockRepo := mocks.NewMockHealthRepository(t)
+		mockRepo.EXPECT().HealthCheck(context.Background()).Return(errors.New("connection failed"))
+
+		service := NewService(mockRepo)
+		ctx := context.Background()
+		status := service.Check(ctx)
+
+		assert.Equal(t, StatusDegraded, status.Status)
+		assert.Contains(t, status.Database, "error:")
+		assert.False(t, status.Timestamp.IsZero())
+	})
 }

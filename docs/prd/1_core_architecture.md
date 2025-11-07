@@ -213,7 +213,7 @@ myapp/
 │       ├── model.conf       # Casbin model
 │       └── policies.go      # Default policies
 │
-├── db/                       # Database files
+├── internal/db/             # Database files
 │   ├── migrations/          # Goose migrations
 │   │   ├── 20250116_init.sql
 │   │   └── [timestamp]_[name].sql
@@ -315,7 +315,7 @@ Business logic organized by feature (modular architecture):
 - Feature-specific business rules and validations
 - Colocated: `domain/posts/service.go`, `domain/posts/repository.go`, and `domain/posts/dto.go`
 
-### `/db`
+### `/internal/db`
 
 Database-related files:
 

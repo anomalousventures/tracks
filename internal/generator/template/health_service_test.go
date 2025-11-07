@@ -48,10 +48,11 @@ func TestHealthServiceTemplate(t *testing.T) {
 			assert.Contains(t, result, "package health")
 			assert.Contains(t, result, tt.wantImport, "should import interfaces package from module")
 			assert.Contains(t, result, "type service struct")
-			assert.Contains(t, result, "func NewService() interfaces.HealthService")
+			assert.Contains(t, result, "func NewService(repo interfaces.HealthRepository) interfaces.HealthService")
 			assert.Contains(t, result, "func (s *service) Check(ctx context.Context) interfaces.HealthStatus")
-			assert.Contains(t, result, `Status:    "ok"`)
+			assert.Contains(t, result, "Status:    StatusOK")
 			assert.Contains(t, result, "time.Now()")
+			assert.Contains(t, result, "repo interfaces.HealthRepository", "service should have repository field")
 		})
 	}
 }
@@ -135,7 +136,9 @@ func TestHealthServiceImplementsInterface(t *testing.T) {
 	result, err := renderer.Render("internal/domain/health/service.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "func NewService() interfaces.HealthService", "NewService should return HealthService interface")
-	assert.Contains(t, result, "return &service{}", "NewService should return pointer to service")
+	assert.Contains(t, result, "func NewService(repo interfaces.HealthRepository) interfaces.HealthService", "NewService should accept repository and return HealthService interface")
+	assert.Contains(t, result, "return &service{", "NewService should return pointer to service")
+	assert.Contains(t, result, "repo: repo,", "NewService should initialize repository field")
 	assert.Contains(t, result, "func (s *service) Check(ctx context.Context) interfaces.HealthStatus", "Check should match interface signature")
+	assert.Contains(t, result, "s.repo.HealthCheck(ctx)", "Check should call repository HealthCheck method")
 }

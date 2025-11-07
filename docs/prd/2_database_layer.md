@@ -266,7 +266,7 @@ Example: `2024_01_15_14_30_create_users.sql`
 ### Migration Organization
 
 ```text
-db/migrations/
+internal/db/migrations/
 ├── sqlite/                    # SQLite/go-libsql specific
 │   ├── 2024_01_15_14_30_create_users.sql
 │   └── 2024_01_15_14_35_create_posts.sql
@@ -330,12 +330,12 @@ func Migrate(db *sql.DB, driver string) error {
 version: "2"
 sql:
   - engine: "sqlite"  # or "postgresql"
-    queries: "db/queries"
-    schema: "db/migrations/sqlite"  # or postgres
+    queries: "internal/db/queries"
+    schema: "internal/db/migrations/sqlite"  # or postgres
     gen:
       go:
         package: "generated"
-        out: "db/generated"
+        out: "internal/db/generated"
         sql_package: "database/sql"
         emit_json_tags: true
         emit_interface: true
@@ -351,7 +351,7 @@ sql:
 ### User Queries
 
 ```sql
--- db/queries/users.sql
+-- internal/db/queries/users.sql
 
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = ? LIMIT 1;
@@ -388,7 +388,7 @@ SELECT COUNT(*) FROM users;
 ### Post Queries
 
 ```sql
--- db/queries/posts.sql
+-- internal/db/queries/posts.sql
 
 -- name: GetPostBySlug :one
 SELECT
@@ -477,7 +477,7 @@ import (
     "errors"
     "fmt"
 
-    "myapp/db/generated"  // SQLC generated
+    "myapp/internal/db/generated"  // SQLC generated
     "myapp/internal/pkg/identifier"
     "myapp/internal/pkg/slug"
 )

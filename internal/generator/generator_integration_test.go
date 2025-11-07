@@ -256,510 +256,256 @@ func TestGenerateFullProject_DirectoryAlreadyExists(t *testing.T) {
 	assert.Contains(t, err.Error(), "already exists")
 }
 
-// TestGoModDownload (#144) - Verifies go mod download succeeds on generated projects
-func TestGoModDownload(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+// runE2ETest validates the user-facing contract: generated projects must work correctly
+// across all supported platforms and database drivers without manual intervention.
+func runE2ETest(t *testing.T, driver string) {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+	projectName := "testapp"
+
+	cfg := ProjectConfig{
+		ProjectName:    projectName,
+		ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
+		DatabaseDriver: driver,
+		EnvPrefix:      "APP",
+		InitGit:        true,
+		OutputPath:     tmpDir,
 	}
 
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
+	t.Log("1. Generating project...")
+	gen := NewProjectGenerator()
+	ctx := context.Background()
+	err := gen.Generate(ctx, cfg)
+	require.NoError(t, err, "project generation should succeed")
 
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
+	projectRoot := filepath.Join(tmpDir, projectName)
 
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        false,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			cmd := cmdWithTimeout(longTimeout, "go", "mod", "download")
-			cmd.Dir = projectRoot
-			output, err := cmd.CombinedOutput()
-
-			if err != nil {
-				t.Logf("go mod download output:\n%s", string(output))
-			}
-
-			assert.NoError(t, err, "go mod download should succeed")
-
-			goSumPath := filepath.Join(projectRoot, "go.sum")
-			stat, err := os.Stat(goSumPath)
-			assert.NoError(t, err, "go.sum should be created")
-			if err == nil {
-				assert.True(t, stat.Size() > 0, "go.sum should not be empty")
-			}
-		})
+	t.Log("2. Verifying go mod tidy is idempotent...")
+	tidyCmd := cmdWithTimeout(longTimeout, "go", "mod", "tidy")
+	tidyCmd.Dir = projectRoot
+	output, err := tidyCmd.CombinedOutput()
+	if err != nil {
+		t.Logf("go mod tidy output:\n%s", string(output))
 	}
+	require.NoError(t, err, "go mod tidy should succeed")
+
+	gitStatusCmd := cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
+	gitStatusCmd.Dir = projectRoot
+	statusOutput, err := gitStatusCmd.CombinedOutput()
+	require.NoError(t, err, "git status should succeed")
+	statusStr := strings.TrimSpace(string(statusOutput))
+	assert.Empty(t, statusStr, "go mod tidy should be idempotent (no changes after generation)")
+
+	t.Log("3. Verifying make generate is idempotent...")
+	generateCmd := cmdWithTimeout(mediumTimeout, "make", "generate")
+	generateCmd.Dir = projectRoot
+	output, err = generateCmd.CombinedOutput()
+	if err != nil {
+		t.Logf("make generate output:\n%s", string(output))
+	}
+	require.NoError(t, err, "make generate should succeed")
+
+	gitStatusCmd = cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
+	gitStatusCmd.Dir = projectRoot
+	statusOutput, err = gitStatusCmd.CombinedOutput()
+	require.NoError(t, err, "git status should succeed")
+	statusStr = strings.TrimSpace(string(statusOutput))
+	assert.Empty(t, statusStr, "make generate should be idempotent (no changes after generation)")
+
+	t.Log("4. Running tests...")
+	testCmd := cmdWithTimeout(mediumTimeout, "make", "test")
+	testCmd.Dir = projectRoot
+	output, err = testCmd.CombinedOutput()
+	if err != nil {
+		t.Logf("make test output:\n%s", string(output))
+	}
+	assert.NoError(t, err, "make test should pass")
+	outputStr := string(output)
+	assert.Contains(t, outputStr, "ok", "test output should show passing tests")
+	assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
+
+	t.Log("5. Running linter...")
+	lintCmd := cmdWithTimeout(mediumTimeout, "make", "lint")
+	lintCmd.Dir = projectRoot
+	output, err = lintCmd.CombinedOutput()
+	if err != nil {
+		t.Logf("make lint output:\n%s", string(output))
+	}
+	assert.NoError(t, err, "make lint should succeed with no errors")
+	outputStr = strings.ToLower(string(output))
+	assert.NotContains(t, outputStr, "error:", "lint output should not contain errors")
+
+	t.Log("6. Building binary...")
+	binDir := filepath.Join(projectRoot, "bin")
+	err = os.MkdirAll(binDir, 0755)
+	require.NoError(t, err, "should create bin directory")
+
+	binaryPath := filepath.Join(binDir, "server")
+	buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
+	buildCmd.Dir = projectRoot
+	output, err = buildCmd.CombinedOutput()
+	if err != nil {
+		t.Logf("go build output:\n%s", string(output))
+	}
+	assert.NoError(t, err, "go build should succeed")
+
+	stat, err := os.Stat(binaryPath)
+	assert.NoError(t, err, "binary should exist")
+	if err == nil {
+		assert.True(t, stat.Size() > 0, "binary should not be empty")
+		assert.True(t, stat.Mode().Perm()&0100 != 0, "binary should be executable")
+	}
+
+	// 6.5. Configure database for E2E test
+	var dbURL string
+	switch driver {
+	case "sqlite3":
+		dataDir := filepath.Join(projectRoot, "data")
+		err = os.MkdirAll(dataDir, 0755)
+		require.NoError(t, err, "should create data directory")
+		dbURL = fmt.Sprintf("file:%s/test.db", dataDir)
+		t.Logf("6.5. Using sqlite3 database: %s", dbURL)
+
+	case "go-libsql":
+		t.Log("6.5. Starting docker-compose services for go-libsql...")
+		composeUpCmd := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
+		composeUpCmd.Dir = projectRoot
+		output, err = composeUpCmd.CombinedOutput()
+		if err != nil {
+			t.Logf("docker-compose up output:\n%s", string(output))
+		}
+		require.NoError(t, err, "docker-compose up should succeed")
+
+		defer func() {
+			t.Log("Stopping docker-compose services...")
+			composeDownCmd := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			composeDownCmd.Dir = projectRoot
+			_ = composeDownCmd.Run()
+		}()
+
+		// Wait for libsql to be healthy
+		t.Log("Waiting for libsql to be ready...")
+		time.Sleep(5 * time.Second)
+		dbURL = "http://localhost:8080"
+
+	case "postgres":
+		t.Log("6.5. Starting docker-compose services for postgres...")
+		composeUpCmd := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
+		composeUpCmd.Dir = projectRoot
+		output, err = composeUpCmd.CombinedOutput()
+		if err != nil {
+			t.Logf("docker-compose up output:\n%s", string(output))
+		}
+		require.NoError(t, err, "docker-compose up should succeed")
+
+		defer func() {
+			t.Log("Stopping docker-compose services...")
+			composeDownCmd := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			composeDownCmd.Dir = projectRoot
+			_ = composeDownCmd.Run()
+		}()
+
+		// Wait for postgres to be healthy
+		t.Log("Waiting for postgres to be ready...")
+		time.Sleep(5 * time.Second)
+		dbURL = fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", projectName, projectName, projectName)
+	}
+
+	t.Log("7. Starting server...")
+	// Server is a long-running process - don't use a timeout context
+	serverCmd := exec.Command(binaryPath)
+	serverCmd.Dir = projectRoot
+	serverCmd.Env = append(os.Environ(),
+		"APP_SERVER_PORT=:18081",
+		fmt.Sprintf("APP_DATABASE_URL=%s", dbURL),
+	)
+
+	serverLogFile := filepath.Join(tmpDir, "server.log")
+	logFile, err := os.Create(serverLogFile)
+	require.NoError(t, err, "should create log file")
+	defer logFile.Close()
+	serverCmd.Stdout = logFile
+	serverCmd.Stderr = logFile
+
+	err = serverCmd.Start()
+	require.NoError(t, err, "server should start")
+
+	defer func() {
+		if serverCmd.Process != nil {
+			_ = serverCmd.Process.Kill()
+			_ = serverCmd.Wait()
+		}
+		if t.Failed() {
+			if logs, err := os.ReadFile(serverLogFile); err == nil {
+				t.Logf("Server logs:\n%s", string(logs))
+			}
+		}
+	}()
+
+	// Give server time to initialize database connection and start listening
+	t.Log("Waiting for server to start...")
+	time.Sleep(3 * time.Second)
+
+	if serverCmd.ProcessState != nil && serverCmd.ProcessState.Exited() {
+		if logs, err := os.ReadFile(serverLogFile); err == nil {
+			t.Logf("Server logs:\n%s", string(logs))
+		}
+		t.Fatal("server exited immediately after starting")
+	}
+	assert.NotNil(t, serverCmd.Process, "server process should still be running")
+
+	t.Log("8. Checking health endpoint...")
+	var resp *http.Response
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		if serverCmd.ProcessState != nil && serverCmd.ProcessState.Exited() {
+			t.Log("Server process has exited during health checks")
+			break
+		}
+
+		resp, err = http.Get("http://localhost:18081/api/health")
+		if err == nil {
+			break
+		}
+		if i < maxRetries-1 {
+			t.Logf("Health check attempt %d/%d failed: %v (retrying...)", i+1, maxRetries, err)
+			time.Sleep(1 * time.Second)
+		} else {
+			t.Logf("Health check attempt %d/%d failed: %v", i+1, maxRetries, err)
+		}
+	}
+
+	assert.NoError(t, err, "health endpoint should be accessible after retries")
+	if resp != nil {
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "health endpoint should return 200 OK")
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"), "should return JSON")
+	}
+
+	t.Log("E2E test completed successfully!")
 }
 
-// TestGoTestPasses (#145) - Verifies all generated tests pass
-func TestGoTestPasses(t *testing.T) {
+// TestE2E_GoLibsql runs full E2E test suite for go-libsql driver
+func TestE2E_GoLibsql(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+		t.Skip("skipping E2E integration test in short mode")
 	}
-
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        false,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
-			tidyCmd.Dir = projectRoot
-			output, err := tidyCmd.CombinedOutput()
-			if err != nil {
-				t.Logf("go mod tidy output:\n%s", string(output))
-				t.Fatalf("go mod tidy failed: %v", err)
-			}
-
-			testCmd := cmdWithTimeout(mediumTimeout, "go", "test", "./...")
-			testCmd.Dir = projectRoot
-			output, err = testCmd.CombinedOutput()
-
-			if err != nil {
-				t.Logf("go test output:\n%s", string(output))
-			}
-
-			assert.NoError(t, err, "go test should pass")
-			assert.Contains(t, string(output), "ok", "should have passing test packages")
-			assert.NotContains(t, string(output), "FAIL", "test output should not contain failures")
-		})
-	}
+	runE2ETest(t, "go-libsql")
 }
 
-// TestGoBuildSucceeds (#146) - Verifies the server binary builds successfully
-func TestGoBuildSucceeds(t *testing.T) {
+// TestE2E_SQLite3 runs full E2E test suite for sqlite3 driver
+func TestE2E_SQLite3(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+		t.Skip("skipping E2E integration test in short mode")
 	}
-
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        false,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
-			tidyCmd.Dir = projectRoot
-			output, err := tidyCmd.CombinedOutput()
-			if err != nil {
-				t.Logf("go mod tidy output:\n%s", string(output))
-				t.Fatalf("go mod tidy failed: %v", err)
-			}
-
-			binDir := filepath.Join(projectRoot, "bin")
-			err = os.MkdirAll(binDir, 0755)
-			require.NoError(t, err)
-
-			binaryPath := filepath.Join(binDir, "server")
-			buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
-			buildCmd.Dir = projectRoot
-			output, err = buildCmd.CombinedOutput()
-
-			if err != nil {
-				t.Logf("go build output:\n%s", string(output))
-			}
-
-			assert.NoError(t, err, "go build should succeed")
-
-			stat, err := os.Stat(binaryPath)
-			assert.NoError(t, err, "binary should exist")
-			if err == nil {
-				assert.True(t, stat.Size() > 0, "binary should not be empty")
-				assert.True(t, stat.Mode().Perm()&0100 != 0, "binary should be executable")
-			}
-		})
-	}
+	runE2ETest(t, "sqlite3")
 }
 
-// TestServerRuns (#147) - Verifies the server binary starts and runs
-func TestServerRuns(t *testing.T) {
+// TestE2E_Postgres runs full E2E test suite for postgres driver
+func TestE2E_Postgres(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
+		t.Skip("skipping E2E integration test in short mode")
 	}
-
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        false,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
-			tidyCmd.Dir = projectRoot
-			output, err := tidyCmd.CombinedOutput()
-			if err != nil {
-				t.Logf("go mod tidy output:\n%s", string(output))
-				t.Fatalf("go mod tidy failed: %v", err)
-			}
-
-			binDir := filepath.Join(projectRoot, "bin")
-			err = os.MkdirAll(binDir, 0755)
-			require.NoError(t, err)
-
-			binaryPath := filepath.Join(binDir, "server")
-			buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
-			buildCmd.Dir = projectRoot
-			err = buildCmd.Run()
-			require.NoError(t, err)
-
-			cmd := cmdWithTimeout(shortTimeout, binaryPath)
-			cmd.Dir = projectRoot
-			cmd.Env = append(os.Environ(), "APP_SERVER_PORT=:18081")
-
-			err = cmd.Start()
-			require.NoError(t, err, "server should start")
-
-			defer func() {
-				if cmd.Process != nil {
-					_ = cmd.Process.Kill()
-					_ = cmd.Wait()
-				}
-			}()
-
-			// Wait for server to initialize and check it's still running
-			time.Sleep(2 * time.Second)
-
-			if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-				t.Fatal("server exited immediately after starting")
-			}
-
-			assert.NotNil(t, cmd.Process, "server process should still be running")
-		})
-	}
-}
-
-// TestHealthCheckEndpoint (#148) - Verifies health check endpoint returns 200 OK
-func TestHealthCheckEndpoint(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        false,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			// Run go mod tidy to download dependencies and populate go.sum
-			tidyCmd := cmdWithTimeout(mediumTimeout, "go", "mod", "tidy")
-			tidyCmd.Dir = projectRoot
-			output, err := tidyCmd.CombinedOutput()
-			if err != nil {
-				t.Logf("go mod tidy output:\n%s", string(output))
-				t.Fatalf("go mod tidy failed: %v", err)
-			}
-
-			binDir := filepath.Join(projectRoot, "bin")
-			err = os.MkdirAll(binDir, 0755)
-			require.NoError(t, err)
-
-			binaryPath := filepath.Join(binDir, "server")
-			buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
-			buildCmd.Dir = projectRoot
-			err = buildCmd.Run()
-			require.NoError(t, err)
-
-			port := "18080"
-
-			// Set database URL based on driver
-			var dbURL string
-			switch driver {
-			case "go-libsql":
-				dbURL = "libsql://:memory:"
-			case "sqlite3":
-				dbURL = ":memory:"
-			case "postgres":
-				t.Skip("postgres requires running database server")
-				return
-			}
-
-			cmd := cmdWithTimeout(shortTimeout, binaryPath)
-			cmd.Dir = projectRoot
-			envVars := []string{
-				fmt.Sprintf("APP_SERVER_PORT=:%s", port),
-				fmt.Sprintf("APP_DATABASE_URL=%s", dbURL),
-			}
-			t.Logf("Setting env vars: %v", envVars)
-			cmd.Env = append(os.Environ(), envVars...)
-
-			// Capture server output for debugging
-			var stdout, stderr strings.Builder
-			cmd.Stdout = &stdout
-			cmd.Stderr = &stderr
-
-			err = cmd.Start()
-			require.NoError(t, err)
-
-			defer func() {
-				if cmd.Process != nil {
-					_ = cmd.Process.Kill()
-					_ = cmd.Wait()
-				}
-			}()
-
-			// Poll for server readiness with timeout
-			healthURL := fmt.Sprintf("http://localhost:%s/api/health", port)
-			var resp *http.Response
-			maxRetries := 30
-			for i := 0; i < maxRetries; i++ {
-				// Check if process is still running
-				if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
-					t.Fatalf("server process exited unexpectedly")
-				}
-
-				resp, err = http.Get(healthURL)
-				if err == nil {
-					break
-				}
-
-				if i == maxRetries-1 {
-					t.Logf("Failed to GET %s after %d retries: %v", healthURL, maxRetries, err)
-					t.Logf("Server stdout:\n%s", stdout.String())
-					t.Logf("Server stderr:\n%s", stderr.String())
-					require.NoError(t, err, "should be able to GET health endpoint after retries")
-				}
-
-				time.Sleep(200 * time.Millisecond)
-			}
-
-			require.NoError(t, err, "should be able to GET health endpoint")
-			defer resp.Body.Close()
-
-			assert.Equal(t, http.StatusOK, resp.StatusCode, "health check should return 200 OK")
-			assert.Equal(t, "application/json", resp.Header.Get("Content-Type"), "should return JSON")
-		})
-	}
-}
-
-// TestMakeGenerateIdempotent (#225) - Verifies make generate is idempotent after project generation
-func TestMakeGenerateIdempotent(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        true,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			idempotencyCheckCmd := cmdWithTimeout(mediumTimeout, "make", "generate")
-			idempotencyCheckCmd.Dir = projectRoot
-			output, err := idempotencyCheckCmd.CombinedOutput()
-			if err != nil {
-				t.Logf("idempotency check output:\n%s", string(output))
-			}
-			require.NoError(t, err, "idempotency check should succeed")
-
-			gitStatusCmd := cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
-			gitStatusCmd.Dir = projectRoot
-			statusOutput, err := gitStatusCmd.CombinedOutput()
-			require.NoError(t, err)
-
-			statusStr := strings.TrimSpace(string(statusOutput))
-			assert.Empty(t, statusStr, "make generate should be idempotent (no changes on second run)")
-		})
-	}
-}
-
-// TestMakeLintSucceeds (#226) - Verifies make lint succeeds after project generation
-func TestMakeLintSucceeds(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	drivers := []string{"go-libsql", "sqlite3", "postgres"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        false,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			lintCmd := cmdWithTimeout(mediumTimeout, "make", "lint")
-			lintCmd.Dir = projectRoot
-			output, err := lintCmd.CombinedOutput()
-
-			if err != nil {
-				t.Logf("make lint output:\n%s", string(output))
-			}
-
-			assert.NoError(t, err, "make lint should succeed with no errors")
-
-			outputStr := strings.ToLower(string(output))
-			assert.NotContains(t, outputStr, "error:", "lint output should not contain errors")
-		})
-	}
-}
-
-// TestGeneratedProjectTestsShouldPass verifies that generated projects include
-// working tests that pass. Project generation now includes running make generate
-// before writing test files, so tests can import generated mocks.
-func TestGeneratedProjectTestsShouldPass(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	drivers := []string{"go-libsql", "sqlite3"}
-
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-				DatabaseDriver: driver,
-				EnvPrefix:      "APP",
-				InitGit:        true,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Generate(ctx, cfg)
-			require.NoError(t, err)
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			testCmd := cmdWithTimeout(mediumTimeout, "make", "test")
-			testCmd.Dir = projectRoot
-			testOutput, err := testCmd.CombinedOutput()
-
-			if err != nil {
-				t.Logf("make test output:\n%s", string(testOutput))
-			}
-
-			require.NoError(t, err, "make test should succeed")
-
-			outputStr := string(testOutput)
-			assert.Contains(t, outputStr, "ok", "test output should show passing tests")
-			assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
-		})
-	}
+	runE2ETest(t, "postgres")
 }
