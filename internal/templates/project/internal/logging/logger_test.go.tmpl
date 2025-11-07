@@ -30,8 +30,8 @@ func TestLogger_ContextMethods(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name   string
-		logFn  func()
+		name  string
+		logFn func()
 	}{
 		{"Info logs message", func() { logger.Info(ctx).Msg("test info") }},
 		{"Error logs message", func() { logger.Error(ctx).Msg("test error") }},

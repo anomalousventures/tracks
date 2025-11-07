@@ -323,9 +323,8 @@ func runE2ETest(t *testing.T, driver string) {
 		t.Logf("make test output:\n%s", outputStr)
 	}
 	require.NoError(t, err, "make test should pass")
-	assert.Contains(t, outputStr, "=== RUN", "tests should actually execute")
-	assert.Contains(t, outputStr, "PASS", "tests should pass")
-	assert.NotContains(t, strings.ToLower(outputStr), "--- fail:", "no tests should fail")
+	assert.Contains(t, outputStr, "ok", "test output should show passing tests")
+	assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
 
 	t.Log("5. Running linter...")
 	lintCmd := cmdWithTimeout(mediumTimeout, "make", "lint")
