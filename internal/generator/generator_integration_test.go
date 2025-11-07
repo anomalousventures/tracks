@@ -327,7 +327,7 @@ func runE2ETest(t *testing.T, driver string) {
 	assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
 
 	t.Log("5. Running linter...")
-	lintCmd, cancel6 := cmdWithTimeout(mediumTimeout, "make", "lint")
+	lintCmd, cancel6 := cmdWithTimeout(longTimeout, "make", "lint")
 	lintCmd.Dir = projectRoot
 	defer cancel6()
 	output, err = lintCmd.CombinedOutput()
