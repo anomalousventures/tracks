@@ -29,12 +29,23 @@ func TestLogger_ContextMethods(t *testing.T) {
 	logger := NewLogger("production")
 	ctx := context.Background()
 
-	assert.NotPanics(t, func() {
-		logger.Info(ctx).Msg("test")
-		logger.Error(ctx).Msg("test")
-		logger.Debug(ctx).Msg("test")
-		logger.Warn(ctx).Msg("test")
-	})
+	tests := []struct {
+		name   string
+		logFn  func()
+	}{
+		{"Info logs message", func() { logger.Info(ctx).Msg("test info") }},
+		{"Error logs message", func() { logger.Error(ctx).Msg("test error") }},
+		{"Debug logs message", func() { logger.Debug(ctx).Msg("test debug") }},
+		{"Warn logs message", func() { logger.Warn(ctx).Msg("test warn") }},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := logger.Info(ctx)
+			assert.NotNil(t, event, "logging method should return valid event")
+			tt.logFn()
+		})
+	}
 }
 
 func TestWithRequestID(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/anomalousventures/tracks/internal/generator/interfaces"
@@ -46,7 +47,8 @@ func (r *templateRenderer) Render(name string, data any) (string, error) {
 		return "", &TemplateError{Template: name, Err: err}
 	}
 
-	return buf.String(), nil
+	result := strings.ReplaceAll(buf.String(), "\r\n", "\n")
+	return result, nil
 }
 
 func (r *templateRenderer) RenderToFile(templateName string, data any, outputPath string) error {

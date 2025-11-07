@@ -15,9 +15,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// ProjectConfig and other generator types remain in this package.
-// The ProjectGenerator interface has moved to internal/cli/interfaces/generator.go
-// following ADR-002 (interfaces defined by consumers).
+// ProjectGenerator interface is defined in cli/interfaces per ADR-002 (consumer-defined interfaces).
 
 type projectGenerator struct {
 	renderer generatorinterfaces.TemplateRenderer

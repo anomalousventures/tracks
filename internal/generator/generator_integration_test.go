@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -317,13 +318,14 @@ func runE2ETest(t *testing.T, driver string) {
 	testCmd := cmdWithTimeout(mediumTimeout, "make", "test")
 	testCmd.Dir = projectRoot
 	output, err = testCmd.CombinedOutput()
-	if err != nil {
-		t.Logf("make test output:\n%s", string(output))
-	}
-	assert.NoError(t, err, "make test should pass")
 	outputStr := string(output)
-	assert.Contains(t, outputStr, "ok", "test output should show passing tests")
-	assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
+	if err != nil {
+		t.Logf("make test output:\n%s", outputStr)
+	}
+	require.NoError(t, err, "make test should pass")
+	assert.Contains(t, outputStr, "=== RUN", "tests should actually execute")
+	assert.Contains(t, outputStr, "PASS", "tests should pass")
+	assert.NotContains(t, strings.ToLower(outputStr), "--- fail:", "no tests should fail")
 
 	t.Log("5. Running linter...")
 	lintCmd := cmdWithTimeout(mediumTimeout, "make", "lint")
@@ -341,7 +343,11 @@ func runE2ETest(t *testing.T, driver string) {
 	err = os.MkdirAll(binDir, 0755)
 	require.NoError(t, err, "should create bin directory")
 
-	binaryPath := filepath.Join(binDir, "server")
+	binaryName := "server"
+	if runtime.GOOS == "windows" {
+		binaryName = "server.exe"
+	}
+	binaryPath := filepath.Join(binDir, binaryName)
 	buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
 	buildCmd.Dir = projectRoot
 	output, err = buildCmd.CombinedOutput()
