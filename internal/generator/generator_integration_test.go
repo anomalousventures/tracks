@@ -29,15 +29,10 @@ func getTimeout(envVar string, defaultTimeout time.Duration) time.Duration {
 
 // cmdWithTimeout creates an exec.Command with a timeout context
 // to prevent integration tests from hanging indefinitely.
-func cmdWithTimeout(timeout time.Duration, name string, args ...string) *exec.Cmd {
+func cmdWithTimeout(timeout time.Duration, name string, args ...string) (*exec.Cmd, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	cmd := exec.CommandContext(ctx, name, args...)
-
-	// Store cancel in a way that won't cause issues, but note that
-	// the context will be canceled after timeout regardless
-	_ = cancel
-
-	return cmd
+	return cmd, cancel
 }
 
 var (
@@ -283,40 +278,45 @@ func runE2ETest(t *testing.T, driver string) {
 	projectRoot := filepath.Join(tmpDir, projectName)
 
 	t.Log("2. Verifying go mod tidy is idempotent...")
-	tidyCmd := cmdWithTimeout(longTimeout, "go", "mod", "tidy")
+	tidyCmd, cancel := cmdWithTimeout(longTimeout, "go", "mod", "tidy")
 	tidyCmd.Dir = projectRoot
+	defer cancel()
 	output, err := tidyCmd.CombinedOutput()
 	if err != nil {
 		t.Logf("go mod tidy output:\n%s", string(output))
 	}
 	require.NoError(t, err, "go mod tidy should succeed")
 
-	gitStatusCmd := cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
+	gitStatusCmd, cancel2 := cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
 	gitStatusCmd.Dir = projectRoot
+	defer cancel2()
 	statusOutput, err := gitStatusCmd.CombinedOutput()
 	require.NoError(t, err, "git status should succeed")
 	statusStr := strings.TrimSpace(string(statusOutput))
 	assert.Empty(t, statusStr, "go mod tidy should be idempotent (no changes after generation)")
 
 	t.Log("3. Verifying make generate is idempotent...")
-	generateCmd := cmdWithTimeout(mediumTimeout, "make", "generate")
+	generateCmd, cancel3 := cmdWithTimeout(mediumTimeout, "make", "generate")
 	generateCmd.Dir = projectRoot
+	defer cancel3()
 	output, err = generateCmd.CombinedOutput()
 	if err != nil {
 		t.Logf("make generate output:\n%s", string(output))
 	}
 	require.NoError(t, err, "make generate should succeed")
 
-	gitStatusCmd = cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
+	gitStatusCmd, cancel4 := cmdWithTimeout(shortTimeout, "git", "status", "--porcelain")
 	gitStatusCmd.Dir = projectRoot
+	defer cancel4()
 	statusOutput, err = gitStatusCmd.CombinedOutput()
 	require.NoError(t, err, "git status should succeed")
 	statusStr = strings.TrimSpace(string(statusOutput))
 	assert.Empty(t, statusStr, "make generate should be idempotent (no changes after generation)")
 
 	t.Log("4. Running tests...")
-	testCmd := cmdWithTimeout(mediumTimeout, "make", "test")
+	testCmd, cancel5 := cmdWithTimeout(mediumTimeout, "make", "test")
 	testCmd.Dir = projectRoot
+	defer cancel5()
 	output, err = testCmd.CombinedOutput()
 	outputStr := string(output)
 	if err != nil {
@@ -324,11 +324,13 @@ func runE2ETest(t *testing.T, driver string) {
 	}
 	require.NoError(t, err, "make test should pass")
 	assert.Contains(t, outputStr, "ok", "test output should show passing tests")
+	assert.NotContains(t, outputStr, "[no test files]", "should have actual test files")
 	assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
 
 	t.Log("5. Running linter...")
-	lintCmd := cmdWithTimeout(mediumTimeout, "make", "lint")
+	lintCmd, cancel6 := cmdWithTimeout(mediumTimeout, "make", "lint")
 	lintCmd.Dir = projectRoot
+	defer cancel6()
 	output, err = lintCmd.CombinedOutput()
 	if err != nil {
 		t.Logf("make lint output:\n%s", string(output))
@@ -347,8 +349,9 @@ func runE2ETest(t *testing.T, driver string) {
 		binaryName = "server.exe"
 	}
 	binaryPath := filepath.Join(binDir, binaryName)
-	buildCmd := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
+	buildCmd, cancel7 := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
 	buildCmd.Dir = projectRoot
+	defer cancel7()
 	output, err = buildCmd.CombinedOutput()
 	if err != nil {
 		t.Logf("go build output:\n%s", string(output))
@@ -374,8 +377,9 @@ func runE2ETest(t *testing.T, driver string) {
 
 	case "go-libsql":
 		t.Log("6.5. Starting docker-compose services for go-libsql...")
-		composeUpCmd := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
+		composeUpCmd, cancel8 := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
+		defer cancel8()
 		output, err = composeUpCmd.CombinedOutput()
 		if err != nil {
 			t.Logf("docker-compose up output:\n%s", string(output))
@@ -384,7 +388,8 @@ func runE2ETest(t *testing.T, driver string) {
 
 		defer func() {
 			t.Log("Stopping docker-compose services...")
-			composeDownCmd := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			defer cancel()
 			composeDownCmd.Dir = projectRoot
 			_ = composeDownCmd.Run()
 		}()
@@ -396,8 +401,9 @@ func runE2ETest(t *testing.T, driver string) {
 
 	case "postgres":
 		t.Log("6.5. Starting docker-compose services for postgres...")
-		composeUpCmd := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
+		composeUpCmd, cancel9 := cmdWithTimeout(longTimeout, "docker-compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
+		defer cancel9()
 		output, err = composeUpCmd.CombinedOutput()
 		if err != nil {
 			t.Logf("docker-compose up output:\n%s", string(output))
@@ -406,7 +412,8 @@ func runE2ETest(t *testing.T, driver string) {
 
 		defer func() {
 			t.Log("Stopping docker-compose services...")
-			composeDownCmd := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker-compose", "down", "-v")
+			defer cancel()
 			composeDownCmd.Dir = projectRoot
 			_ = composeDownCmd.Run()
 		}()

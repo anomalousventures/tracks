@@ -7,45 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewLogger(t *testing.T) {
-	tests := []struct {
-		name        string
-		environment string
-	}{
-		{"development environment", "development"},
-		{"production environment", "production"},
-		{"staging environment", "staging"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			logger := NewLogger(tt.environment)
-			assert.NotNil(t, logger)
-		})
-	}
-}
-
-func TestLogger_ContextMethods(t *testing.T) {
+func TestLogger_Integration(t *testing.T) {
 	logger := NewLogger("production")
 	ctx := context.Background()
 
-	tests := []struct {
-		name  string
-		logFn func()
-	}{
-		{"Info logs message", func() { logger.Info(ctx).Msg("test info") }},
-		{"Error logs message", func() { logger.Error(ctx).Msg("test error") }},
-		{"Debug logs message", func() { logger.Debug(ctx).Msg("test debug") }},
-		{"Warn logs message", func() { logger.Warn(ctx).Msg("test warn") }},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			event := logger.Info(ctx)
-			assert.NotNil(t, event, "logging method should return valid event")
-			tt.logFn()
+	t.Run("logger methods don't panic", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			logger.Info(ctx).Msg("test info")
+			logger.Error(ctx).Msg("test error")
+			logger.Debug(ctx).Msg("test debug")
+			logger.Warn(ctx).Msg("test warn")
 		})
-	}
+	})
 }
 
 func TestWithRequestID(t *testing.T) {

@@ -15,8 +15,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// ProjectGenerator interface is defined in cli/interfaces per ADR-002 (consumer-defined interfaces).
-
 type projectGenerator struct {
 	renderer generatorinterfaces.TemplateRenderer
 }
