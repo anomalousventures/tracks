@@ -33,6 +33,7 @@ jobs:
         run: go mod download
 
       - name: Run unit tests
+        shell: bash
         run: go test -v -race -short -coverprofile=coverage-unit.out -p 1 ./...
 
       - name: Upload unit test coverage
@@ -90,6 +91,7 @@ jobs:
           esac
 
       - name: Run integration tests
+        shell: bash
         run: go test -v -coverprofile=coverage-integration.out -p 1 ./tests/integration
 
       - name: Upload integration test coverage

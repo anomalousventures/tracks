@@ -308,17 +308,20 @@ Tracks uses a multi-layered testing approach to ensure code quality while maximi
 ### Test Organization
 
 **Unit Tests** (`*_test.go` colocated with source):
+
 - Fast, isolated tests with no external dependencies
 - Run with `-short` flag
 - Use the race detector (`-race`)
 - Execute on ALL platforms (Ubuntu, macOS, Windows)
 
 **Integration Tests** (`tests/integration/`):
+
 - Test component integration without external services
 - Include file generation, validation, git operations
 - Execute on ALL platforms (Ubuntu, macOS, Windows)
 
 **Docker E2E Tests** (`tests/integration/` with `//go:build docker` tag):
+
 - Full end-to-end tests requiring Docker Compose
 - Test generated projects with databases (Postgres, LibSQL)
 - Execute ONLY on Ubuntu runners (Docker setup issues on macOS/Windows)
