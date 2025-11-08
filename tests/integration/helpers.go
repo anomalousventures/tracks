@@ -1,4 +1,4 @@
-package generator
+package integration
 
 import (
 	"context"
@@ -12,12 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/anomalousventures/tracks/internal/generator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// getTimeout returns a timeout duration from environment or default.
-// Env vars: INTEGRATION_TEST_SHORT_TIMEOUT, INTEGRATION_TEST_MEDIUM_TIMEOUT, INTEGRATION_TEST_LONG_TIMEOUT, INTEGRATION_TEST_E2E_TIMEOUT
 func getTimeout(envVar string, defaultTimeout time.Duration) time.Duration {
 	if val := os.Getenv(envVar); val != "" {
 		if timeout, err := time.ParseDuration(val); err == nil && timeout > 0 {
@@ -27,8 +26,6 @@ func getTimeout(envVar string, defaultTimeout time.Duration) time.Duration {
 	return defaultTimeout
 }
 
-// cmdWithTimeout creates an exec.Command with a timeout context
-// to prevent integration tests from hanging indefinitely.
 func cmdWithTimeout(timeout time.Duration, name string, args ...string) (*exec.Cmd, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	cmd := exec.CommandContext(ctx, name, args...)
@@ -36,232 +33,19 @@ func cmdWithTimeout(timeout time.Duration, name string, args ...string) (*exec.C
 }
 
 var (
-	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)     // git, local ops
-	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second)   // compile, test, lint
-	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 15*time.Second)     // network, downloads
-	e2eTimeout    = getTimeout("INTEGRATION_TEST_E2E_TIMEOUT", 120*time.Second)     // E2E operations on generated projects
+	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)
+	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second)
+	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 15*time.Second)
+	e2eTimeout    = getTimeout("INTEGRATION_TEST_E2E_TIMEOUT", 120*time.Second)
 )
 
-// TestGenerateFullProject (#143) - Foundational integration test that generates
-// a complete project structure and verifies all files and directories are created correctly.
-func TestGenerateFullProject(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	tests := []struct {
-		name           string
-		databaseDriver string
-		initGit        bool
-		modulePath     string
-	}{
-		{
-			name:           "go-libsql without git",
-			databaseDriver: "go-libsql",
-			initGit:        false,
-			modulePath:     "github.com/test/libsql-app",
-		},
-		{
-			name:           "sqlite3 with git",
-			databaseDriver: "sqlite3",
-			initGit:        true,
-			modulePath:     "github.com/test/sqlite-app",
-		},
-		{
-			name:           "postgres without git",
-			databaseDriver: "postgres",
-			initGit:        false,
-			modulePath:     "example.com/postgres-app",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			projectName := "testapp"
-
-			cfg := ProjectConfig{
-				ProjectName:    projectName,
-				ModulePath:     tt.modulePath,
-				DatabaseDriver: tt.databaseDriver,
-				EnvPrefix:      "APP",
-				InitGit:        tt.initGit,
-				OutputPath:     tmpDir,
-			}
-
-			gen := NewProjectGenerator()
-			ctx := context.Background()
-
-			err := gen.Validate(cfg)
-			require.NoError(t, err, "validation should succeed")
-
-			err = gen.Generate(ctx, cfg)
-			require.NoError(t, err, "generation should succeed")
-
-			projectRoot := filepath.Join(tmpDir, projectName)
-
-			expectedFiles := []string{
-				"go.mod",
-				"README.md",
-				".gitignore",
-				".golangci.yml",
-				".mockery.yaml",
-				".tracks.yaml",
-				".env.example",
-				"Makefile",
-				"sqlc.yaml",
-				"cmd/server/main.go",
-				"internal/config/config.go",
-				"internal/interfaces/health.go",
-				"internal/interfaces/logger.go",
-				"internal/logging/logger.go",
-				"internal/domain/health/service.go",
-				"internal/http/server.go",
-				"internal/http/routes.go",
-				"internal/http/routes/routes.go",
-				"internal/http/handlers/health.go",
-				"internal/http/middleware/logging.go",
-				"internal/db/db.go",
-			}
-
-			for _, file := range expectedFiles {
-				path := filepath.Join(projectRoot, file)
-				_, err := os.Stat(path)
-				assert.NoError(t, err, "file should exist: %s", file)
-			}
-
-			expectedDirs := []string{
-				"cmd",
-				"cmd/server",
-				"internal",
-				"internal/config",
-				"internal/interfaces",
-				"internal/logging",
-				"internal/domain",
-				"internal/domain/health",
-				"internal/http",
-				"internal/http/routes",
-				"internal/http/handlers",
-				"internal/http/middleware",
-				"internal/db",
-			}
-
-			for _, dir := range expectedDirs {
-				path := filepath.Join(projectRoot, dir)
-				stat, err := os.Stat(path)
-				assert.NoError(t, err, "directory should exist: %s", dir)
-				if err == nil {
-					assert.True(t, stat.IsDir(), "%s should be a directory", dir)
-				}
-			}
-
-			goModPath := filepath.Join(projectRoot, "go.mod")
-			content, err := os.ReadFile(goModPath)
-			require.NoError(t, err, "should be able to read go.mod")
-
-			assert.Contains(t, string(content), tt.modulePath, "go.mod should contain module path")
-			assert.Contains(t, string(content), "go 1.25", "go.mod should contain Go version")
-
-			dbPath := filepath.Join(projectRoot, "internal/db/db.go")
-			dbContent, err := os.ReadFile(dbPath)
-			require.NoError(t, err, "should be able to read internal/db/db.go")
-
-			driverMapping := map[string]string{
-				"go-libsql": "libsql",
-				"sqlite3":   "sqlite3",
-				"postgres":  "postgres",
-			}
-			expectedDriver := driverMapping[tt.databaseDriver]
-			assert.Contains(t, string(dbContent), expectedDriver, "db.go should contain correct driver")
-
-			if tt.initGit {
-				gitDir := filepath.Join(projectRoot, ".git")
-				stat, err := os.Stat(gitDir)
-				assert.NoError(t, err, ".git directory should exist when git is initialized")
-				if err == nil {
-					assert.True(t, stat.IsDir(), ".git should be a directory")
-				}
-			} else {
-				gitDir := filepath.Join(projectRoot, ".git")
-				_, err := os.Stat(gitDir)
-				assert.True(t, os.IsNotExist(err), ".git directory should not exist when git is not initialized")
-			}
-		})
-	}
-}
-
-// TestGenerateFullProject_CustomModuleName tests generation with custom module name
-func TestGenerateFullProject_CustomModuleName(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	tmpDir := t.TempDir()
-	projectName := "customapp"
-	modulePath := "mycorp.com/apps/customapp"
-
-	cfg := ProjectConfig{
-		ProjectName:    projectName,
-		ModulePath:     modulePath,
-		DatabaseDriver: "postgres",
-		EnvPrefix:      "CUSTOM",
-		InitGit:        false,
-		OutputPath:     tmpDir,
-	}
-
-	gen := NewProjectGenerator()
-	ctx := context.Background()
-
-	err := gen.Generate(ctx, cfg)
-	require.NoError(t, err)
-
-	projectRoot := filepath.Join(tmpDir, projectName)
-	goModPath := filepath.Join(projectRoot, "go.mod")
-	content, err := os.ReadFile(goModPath)
-	require.NoError(t, err)
-
-	assert.Contains(t, string(content), modulePath)
-}
-
-// TestGenerateFullProject_DirectoryAlreadyExists tests that generation fails
-// when the target directory already exists
-func TestGenerateFullProject_DirectoryAlreadyExists(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	tmpDir := t.TempDir()
-	projectName := "existing"
-
-	existingDir := filepath.Join(tmpDir, projectName)
-	err := os.Mkdir(existingDir, 0755)
-	require.NoError(t, err)
-
-	cfg := ProjectConfig{
-		ProjectName:    projectName,
-		ModulePath:     "github.com/test/existing",
-		DatabaseDriver: "postgres",
-		EnvPrefix:      "APP",
-		InitGit:        false,
-		OutputPath:     tmpDir,
-	}
-
-	gen := NewProjectGenerator()
-
-	err = gen.Validate(cfg)
-	assert.Error(t, err, "validation should fail when directory exists")
-	assert.Contains(t, err.Error(), "already exists")
-}
-
-// runE2ETest validates the user-facing contract: generated projects must work correctly
-// across all supported platforms and database drivers without manual intervention.
 func runE2ETest(t *testing.T, driver string) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
 	projectName := "testapp"
 
-	cfg := ProjectConfig{
+	cfg := generator.ProjectConfig{
 		ProjectName:    projectName,
 		ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
 		DatabaseDriver: driver,
@@ -271,7 +55,7 @@ func runE2ETest(t *testing.T, driver string) {
 	}
 
 	t.Log("1. Generating project...")
-	gen := NewProjectGenerator()
+	gen := generator.NewProjectGenerator()
 	ctx := context.Background()
 	err := gen.Generate(ctx, cfg)
 	require.NoError(t, err, "project generation should succeed")
@@ -365,7 +149,6 @@ func runE2ETest(t *testing.T, driver string) {
 		assert.True(t, stat.Mode().Perm()&0100 != 0, "binary should be executable")
 	}
 
-	// 6.5. Configure database for E2E test
 	var dbURL string
 	switch driver {
 	case "sqlite3":
@@ -394,7 +177,6 @@ func runE2ETest(t *testing.T, driver string) {
 			_ = composeDownCmd.Run()
 		}()
 
-		// Wait for libsql to be healthy
 		t.Log("Waiting for libsql to be ready...")
 		time.Sleep(5 * time.Second)
 		dbURL = "http://localhost:8080"
@@ -418,14 +200,12 @@ func runE2ETest(t *testing.T, driver string) {
 			_ = composeDownCmd.Run()
 		}()
 
-		// Wait for postgres to be healthy
 		t.Log("Waiting for postgres to be ready...")
 		time.Sleep(5 * time.Second)
 		dbURL = fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", projectName, projectName, projectName)
 	}
 
 	t.Log("7. Starting server...")
-	// Server is a long-running process - don't use a timeout context
 	serverCmd := exec.Command(binaryPath)
 	serverCmd.Dir = projectRoot
 	serverCmd.Env = append(os.Environ(),
@@ -455,7 +235,6 @@ func runE2ETest(t *testing.T, driver string) {
 		}
 	}()
 
-	// Give server time to initialize database connection and start listening
 	t.Log("Waiting for server to start...")
 	time.Sleep(3 * time.Second)
 
@@ -496,28 +275,4 @@ func runE2ETest(t *testing.T, driver string) {
 	}
 
 	t.Log("E2E test completed successfully!")
-}
-
-// TestE2E_GoLibsql runs full E2E test suite for go-libsql driver
-func TestE2E_GoLibsql(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping E2E integration test in short mode")
-	}
-	runE2ETest(t, "go-libsql")
-}
-
-// TestE2E_SQLite3 runs full E2E test suite for sqlite3 driver
-func TestE2E_SQLite3(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping E2E integration test in short mode")
-	}
-	runE2ETest(t, "sqlite3")
-}
-
-// TestE2E_Postgres runs full E2E test suite for postgres driver
-func TestE2E_Postgres(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping E2E integration test in short mode")
-	}
-	runE2ETest(t, "postgres")
 }

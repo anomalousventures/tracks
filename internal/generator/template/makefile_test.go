@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/templates"
-	"github.com/anomalousventures/tracks/tests/helpers"
+	"github.com/anomalousventures/tracks/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -70,7 +70,7 @@ func TestMakefileTargets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			helpers.AssertContainsAll(t, result, tt.items)
+			testutil.AssertContainsAll(t, result, tt.items)
 		})
 	}
 }
@@ -78,7 +78,7 @@ func TestMakefileTargets(t *testing.T) {
 func TestMakefileHelpText(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"help         - Show this help message",
 		"test         - Run all tests",
 		"build        - Build the server binary",
@@ -97,7 +97,7 @@ func TestMakefileHelpText(t *testing.T) {
 func TestMakefileUsesGoTool(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"go tool air",
 		"go tool mockery",
 		"go tool sqlc",

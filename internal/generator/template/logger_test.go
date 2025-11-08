@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/templates"
-	"github.com/anomalousventures/tracks/tests/helpers"
+	"github.com/anomalousventures/tracks/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,13 +25,13 @@ func TestLoggerTemplate(t *testing.T) {
 
 func TestLoggerValidGoCode(t *testing.T) {
 	result := renderLoggerTemplate(t)
-	helpers.AssertValidGoCode(t, result, "logger.go")
+	testutil.AssertValidGoCode(t, result, "logger.go")
 }
 
 func TestLoggerImports(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		`"context"`,
 		`"os"`,
 		`"github.com/rs/zerolog"`,
@@ -41,7 +41,7 @@ func TestLoggerImports(t *testing.T) {
 func TestLoggerStruct(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"type Logger struct",
 		"logger zerolog.Logger",
 	})
@@ -50,7 +50,7 @@ func TestLoggerStruct(t *testing.T) {
 func TestLoggerNewLoggerFunction(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"func NewLogger(environment string) *Logger",
 		"zerolog.TimeFieldFormat = zerolog.TimeFormatUnix",
 		"return &Logger{logger: logger}",
@@ -60,7 +60,7 @@ func TestLoggerNewLoggerFunction(t *testing.T) {
 func TestLoggerEnvironmentLevels(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		`if environment == "development"`,
 		"zerolog.ConsoleWriter{Out: os.Stderr}",
 		"zerolog.SetGlobalLevel(zerolog.DebugLevel)",
@@ -72,7 +72,7 @@ func TestLoggerEnvironmentLevels(t *testing.T) {
 func TestLoggerContextMethods(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"func (l *Logger) Debug(ctx context.Context) *zerolog.Event",
 		"func (l *Logger) Info(ctx context.Context) *zerolog.Event",
 		"func (l *Logger) Warn(ctx context.Context) *zerolog.Event",
@@ -87,7 +87,7 @@ func TestLoggerContextMethods(t *testing.T) {
 func TestLoggerContextKey(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"type contextKey string",
 		`const requestIDKey contextKey = "request_id"`,
 	})
@@ -96,7 +96,7 @@ func TestLoggerContextKey(t *testing.T) {
 func TestLoggerWithRequestID(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"func WithRequestID(ctx context.Context, requestID string) context.Context",
 		"return context.WithValue(ctx, requestIDKey, requestID)",
 	})
@@ -105,7 +105,7 @@ func TestLoggerWithRequestID(t *testing.T) {
 func TestLoggerWithContext(t *testing.T) {
 	result := renderLoggerTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"func (l *Logger) loggerWithContext(ctx context.Context) *zerolog.Logger",
 		"if requestID, ok := ctx.Value(requestIDKey).(string); ok && requestID != \"\"",
 		`logger = logger.With().Str("request_id", requestID).Logger()`,

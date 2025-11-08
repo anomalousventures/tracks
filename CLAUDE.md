@@ -301,6 +301,72 @@ We use architecture tests to enforce design principles programmatically. These t
 4. Verify test passes on current codebase
 5. Document the test in this section of CLAUDE.md
 
+## Testing Strategy
+
+Tracks uses a multi-layered testing approach to ensure code quality while maximizing cross-platform coverage.
+
+### Test Organization
+
+**Unit Tests** (`*_test.go` colocated with source):
+- Fast, isolated tests with no external dependencies
+- Run with `-short` flag
+- Use the race detector (`-race`)
+- Execute on ALL platforms (Ubuntu, macOS, Windows)
+
+**Integration Tests** (`tests/integration/`):
+- Test component integration without external services
+- Include file generation, validation, git operations
+- Execute on ALL platforms (Ubuntu, macOS, Windows)
+
+**Docker E2E Tests** (`tests/integration/` with `//go:build docker` tag):
+- Full end-to-end tests requiring Docker Compose
+- Test generated projects with databases (Postgres, LibSQL)
+- Execute ONLY on Ubuntu runners (Docker setup issues on macOS/Windows)
+
+### Build Tags for Test Separation
+
+Use Go build tags to separate Docker-requiring tests:
+
+```go
+//go:build docker
+
+package integration
+
+import "testing"
+
+func TestE2E_Postgres(t *testing.T) {
+    runE2ETest(t, "postgres")
+}
+```
+
+**Running tests locally:**
+
+```bash
+make test                           # Unit tests only (short)
+go test ./tests/integration         # Integration tests (no Docker)
+go test -tags=docker ./tests/integration  # Docker E2E tests
+make test-coverage                  # All three with coverage reports
+```
+
+**CI Test Jobs:**
+
+1. **unit-tests** - Runs on all platforms with `-race -short`
+2. **integration-tests** - Runs on all platforms (no Docker tests)
+3. **docker-e2e-tests** - Runs on Ubuntu only with `-tags=docker`
+
+Each job uploads separate coverage reports to Codecov with platform-specific flags.
+
+### Timeout Configuration
+
+Integration and E2E tests support platform-specific timeouts via environment variables:
+
+- `INTEGRATION_TEST_SHORT_TIMEOUT` (default: 2s, macOS: 4s, Windows: 6s)
+- `INTEGRATION_TEST_MEDIUM_TIMEOUT` (default: 10s, macOS: 20s, Windows: 30s)
+- `INTEGRATION_TEST_LONG_TIMEOUT` (default: 15s, macOS: 30s, Windows: 45s)
+- `INTEGRATION_TEST_E2E_TIMEOUT` (default: 120s, macOS: 180s, Windows: 240s)
+
+CI sets these automatically based on runner OS.
+
 ## Commit and PR Guidelines
 
 **See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed PR process.**
