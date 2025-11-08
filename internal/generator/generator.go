@@ -65,7 +65,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		return fmt.Errorf("failed to create project directories: %w", err)
 	}
 
-	// Phase 1: Pre-generate templates (files that don't import SQLC-generated code)
 	preGenerateTemplates := map[string]string{
 		".env.example.tmpl":                        ".env.example",
 		".gitignore.tmpl":                          ".gitignore",
@@ -93,7 +92,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/db/queries/health.sql.tmpl":      "internal/db/queries/health.sql",
 	}
 
-	// Phase 3: Post-generate templates (files that import SQLC-generated code or depend on it)
 	postGenerateTemplates := map[string]string{
 		"cmd/server/main.go.tmpl":                      "cmd/server/main.go",
 		"internal/domain/health/repository.go.tmpl":    "internal/domain/health/repository.go",
@@ -106,7 +104,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/handlers/health_test.go.tmpl":  "internal/http/handlers/health_test.go",
 	}
 
-	// Phase 1: Render pre-generate templates
 	logger.Info().
 		Int("template_count", len(preGenerateTemplates)).
 		Msg("rendering pre-generate templates")
@@ -168,7 +165,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		logger.Info().Msg("mocks and SQL code generated successfully")
 	}
 
-	// Phase 3: Render post-generate templates (files that import generated code)
 	logger.Info().
 		Int("template_count", len(postGenerateTemplates)).
 		Msg("rendering post-generate templates")
@@ -206,7 +202,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		logger.Info().Msg("dependencies tidied")
 	}
 
-	// Phase 5: Render test templates
 	logger.Info().
 		Int("template_count", len(testTemplates)).
 		Msg("rendering test templates")

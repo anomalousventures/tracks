@@ -7,17 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLogger_Integration(t *testing.T) {
+func TestLogger_SmokeTest(t *testing.T) {
 	logger := NewLogger("production")
 	ctx := context.Background()
 
-	t.Run("logger methods don't panic", func(t *testing.T) {
-		assert.NotPanics(t, func() {
-			logger.Info(ctx).Msg("test info")
-			logger.Error(ctx).Msg("test error")
-			logger.Debug(ctx).Msg("test debug")
-			logger.Warn(ctx).Msg("test warn")
-		})
+	assert.NotPanics(t, func() {
+		logger.Info(ctx).Msg("smoke test info")
+		logger.Error(ctx).Msg("smoke test error")
+		logger.Debug(ctx).Msg("smoke test debug")
+		logger.Warn(ctx).Msg("smoke test warn")
 	})
 }
 
