@@ -146,7 +146,9 @@ func runE2ETest(t *testing.T, driver string) {
 	assert.NoError(t, err, "binary should exist")
 	if err == nil {
 		assert.True(t, stat.Size() > 0, "binary should not be empty")
-		assert.True(t, stat.Mode().Perm()&0100 != 0, "binary should be executable")
+		if runtime.GOOS != "windows" {
+			assert.True(t, stat.Mode().Perm()&0100 != 0, "binary should be executable")
+		}
 	}
 
 	var dbURL string
