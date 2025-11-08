@@ -150,7 +150,6 @@ func TestReadmeContentValidation(t *testing.T) {
 		{
 			name: "installation_steps",
 			contains: []string{
-				"go mod download",
 				"make generate",
 				"make test",
 				"make dev",

@@ -25,7 +25,6 @@ func TestRenderSuccessOutput(t *testing.T) {
 	assert.Contains(t, result, "postgres")
 	assert.Contains(t, result, "initialized")
 	assert.Contains(t, result, "cd myapp")
-	assert.Contains(t, result, "go mod download")
 	assert.Contains(t, result, "make test")
 	assert.Contains(t, result, "make dev")
 }
@@ -87,9 +86,8 @@ func TestRenderSuccessPlain(t *testing.T) {
 	assert.Contains(t, result, "Git:           not initialized")
 	assert.Contains(t, result, "Next steps:")
 	assert.Contains(t, result, "1. cd plainapp")
-	assert.Contains(t, result, "2. go mod download")
-	assert.Contains(t, result, "3. make test")
-	assert.Contains(t, result, "4. make dev")
+	assert.Contains(t, result, "2. make test")
+	assert.Contains(t, result, "3. make dev")
 }
 
 func TestRenderSuccessOutput_AllDatabaseDrivers(t *testing.T) {
@@ -159,11 +157,9 @@ func TestRenderSuccessOutput_NextStepsOrder(t *testing.T) {
 	result := RenderSuccessOutput(output)
 
 	cdIndex := strings.Index(result, "cd myapp")
-	downloadIndex := strings.Index(result, "go mod download")
 	testIndex := strings.Index(result, "make test")
 	devIndex := strings.Index(result, "make dev")
 
-	assert.True(t, cdIndex < downloadIndex, "cd should come before go mod download")
-	assert.True(t, downloadIndex < testIndex, "go mod download should come before make test")
+	assert.True(t, cdIndex < testIndex, "cd should come before make test")
 	assert.True(t, testIndex < devIndex, "make test should come before make dev")
 }

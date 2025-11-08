@@ -71,7 +71,6 @@ func RenderSuccessOutput(output SuccessOutput) string {
 
 	steps := []string{
 		fmt.Sprintf("cd %s", output.ProjectName),
-		"go mod download",
 		"make test",
 		"make dev",
 	}
@@ -102,9 +101,8 @@ func renderSuccessPlain(output SuccessOutput) string {
 
 	b.WriteString("Next steps:\n")
 	b.WriteString(fmt.Sprintf("  1. cd %s\n", output.ProjectName))
-	b.WriteString("  2. go mod download\n")
-	b.WriteString("  3. make test\n")
-	b.WriteString("  4. make dev\n")
+	b.WriteString("  2. make test\n")
+	b.WriteString("  3. make dev\n")
 
 	return b.String()
 }
