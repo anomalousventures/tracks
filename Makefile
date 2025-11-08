@@ -74,10 +74,12 @@ test: ## Run Go unit tests
 	@go test -v -short ./...
 
 test-coverage: ## Run tests with coverage
-	@echo "Running tests with coverage..."
-	@go test -v -race -coverprofile=coverage.out -p 1 ./...
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report generated: coverage.html"
+	@echo "Running unit tests with race detector and coverage..."
+	@go test -v -race -short -coverprofile=coverage-unit.out -p 1 ./...
+	@echo "Running integration tests with coverage (no race detector)..."
+	@go test -v -coverprofile=coverage-integration.out -p 1 ./...
+	@go tool cover -html=coverage-unit.out -o coverage.html
+	@echo "Coverage reports generated: coverage-unit.out, coverage-integration.out, coverage.html"
 
 test-integration: ## Run integration tests
 	@echo "Running integration tests..."

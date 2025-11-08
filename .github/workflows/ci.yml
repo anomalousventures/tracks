@@ -71,11 +71,19 @@ jobs:
       - name: Run tests
         run: make test-coverage
 
-      - name: Upload coverage
+      - name: Upload unit test coverage
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.out
+          file: ./coverage-unit.out
           flags: unittests-${{ runner.os }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Upload integration test coverage
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage-integration.out
+          flags: integration-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
