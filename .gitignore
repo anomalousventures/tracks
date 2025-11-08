@@ -65,3 +65,11 @@ Thumbs.db
 # Temporary files
 *.tmp
 .cache/
+
+# Integration test generated projects
+tests/integration/test*/
+tests/integration/*/
+!tests/integration/*.go
+test/integration/test*/
+test/integration/*/
+!test/integration/*.go
