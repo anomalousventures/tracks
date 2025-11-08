@@ -32,6 +32,18 @@ func cmdWithTimeout(timeout time.Duration, name string, args ...string) (*exec.C
 	return cmd, cancel
 }
 
+func dockerCmdWithTimeout(timeout time.Duration, args ...string) (*exec.Cmd, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		wslArgs := append([]string{"--", "docker"}, args...)
+		cmd = exec.CommandContext(ctx, "wsl", wslArgs...)
+	} else {
+		cmd = exec.CommandContext(ctx, "docker", args...)
+	}
+	return cmd, cancel
+}
+
 var (
 	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)
 	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second)
@@ -162,7 +174,7 @@ func runE2ETest(t *testing.T, driver string) {
 
 	case "go-libsql":
 		t.Log("6.5. Starting docker compose services for go-libsql...")
-		composeUpCmd, cancel8 := cmdWithTimeout(longTimeout, "docker", "compose", "up", "-d")
+		composeUpCmd, cancel8 := dockerCmdWithTimeout(longTimeout, "compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
 		defer cancel8()
 		output, err = composeUpCmd.CombinedOutput()
@@ -173,7 +185,7 @@ func runE2ETest(t *testing.T, driver string) {
 
 		defer func() {
 			t.Log("Stopping docker compose services...")
-			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker", "compose", "down", "-v")
+			composeDownCmd, cancel := dockerCmdWithTimeout(mediumTimeout, "compose", "down", "-v")
 			defer cancel()
 			composeDownCmd.Dir = projectRoot
 			_ = composeDownCmd.Run()
@@ -185,7 +197,7 @@ func runE2ETest(t *testing.T, driver string) {
 
 	case "postgres":
 		t.Log("6.5. Starting docker compose services for postgres...")
-		composeUpCmd, cancel9 := cmdWithTimeout(longTimeout, "docker", "compose", "up", "-d")
+		composeUpCmd, cancel9 := dockerCmdWithTimeout(longTimeout, "compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
 		defer cancel9()
 		output, err = composeUpCmd.CombinedOutput()
@@ -196,7 +208,7 @@ func runE2ETest(t *testing.T, driver string) {
 
 		defer func() {
 			t.Log("Stopping docker compose services...")
-			composeDownCmd, cancel := cmdWithTimeout(mediumTimeout, "docker", "compose", "down", "-v")
+			composeDownCmd, cancel := dockerCmdWithTimeout(mediumTimeout, "compose", "down", "-v")
 			defer cancel()
 			composeDownCmd.Dir = projectRoot
 			_ = composeDownCmd.Run()

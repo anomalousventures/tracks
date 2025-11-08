@@ -103,11 +103,12 @@ jobs:
           fail_ci_if_error: false
 
   docker-e2e-tests:
-    name: Docker E2E Tests (Ubuntu)
-    runs-on: ubuntu-latest
+    name: Docker E2E Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
         go-version: ['1.25.3']
 
     steps:
@@ -123,21 +124,55 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Setup Docker (macOS)
+        if: runner.os == 'macOS'
+        uses: douglascamata/setup-docker-macos-action@v1.1.0
+
+      - name: Setup WSL (Windows)
+        if: runner.os == 'Windows'
+        uses: Vampire/setup-wsl@v3
+        with:
+          distribution: Debian
+          use-cache: false
+
+      - name: Install Docker in WSL (Windows)
+        if: runner.os == 'Windows'
+        shell: wsl-bash {0}
+        run: curl -fsSL https://get.docker.com | sh
+
       - name: Set integration test timeouts
+        shell: bash
         run: |
-          echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
-          echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
-          echo "INTEGRATION_TEST_LONG_TIMEOUT=15s" >> $GITHUB_ENV
-          echo "INTEGRATION_TEST_E2E_TIMEOUT=120s" >> $GITHUB_ENV
+          case "${{ matrix.os }}" in
+            ubuntu-latest)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
+              ;;
+            macos-latest|macos-latest-large)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=4s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=20s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
+              ;;
+            windows-2025)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=6s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=45s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=240s" >> $GITHUB_ENV
+              ;;
+          esac
 
       - name: Run Docker E2E tests
+        shell: bash
         run: go test -v -tags=docker -coverprofile=coverage-docker.out -p 1 ./tests/integration
 
       - name: Upload Docker E2E test coverage
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage-docker.out
-          flags: docker-e2e-ubuntu
+          flags: docker-e2e-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
