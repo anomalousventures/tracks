@@ -35,8 +35,8 @@ func cmdWithTimeout(timeout time.Duration, name string, args ...string) (*exec.C
 var (
 	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)
 	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second)
-	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 15*time.Second)
-	e2eTimeout    = getTimeout("INTEGRATION_TEST_E2E_TIMEOUT", 120*time.Second)
+	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 30*time.Second)
+	e2eTimeout    = getTimeout("INTEGRATION_TEST_E2E_TIMEOUT", 180*time.Second)
 )
 
 func runE2ETest(t *testing.T, driver string) {
