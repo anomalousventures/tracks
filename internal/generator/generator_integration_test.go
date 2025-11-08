@@ -17,7 +17,7 @@ import (
 )
 
 // getTimeout returns a timeout duration from environment or default.
-// Env vars: INTEGRATION_TEST_SHORT_TIMEOUT, INTEGRATION_TEST_MEDIUM_TIMEOUT, INTEGRATION_TEST_LONG_TIMEOUT
+// Env vars: INTEGRATION_TEST_SHORT_TIMEOUT, INTEGRATION_TEST_MEDIUM_TIMEOUT, INTEGRATION_TEST_LONG_TIMEOUT, INTEGRATION_TEST_E2E_TIMEOUT
 func getTimeout(envVar string, defaultTimeout time.Duration) time.Duration {
 	if val := os.Getenv(envVar); val != "" {
 		if timeout, err := time.ParseDuration(val); err == nil && timeout > 0 {
@@ -36,9 +36,10 @@ func cmdWithTimeout(timeout time.Duration, name string, args ...string) (*exec.C
 }
 
 var (
-	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)   // git, local ops
-	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second) // compile, test, lint
-	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 15*time.Second)   // network, downloads
+	shortTimeout  = getTimeout("INTEGRATION_TEST_SHORT_TIMEOUT", 2*time.Second)     // git, local ops
+	mediumTimeout = getTimeout("INTEGRATION_TEST_MEDIUM_TIMEOUT", 10*time.Second)   // compile, test, lint
+	longTimeout   = getTimeout("INTEGRATION_TEST_LONG_TIMEOUT", 15*time.Second)     // network, downloads
+	e2eTimeout    = getTimeout("INTEGRATION_TEST_E2E_TIMEOUT", 120*time.Second)     // E2E operations on generated projects
 )
 
 // TestGenerateFullProject (#143) - Foundational integration test that generates
@@ -296,7 +297,7 @@ func runE2ETest(t *testing.T, driver string) {
 	assert.Empty(t, statusStr, "go mod tidy should be idempotent (no changes after generation)")
 
 	t.Log("3. Verifying make generate is idempotent...")
-	generateCmd, cancel3 := cmdWithTimeout(mediumTimeout, "make", "generate")
+	generateCmd, cancel3 := cmdWithTimeout(e2eTimeout, "make", "generate")
 	generateCmd.Dir = projectRoot
 	defer cancel3()
 	output, err = generateCmd.CombinedOutput()
@@ -314,7 +315,7 @@ func runE2ETest(t *testing.T, driver string) {
 	assert.Empty(t, statusStr, "make generate should be idempotent (no changes after generation)")
 
 	t.Log("4. Running tests...")
-	testCmd, cancel5 := cmdWithTimeout(mediumTimeout, "make", "test")
+	testCmd, cancel5 := cmdWithTimeout(e2eTimeout, "make", "test")
 	testCmd.Dir = projectRoot
 	defer cancel5()
 	output, err = testCmd.CombinedOutput()
@@ -327,7 +328,7 @@ func runE2ETest(t *testing.T, driver string) {
 	assert.NotContains(t, strings.ToLower(outputStr), "fail", "test output should not contain failures")
 
 	t.Log("5. Running linter...")
-	lintCmd, cancel6 := cmdWithTimeout(longTimeout, "make", "lint")
+	lintCmd, cancel6 := cmdWithTimeout(e2eTimeout, "make", "lint")
 	lintCmd.Dir = projectRoot
 	defer cancel6()
 	output, err = lintCmd.CombinedOutput()
@@ -348,7 +349,7 @@ func runE2ETest(t *testing.T, driver string) {
 		binaryName = "server.exe"
 	}
 	binaryPath := filepath.Join(binDir, binaryName)
-	buildCmd, cancel7 := cmdWithTimeout(mediumTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
+	buildCmd, cancel7 := cmdWithTimeout(e2eTimeout, "go", "build", "-o", binaryPath, "./cmd/server")
 	buildCmd.Dir = projectRoot
 	defer cancel7()
 	output, err = buildCmd.CombinedOutput()

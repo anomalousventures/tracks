@@ -49,22 +49,25 @@ jobs:
         run: |
           case "${{ matrix.os }}" in
             ubuntu-latest)
-              # Fastest runner - use defaults (2s, 10s, 15s)
+              # Fastest runner - use defaults (2s, 10s, 15s) + 2min for E2E
               echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=15s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=120s" >> $GITHUB_ENV
               ;;
             macos-latest|macos-latest-large)
-              # macOS runners - 2x slower
+              # macOS runners - 2x slower + 3min for E2E
               echo "INTEGRATION_TEST_SHORT_TIMEOUT=4s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=20s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
               ;;
             windows-2025)
-              # Slowest runner - 3x slower
+              # Slowest runner - 3x slower + 4min for E2E
               echo "INTEGRATION_TEST_SHORT_TIMEOUT=6s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=30s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=45s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=240s" >> $GITHUB_ENV
               ;;
           esac
 
