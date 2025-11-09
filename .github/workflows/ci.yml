@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# NOTE: Windows ARM (windows-11-arm) is temporarily disabled due to tooling limitations.
+# The `go tool` pattern used for mockery and sqlc does not work correctly on ARM64 Windows,
+# causing `make generate` failures in generated projects. We'll re-enable when Go 1.25+
+# tooling has better ARM64 Windows support. The conditional race detector logic remains
+# for future use when ARM is re-enabled.
+
 jobs:
   unit-tests:
     name: Unit Tests (${{ matrix.os }})
@@ -16,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest, windows-11-arm]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -59,7 +65,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest, windows-11-arm]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -153,7 +159,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest, windows-11-arm]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
