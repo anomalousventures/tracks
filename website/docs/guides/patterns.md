@@ -100,8 +100,8 @@ import (
     "database/sql"
     "fmt"
 
-    "yourmodule/internal/db"
-    "yourmodule/internal/interfaces"
+    "github.com/youruser/yourproject/internal/db"
+    "github.com/youruser/yourproject/internal/interfaces"
 )
 
 var _ interfaces.UserRepository = (*Repository)(nil)
@@ -162,7 +162,7 @@ import (
     "fmt"
 
     "github.com/google/uuid"
-    "yourmodule/internal/interfaces"
+    "github.com/youruser/yourproject/internal/interfaces"
 )
 
 var _ interfaces.UserService = (*Service)(nil)
@@ -207,7 +207,7 @@ import (
     "net/http"
 
     "github.com/go-chi/chi/v5"
-    "yourmodule/internal/interfaces"
+    "github.com/youruser/yourproject/internal/interfaces"
 )
 
 type UserHandler struct {

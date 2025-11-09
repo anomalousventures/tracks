@@ -53,6 +53,10 @@ func (s *Server) Start(ctx context.Context) error {
 
 ### Routes (`routes.go`)
 
+**File structure:**
+- `internal/http/routes.go` - Route registration and middleware chain
+- `internal/http/routes/routes.go` - Route constants (URL patterns)
+
 Registers routes and applies middleware chain:
 
 ```go

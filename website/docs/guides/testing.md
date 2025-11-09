@@ -54,7 +54,7 @@ with-expecter: true
 outpkg: mocks
 output: tests/mocks
 packages:
-  github.com/yourmodule/internal/interfaces:
+  github.com/youruser/yourproject/internal/interfaces:
     interfaces:
       UserService:
       UserRepository:
@@ -88,7 +88,7 @@ tests/mocks/
 import (
     "testing"
     "github.com/stretchr/testify/mock"
-    "yourmodule/tests/mocks"
+    "github.com/youruser/yourproject/tests/mocks"
 )
 
 func TestUserService_GetByID(t *testing.T) {
