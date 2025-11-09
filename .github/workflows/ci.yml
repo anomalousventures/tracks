@@ -32,9 +32,18 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Set test flags
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-11-arm" ]]; then
+            echo "TEST_FLAGS=-v -short -coverprofile=coverage-unit.out -p 1" >> $GITHUB_ENV
+          else
+            echo "TEST_FLAGS=-v -race -short -coverprofile=coverage-unit.out -p 1" >> $GITHUB_ENV
+          fi
+
       - name: Run unit tests
         shell: bash
-        run: go test -v -race -short -coverprofile=coverage-unit.out -p 1 ./...
+        run: go test $TEST_FLAGS ./...
 
       - name: Upload unit test coverage
         uses: codecov/codecov-action@v5
