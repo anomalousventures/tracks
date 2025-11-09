@@ -19,6 +19,8 @@ func setupTestCommand(t *testing.T) *cobra.Command {
 	mockRenderer.On("Title", mock.Anything).Return().Maybe()
 	mockRenderer.On("Section", mock.Anything).Return().Maybe()
 	mockRenderer.On("Flush").Return(nil).Maybe()
+	mockGenerator.On("Validate", mock.Anything).Return(nil).Maybe()
+	mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	factory := func(*cobra.Command) interfaces.Renderer {
 		return mockRenderer
@@ -116,8 +118,10 @@ func TestNewCommand_Run(t *testing.T) {
 
 	mockValidator.On("ValidateProjectName", mock.Anything, "myapp").Return(nil).Once()
 	mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()
+	mockGenerator.On("Validate", mock.Anything).Return(nil).Once()
+	mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Once()
 	mockRenderer.On("Title", "Creating new Tracks application: myapp").Once()
-	mockRenderer.On("Section", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Twice()
 
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return mockRenderer
@@ -146,6 +150,7 @@ func TestNewCommand_Run(t *testing.T) {
 	}
 
 	mockValidator.AssertExpectations(t)
+	mockGenerator.AssertExpectations(t)
 }
 
 func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
@@ -179,8 +184,10 @@ func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
 
 			mockValidator.On("ValidateProjectName", mock.Anything, tt.projectName).Return(nil).Once()
 			mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()
+			mockGenerator.On("Validate", mock.Anything).Return(nil).Once()
+			mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Once()
 			mockRenderer.On("Title", tt.wantTitle).Once()
-			mockRenderer.On("Section", mock.Anything).Once()
+			mockRenderer.On("Section", mock.Anything).Twice()
 
 			factory := func(*cobra.Command) interfaces.Renderer {
 				return mockRenderer
@@ -198,6 +205,7 @@ func TestNewCommand_RunWithDifferentProjectNames(t *testing.T) {
 			}
 
 			mockValidator.AssertExpectations(t)
+			mockGenerator.AssertExpectations(t)
 		})
 	}
 }
@@ -209,8 +217,10 @@ func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 
 	mockValidator.On("ValidateProjectName", mock.Anything, "testapp").Return(nil).Once()
 	mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()
+	mockGenerator.On("Validate", mock.Anything).Return(nil).Once()
+	mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Once()
 	mockRenderer.On("Title", mock.Anything).Once()
-	mockRenderer.On("Section", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Twice()
 
 	var capturedCmd *cobra.Command
 	rendererFactory := func(cmd *cobra.Command) interfaces.Renderer {
@@ -234,6 +244,7 @@ func TestNewCommand_RendererFactoryCalledWithCommand(t *testing.T) {
 	}
 
 	mockValidator.AssertExpectations(t)
+	mockGenerator.AssertExpectations(t)
 }
 
 func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
@@ -243,8 +254,10 @@ func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 
 	mockValidator.On("ValidateProjectName", mock.Anything, "testapp").Return(nil).Once()
 	mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()
+	mockGenerator.On("Validate", mock.Anything).Return(nil).Once()
+	mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Once()
 	mockRenderer.On("Title", mock.Anything).Once()
-	mockRenderer.On("Section", mock.Anything).Once()
+	mockRenderer.On("Section", mock.Anything).Twice()
 
 	rendererFactory := func(*cobra.Command) interfaces.Renderer {
 		return mockRenderer
@@ -276,6 +289,7 @@ func TestNewCommand_FlusherCalledWithCommandAndRenderer(t *testing.T) {
 	}
 
 	mockValidator.AssertExpectations(t)
+	mockGenerator.AssertExpectations(t)
 }
 
 func TestNewCommand_CommandDescriptions(t *testing.T) {
@@ -417,11 +431,14 @@ func TestNewCommand_FlagParsing(t *testing.T) {
 			mockRenderer := mocks.NewMockRenderer(t)
 
 			tt.setupValidator(mockValidator)
+			mockGenerator.On("Validate", mock.Anything).Return(nil).Once()
+			mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Once()
 			mockRenderer.On("Title", mock.Anything).Return().Once()
 			mockRenderer.On("Section", mock.MatchedBy(func(s interfaces.Section) bool {
 				return strings.Contains(s.Body, "Database: "+tt.wantDB) &&
 					strings.Contains(s.Body, "Module: "+tt.wantModule)
 			})).Return().Once()
+			mockRenderer.On("Section", mock.Anything).Return().Once()
 
 			factory := func(*cobra.Command) interfaces.Renderer {
 				return mockRenderer
@@ -439,6 +456,7 @@ func TestNewCommand_FlagParsing(t *testing.T) {
 			}
 
 			mockValidator.AssertExpectations(t)
+			mockGenerator.AssertExpectations(t)
 			mockRenderer.AssertExpectations(t)
 		})
 	}
@@ -547,6 +565,8 @@ func TestNewCommand_ValidationIntegration(t *testing.T) {
 		mockRenderer := mocks.NewMockRenderer(t)
 		mockRenderer.On("Title", mock.Anything).Return().Maybe()
 		mockRenderer.On("Section", mock.Anything).Return().Maybe()
+		mockGenerator.On("Validate", mock.Anything).Return(nil).Maybe()
+		mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Maybe()
 
 		mockValidator.On("ValidateProjectName", mock.MatchedBy(func(ctx interface{}) bool {
 			return ctx != nil
@@ -582,6 +602,9 @@ func TestNewCommand_ValidationIntegration(t *testing.T) {
 		mockRenderer.On("Section", mock.MatchedBy(func(s interfaces.Section) bool {
 			return strings.Contains(s.Body, "Module: example.com/myapp")
 		})).Return().Maybe()
+		mockRenderer.On("Section", mock.Anything).Return().Maybe()
+		mockGenerator.On("Validate", mock.Anything).Return(nil).Maybe()
+		mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Maybe()
 
 		mockValidator.On("ValidateProjectName", mock.Anything, "myapp").Return(nil).Once()
 		mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()
@@ -611,6 +634,8 @@ func TestNewCommand_ValidationIntegration(t *testing.T) {
 		mockRenderer := mocks.NewMockRenderer(t)
 		mockRenderer.On("Title", mock.Anything).Return().Maybe()
 		mockRenderer.On("Section", mock.Anything).Return().Maybe()
+		mockGenerator.On("Validate", mock.Anything).Return(nil).Maybe()
+		mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Maybe()
 
 		mockValidator.On("ValidateProjectName", mock.Anything, "myapp").Return(nil).Once()
 		mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()
@@ -640,6 +665,8 @@ func TestNewCommand_ValidationIntegration(t *testing.T) {
 		mockRenderer := mocks.NewMockRenderer(t)
 		mockRenderer.On("Title", mock.Anything).Return().Maybe()
 		mockRenderer.On("Section", mock.Anything).Return().Maybe()
+		mockGenerator.On("Validate", mock.Anything).Return(nil).Maybe()
+		mockGenerator.On("Generate", mock.Anything, mock.Anything).Return(nil).Maybe()
 
 		mockValidator.On("ValidateProjectName", mock.Anything, "myapp").Return(nil).Once()
 		mockValidator.On("ValidateDatabaseDriver", mock.Anything, "go-libsql").Return(nil).Once()

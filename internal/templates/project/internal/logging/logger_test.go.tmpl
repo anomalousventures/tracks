@@ -1,0 +1,37 @@
+package logging
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestLogger_SmokeTest(t *testing.T) {
+	logger := NewLogger("production")
+	ctx := context.Background()
+
+	assert.NotPanics(t, func() {
+		logger.Info(ctx).Msg("smoke test info")
+		logger.Error(ctx).Msg("smoke test error")
+		logger.Debug(ctx).Msg("smoke test debug")
+		logger.Warn(ctx).Msg("smoke test warn")
+	})
+}
+
+func TestWithRequestID(t *testing.T) {
+	ctx := context.Background()
+	requestID := "test-request-id"
+
+	newCtx := WithRequestID(ctx, requestID)
+	assert.NotNil(t, newCtx)
+
+	retrievedID := GetRequestID(newCtx)
+	assert.Equal(t, requestID, retrievedID)
+}
+
+func TestGetRequestID_EmptyWhenNotSet(t *testing.T) {
+	ctx := context.Background()
+	requestID := GetRequestID(ctx)
+	assert.Empty(t, requestID)
+}

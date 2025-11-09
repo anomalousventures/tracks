@@ -1,24 +1,27 @@
+version: "2"
+
 linters:
-  disable-all: true
   enable:
     - errcheck
     - govet
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
     - contextcheck
+
+  settings:
+    errcheck:
+      check-blank: true
+
+formatters:
+  enable:
     - gofmt
     - goimports
 
-linters-settings:
-  errcheck:
-    check-blank: true
-
 issues:
   exclude-dirs:
-    - test/mocks
-    - db/generated
+    - tests/mocks
+    - internal/db/generated
   exclude-files:
     - ".*_templ\\.go$"
   max-issues-per-linter: 0

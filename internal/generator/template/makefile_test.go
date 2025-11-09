@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/templates"
-	"github.com/anomalousventures/tracks/tests/helpers"
+	"github.com/anomalousventures/tracks/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +31,7 @@ func TestMakefileTargets(t *testing.T) {
 		items []string
 	}{
 		{"phony declarations", []string{
-			".PHONY: help test build dev mocks sqlc lint clean",
+			".PHONY: help test build dev dev-services dev-full dev-down generate mocks sqlc lint clean",
 		}},
 		{"help target", []string{
 			"help: ## Show this help message",
@@ -70,7 +70,7 @@ func TestMakefileTargets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			helpers.AssertContainsAll(t, result, tt.items)
+			testutil.AssertContainsAll(t, result, tt.items)
 		})
 	}
 }
@@ -78,22 +78,26 @@ func TestMakefileTargets(t *testing.T) {
 func TestMakefileHelpText(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
-		"help   - Show this help message",
-		"test   - Run all tests",
-		"build  - Build the server binary",
-		"dev    - Start development server with hot reload",
-		"mocks  - Generate mocks from interfaces",
-		"sqlc   - Generate type-safe SQL code",
-		"lint   - Run linters",
-		"clean  - Remove build artifacts",
+	testutil.AssertContainsAll(t, result, []string{
+		"help         - Show this help message",
+		"test         - Run all tests",
+		"build        - Build the server binary",
+		"dev          - Start development server with hot reload",
+		"dev-services - Start docker-compose services",
+		"dev-full     - Start docker services and dev server",
+		"dev-down     - Stop docker-compose services",
+		"generate     - Generate mocks and SQL code",
+		"mocks        - Generate mocks from interfaces",
+		"sqlc         - Generate type-safe SQL code",
+		"lint         - Run linters",
+		"clean        - Remove build artifacts",
 	})
 }
 
 func TestMakefileUsesGoTool(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"go tool air",
 		"go tool mockery",
 		"go tool sqlc",

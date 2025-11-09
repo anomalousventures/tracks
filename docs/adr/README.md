@@ -29,6 +29,9 @@ Each ADR follows this structure:
 - [ADR-003: Context Propagation Pattern](./003-context-propagation-pattern.md) - Uses Go context for request-scoped values like logger and trace IDs
 - [ADR-004: Mockery for Test Mock Generation](./004-mockery-for-test-mock-generation.md) - Uses mockery with package discovery for automated test mock generation
 - [ADR-005: HTTP Layer Architecture and Cross-Domain Orchestration](./005-http-layer-architecture.md) - Establishes HTTP layer structure and handler orchestration pattern for generated applications
+- [ADR-006: Route Reference Constants Pattern](./006-route-reference-constants.md) - Defines centralized route path constants to eliminate magic strings
+- [ADR-007: Configuration File Separation](./007-configuration-file-separation.md) - Separates configuration concerns into dedicated config package
+- [ADR-008: Generator Template Sequencing](./008-generator-template-sequencing.md) - Sequences template rendering to support mock-dependent tests (app templates → tidy → generate → test templates)
 
 ### Superseded
 

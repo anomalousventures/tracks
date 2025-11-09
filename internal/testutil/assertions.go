@@ -1,4 +1,4 @@
-package helpers
+package testutil
 
 import (
 	"go/parser"
@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// AssertValidGoCode verifies that generated code is syntactically valid Go.
 func AssertValidGoCode(t *testing.T, code, filename string) {
 	t.Helper()
 
@@ -18,7 +17,6 @@ func AssertValidGoCode(t *testing.T, code, filename string) {
 	require.NoError(t, err)
 }
 
-// AssertContainsAll verifies that code contains all expected strings.
 func AssertContainsAll(t *testing.T, code string, items []string) {
 	t.Helper()
 

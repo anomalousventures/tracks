@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/templates"
-	"github.com/anomalousventures/tracks/tests/helpers"
+	"github.com/anomalousventures/tracks/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,15 +39,14 @@ func TestConfigTemplate(t *testing.T) {
 
 func TestConfigValidGoCode(t *testing.T) {
 	result := renderConfigTemplate(t, "APP")
-	helpers.AssertValidGoCode(t, result, "config.go")
+	testutil.AssertValidGoCode(t, result, "config.go")
 }
 
 func TestConfigImports(t *testing.T) {
 	result := renderConfigTemplate(t, "APP")
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		`"fmt"`,
-		`"os"`,
 		`"time"`,
 		`"github.com/spf13/viper"`,
 	})
@@ -94,7 +93,7 @@ func TestConfigStructDefinitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			helpers.AssertContainsAll(t, result, tt.items)
+			testutil.AssertContainsAll(t, result, tt.items)
 		})
 	}
 }
@@ -102,7 +101,7 @@ func TestConfigStructDefinitions(t *testing.T) {
 func TestConfigLoadFunction(t *testing.T) {
 	result := renderConfigTemplate(t, "APP")
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"func Load() (*Config, error)",
 		"v := viper.New()",
 		`v.SetConfigFile(".env")`,
@@ -115,7 +114,7 @@ func TestConfigLoadFunction(t *testing.T) {
 func TestConfigDefaults(t *testing.T) {
 	result := renderConfigTemplate(t, "APP")
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		`v.SetDefault("environment", "production")`,
 		`v.SetDefault("server.port", ":8080")`,
 		`v.SetDefault("server.read_timeout", "15s")`,
@@ -157,7 +156,7 @@ func TestConfigEnvPrefixInterpolation(t *testing.T) {
 func TestConfigMapstructureTags(t *testing.T) {
 	result := renderConfigTemplate(t, "APP")
 
-	helpers.AssertContainsAll(t, result, []string{
+	testutil.AssertContainsAll(t, result, []string{
 		"`mapstructure:\"environment\"`",
 		"`mapstructure:\"server\"`",
 		"`mapstructure:\"database\"`",

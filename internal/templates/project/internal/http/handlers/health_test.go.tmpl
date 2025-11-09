@@ -1,0 +1,47 @@
+package handlers
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"{{.ModuleName}}/internal/interfaces"
+	"{{.ModuleName}}/tests/mocks"
+)
+
+func TestHealthHandler_Check(t *testing.T) {
+	t.Run("returns healthy status", func(t *testing.T) {
+		mockService := mocks.NewMockHealthService(t)
+		mockLogger := mocks.NewMockLogger(t)
+
+		expectedStatus := interfaces.HealthStatus{
+			Status:    "ok",
+			Timestamp: time.Now(),
+		}
+
+		mockService.EXPECT().
+			Check(context.Background()).
+			Return(expectedStatus)
+
+		handler := NewHealthHandler(mockService, mockLogger)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+		rec := httptest.NewRecorder()
+
+		handler.Check(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+
+		var response interfaces.HealthStatus
+		err := json.NewDecoder(rec.Body).Decode(&response)
+		require.NoError(t, err)
+		assert.Equal(t, "ok", response.Status)
+	})
+}

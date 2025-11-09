@@ -110,7 +110,7 @@ func TestServerGracefulShutdown(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, output, "func (s *Server) ListenAndServe() error", "should have ListenAndServe method")
-	assert.Contains(t, output, "signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)", "should handle shutdown signals")
+	assert.Contains(t, output, "signal.Notify(quit, os.Interrupt)", "should handle shutdown signals cross-platform")
 	assert.Contains(t, output, "srv.Shutdown(shutdownCtx)", "should call graceful shutdown")
 }
 

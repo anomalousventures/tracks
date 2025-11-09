@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+{{- if eq .DBDriver "postgres" }}
+  postgres:
+    image: postgres:16-alpine
+    container_name: {{.ProjectName}}-postgres
+    environment:
+      POSTGRES_USER: {{.ProjectName}}
+      POSTGRES_PASSWORD: {{.ProjectName}}
+      POSTGRES_DB: {{.ProjectName}}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{.ProjectName}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+{{- else if eq .DBDriver "go-libsql" }}
+  libsql:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    container_name: {{.ProjectName}}-libsql
+    ports:
+      - "8080:8080"
+    volumes:
+      - libsql-data:/var/lib/sqld
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  libsql-data:
+{{- else if eq .DBDriver "sqlite3" }}
+  # SQLite3 uses a local file database - no container needed
+  # Database file location: ./data/{{.ProjectName}}.db
+  #
+  # Example services you can add for development:
+  #
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   container_name: {{.ProjectName}}-mailhog
+  #   ports:
+  #     - "1025:1025"  # SMTP server
+  #     - "8025:8025"  # Web UI
+  #
+  # localstack:
+  #   image: localstack/localstack:latest
+  #   container_name: {{.ProjectName}}-localstack
+  #   ports:
+  #     - "4566:4566"  # LocalStack edge port
+  #   environment:
+  #     - SERVICES=s3,sqs,sns
+  #     - DEBUG=1
+  #   volumes:
+  #     - localstack-data:/var/lib/localstack
+  #
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: {{.ProjectName}}-redis
+  #   ports:
+  #     - "6379:6379"
+
+# Uncomment if using additional services:
+# volumes:
+#   localstack-data:
+{{- end }}

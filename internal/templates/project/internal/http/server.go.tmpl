@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"{{.ModuleName}}/internal/config"
@@ -60,7 +59,7 @@ func (s *Server) ListenAndServe() error {
 	}()
 
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(quit, os.Interrupt)
 
 	select {
 	case <-quit:

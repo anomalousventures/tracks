@@ -10,13 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Test (${{ matrix.os }})
+  unit-tests:
+    name: Unit Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
         go-version: ['1.25.3']
 
     steps:
@@ -32,14 +32,109 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Run tests
-        run: make test-coverage
+      - name: Run unit tests
+        shell: bash
+        run: go test -v -race -short -coverprofile=coverage-unit.out -p 1 ./...
 
-      - name: Upload coverage
+      - name: Upload unit test coverage
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.out
+          files: ./coverage-unit.out
           flags: unittests-${{ runner.os }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  integration-tests:
+    name: Integration Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
+        go-version: ['1.25.3']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Set integration test timeouts
+        shell: bash
+        run: |
+          case "${{ matrix.os }}" in
+            ubuntu-latest)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=15s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=120s" >> $GITHUB_ENV
+              ;;
+            macos-latest|macos-latest-large)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=4s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=20s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
+              ;;
+            windows-2025)
+              echo "INTEGRATION_TEST_SHORT_TIMEOUT=6s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=30s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_LONG_TIMEOUT=45s" >> $GITHUB_ENV
+              echo "INTEGRATION_TEST_E2E_TIMEOUT=240s" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Run integration tests
+        shell: bash
+        run: go test -v -coverprofile=coverage-integration.out -p 1 ./tests/integration
+
+      - name: Upload integration test coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage-integration.out
+          flags: integration-${{ runner.os }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  docker-e2e-tests:
+    name: Docker E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.3'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Set integration test timeouts
+        run: |
+          echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
+          echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
+          echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
+          echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
+
+      - name: Run Docker E2E tests
+        shell: bash
+        run: go test -v -tags=docker -coverprofile=coverage-docker.out -p 1 ./tests/integration
+
+      - name: Upload Docker E2E test coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage-docker.out
+          flags: docker-e2e-ubuntu
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
@@ -49,7 +144,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
         go-version: ['1.25.3']
 
     steps:

@@ -146,8 +146,8 @@ func TestMainGoTemplate(t *testing.T) {
 		{"server start log", `logger.Info(ctx).Msg("server starting")`, "should log server start"},
 		{"db connection", "database, err := db.New(ctx, cfg.Database)", "should connect to database"},
 		{"db error wrap", `return fmt.Errorf("connect to database: %w", err)`, "should wrap database connection error"},
-		{"db cleanup", "defer database.Close()", "should have defer database.Close()"},
-		{"health service", "healthService := health.NewService()", "should instantiate health service"},
+		{"db cleanup", "database.Close()", "should close database"},
+		{"health service", "healthService := health.NewService(healthRepo)", "should instantiate health service with repository"},
 		{"server builder", "http.NewServer(&cfg.Server, logger)", "should use NewServer constructor"},
 		{"with health", "WithHealthService(healthService)", "should chain WithHealthService"},
 		{"register routes", "RegisterRoutes()", "should chain RegisterRoutes"},
@@ -194,15 +194,15 @@ func TestMainGoMarkerSections(t *testing.T) {
 		})
 	}
 
-	t.Run("REPOSITORIES is empty", func(t *testing.T) {
+	t.Run("REPOSITORIES contains health repo", func(t *testing.T) {
 		beginIdx := strings.Index(result, "// TRACKS:REPOSITORIES:BEGIN")
 		endIdx := strings.Index(result, "// TRACKS:REPOSITORIES:END")
 		require.NotEqual(t, -1, beginIdx, "should have REPOSITORIES begin marker")
 		require.NotEqual(t, -1, endIdx, "should have REPOSITORIES end marker")
 
 		section := result[beginIdx:endIdx]
-		lines := strings.Split(section, "\n")
-		assert.Len(t, lines, 2, "REPOSITORIES section should only contain begin marker and empty line")
+		assert.Contains(t, section, "queries := generated.New(database)", "should create queries")
+		assert.Contains(t, section, "healthRepo := health.NewRepository(queries)", "should create health repository")
 	})
 
 	t.Run("marker order", func(t *testing.T) {

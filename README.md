@@ -157,6 +157,27 @@ For contributors:
 - [Roadmap](./docs/roadmap/README.md) - Phase breakdown and epic details
 - [GitHub Issues](https://github.com/anomalousventures/tracks/issues) - Task tracking
 
+#### Running Tests
+
+Tracks uses a multi-layered testing approach for maximum cross-platform coverage:
+
+```bash
+make test                            # Unit tests (fast, all platforms)
+go test ./tests/integration          # Integration tests (all platforms)
+go test -tags=docker ./tests/integration  # Docker E2E tests (Ubuntu only)
+make test-coverage                   # All tests with coverage reports
+```
+
+**Test Types:**
+
+- **Unit Tests** - Colocated with source, run with `-short` flag, use race detector
+- **Integration Tests** - File generation, validation, git operations (no external services)
+- **Docker E2E Tests** - Full end-to-end with databases (Postgres, LibSQL) via Docker Compose
+
+Docker E2E tests use the `//go:build docker` tag and only run on Ubuntu in CI due to Docker setup complexity on macOS/Windows. Non-Docker tests run on all platforms.
+
+See [Testing Strategy PRD](./docs/prd/13_testing.md) for complete details.
+
 ## Philosophy
 
 ### Idiomatic Go

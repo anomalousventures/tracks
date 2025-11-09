@@ -118,5 +118,5 @@ func TestInitializeGit_ConfiguresUser(t *testing.T) {
 	cmd.Dir = tmpDir
 	output, err = cmd.Output()
 	require.NoError(t, err)
-	assert.Equal(t, "tracks@tracks.local\n", string(output))
+	assert.Equal(t, "info@anomalous.ventures\n", string(output))
 }

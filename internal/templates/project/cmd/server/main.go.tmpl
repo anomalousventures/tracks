@@ -7,6 +7,7 @@ import (
 
 	"{{.ModuleName}}/internal/config"
 	"{{.ModuleName}}/internal/db"
+	"{{.ModuleName}}/internal/db/generated"
 	"{{.ModuleName}}/internal/domain/health"
 	"{{.ModuleName}}/internal/http"
 	"{{.ModuleName}}/internal/logging"
@@ -35,14 +36,20 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("connect to database: %w", err)
 	}
-	defer database.Close()
+	defer func() {
+		if err := database.Close(); err != nil {
+			logger.Error(ctx).Err(err).Msg("failed to close database")
+		}
+	}()
 	// TRACKS:DB:END
 
 	// TRACKS:REPOSITORIES:BEGIN
+	queries := generated.New(database)
+	healthRepo := health.NewRepository(queries)
 	// TRACKS:REPOSITORIES:END
 
 	// TRACKS:SERVICES:BEGIN
-	healthService := health.NewService()
+	healthService := health.NewService(healthRepo)
 	// TRACKS:SERVICES:END
 
 	srv := http.NewServer(&cfg.Server, logger).

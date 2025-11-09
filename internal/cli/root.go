@@ -136,7 +136,7 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	logger := NewLogger(logLevelStr)
 
 	validator := validation.NewValidator()
-	projectGenerator := generator.NewNoopGenerator()
+	projectGenerator := generator.NewProjectGenerator()
 
 	ctx := WithViper(context.Background(), v)
 	ctx = trackscontext.WithLogger(ctx, logger)

@@ -145,7 +145,7 @@ dev:
 ```yaml
 # Migration tracking
 database:
-  migrations_path: "db/migrations"
+  migrations_path: "internal/db/migrations"
   last_migration: "20250103_143000_create_users"
 
 # Tool versions for regeneration
