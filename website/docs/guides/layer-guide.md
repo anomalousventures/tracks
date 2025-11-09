@@ -102,15 +102,16 @@ Type-safe route references:
 package routes
 
 const (
-    // Health
+    // API (JSON only, rare)
     HealthCheck = "/api/health"
 
-    // Users
-    UsersList   = "/api/users"
-    UsersCreate = "/api/users"
-    UsersGet    = "/api/users/{id}"
-    UsersUpdate = "/api/users/{id}"
-    UsersDelete = "/api/users/{id}"
+    // Users (hypermedia routes - HTML responses)
+    UsersList      = "/users"
+    UsersCreate    = "/users"
+    UserProfile    = "/u/{username}"
+    EditProfile    = "/settings/profile"
+    UpdateProfile  = "/settings/profile"
+    DeleteAccount  = "/settings/account/delete"
 )
 ```
 

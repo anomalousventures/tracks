@@ -240,38 +240,35 @@ func TestUserHandler_Create(t *testing.T) {
         mockService := mocks.NewMockUserService(t)
 
         mockService.EXPECT().
-            Create(mock.Anything, "John Doe", "john@example.com").
+            Create(mock.Anything, "johndoe", "john@example.com").
             Return(&interfaces.User{
-                ID:    "123",
-                Name:  "John Doe",
-                Email: "john@example.com",
+                ID:       "123",
+                Username: "johndoe",
+                Email:    "john@example.com",
             }, nil).
             Once()
 
         handler := NewUserHandler(mockService)
 
-        reqBody := `{"name":"John Doe","email":"john@example.com"}`
-        req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(reqBody))
-        req.Header.Set("Content-Type", "application/json")
+        form := url.Values{}
+        form.Add("username", "johndoe")
+        form.Add("email", "john@example.com")
+        req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(form.Encode()))
+        req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
         w := httptest.NewRecorder()
 
         handler.Create(w, req)
 
-        assert.Equal(t, http.StatusOK, w.Code)
-
-        var resp map[string]interface{}
-        err := json.NewDecoder(w.Body).Decode(&resp)
-        assert.NoError(t, err)
-        assert.Equal(t, "123", resp["id"])
-        assert.Equal(t, "John Doe", resp["name"])
+        assert.Equal(t, http.StatusSeeOther, w.Code)
+        assert.Equal(t, "/u/johndoe", w.Header().Get("Location"))
     })
 
-    t.Run("invalid request body", func(t *testing.T) {
+    t.Run("invalid form data", func(t *testing.T) {
         mockService := mocks.NewMockUserService(t)
         handler := NewUserHandler(mockService)
 
-        req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader("invalid json"))
+        req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(""))
         w := httptest.NewRecorder()
 
         handler.Create(w, req)
@@ -289,13 +286,16 @@ func TestUserHandler_Create(t *testing.T) {
 
         handler := NewUserHandler(mockService)
 
-        reqBody := `{"name":"John Doe","email":"john@example.com"}`
-        req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(reqBody))
+        form := url.Values{}
+        form.Add("username", "johndoe")
+        form.Add("email", "john@example.com")
+        req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(form.Encode()))
+        req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
         w := httptest.NewRecorder()
 
         handler.Create(w, req)
 
-        assert.Equal(t, http.StatusInternalServerError, w.Code)
+        assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
     })
 }
 ```
@@ -339,19 +339,15 @@ func TestDashboardHandler_Get(t *testing.T) {
 
     handler := NewDashboardHandler(mockUserService, mockPostService, mockStatsService)
 
-    req := httptest.NewRequest(http.MethodGet, "/api/dashboard", nil)
+    req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
     w := httptest.NewRecorder()
 
     handler.Get(w, req)
 
     assert.Equal(t, http.StatusOK, w.Code)
-
-    var resp DashboardResponse
-    err := json.NewDecoder(w.Body).Decode(&resp)
-    assert.NoError(t, err)
-    assert.Equal(t, "John", resp.User.Name)
-    assert.Len(t, resp.Posts, 1)
-    assert.Equal(t, 42, resp.Stats.PostCount)
+    assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+    assert.Contains(t, w.Body.String(), "John")
+    assert.Contains(t, w.Body.String(), "Hello")
 }
 ```
 

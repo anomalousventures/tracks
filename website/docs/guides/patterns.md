@@ -246,13 +246,13 @@ Update `internal/http/routes/routes.go`:
 
 ```go
 const (
-    // Existing
+    // API (JSON only, rare)
     HealthCheck = "/api/health"
 
-    // Users
-    UsersList   = "/api/users"
-    UsersCreate = "/api/users"
-    UsersGet    = "/api/users/{id}"
+    // Users (hypermedia routes - HTML responses)
+    UsersList   = "/users"
+    UsersCreate = "/users"
+    UserProfile = "/u/{username}"
 )
 ```
 
@@ -269,9 +269,9 @@ func registerRoutes(s *Server) {
 
     // Users
     userHandler := handlers.NewUserHandler(s.userService)
-    r.Post(routes.UsersCreate, userHandler.Create)
     r.Get(routes.UsersList, userHandler.List)
-    r.Get(routes.UsersGet, userHandler.Get)
+    r.Post(routes.UsersCreate, userHandler.Create)
+    r.Get(routes.UserProfile, userHandler.ShowProfile)
 }
 ```
 
@@ -499,46 +499,46 @@ func (r *Repository) InsertTx(ctx context.Context, tx *sql.Tx, user *User) error
 }
 ```
 
-## Complete Example: Get User by ID
+## Complete Example: Get User Profile
 
 Here's the complete flow from HTTP request to database query.
 
 ### Request
 
 ```http
-GET /api/users/123 HTTP/1.1
+GET /u/johndoe HTTP/1.1
 ```
 
 ### Handler
 
 ```go
-func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-    id := chi.URLParam(r, "id")
-    user, err := h.userService.GetByID(r.Context(), id)
+func (h *UserHandler) ShowProfile(w http.ResponseWriter, r *http.Request) {
+    username := chi.URLParam(r, "username")
+    user, err := h.userService.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, err.Error(), 500)
         return
     }
-    json.NewEncoder(w).Encode(user)
+    views.UserProfile(user).Render(r.Context(), w)
 }
 ```
 
 ### Service
 
 ```go
-func (s *Service) GetByID(ctx context.Context, id string) (*interfaces.User, error) {
-    if id == "" {
-        return nil, ErrInvalidID
+func (s *Service) GetByUsername(ctx context.Context, username string) (*interfaces.User, error) {
+    if username == "" {
+        return nil, ErrInvalidUsername
     }
-    return s.repo.FindByID(ctx, id)
+    return s.repo.FindByUsername(ctx, username)
 }
 ```
 
 ### Repository
 
 ```go
-func (r *Repository) FindByID(ctx context.Context, id string) (*interfaces.User, error) {
-    row, err := r.queries.GetUser(ctx, id)
+func (r *Repository) FindByUsername(ctx context.Context, username string) (*interfaces.User, error) {
+    row, err := r.queries.GetUserByUsername(ctx, username)
     if err != nil {
         if errors.Is(err, sql.ErrNoRows) {
             return nil, ErrUserNotFound
@@ -546,9 +546,10 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*interfaces.User,
         return nil, fmt.Errorf("getting user: %w", err)
     }
     return &interfaces.User{
-        ID:    row.ID,
-        Name:  row.Name,
-        Email: row.Email,
+        ID:       row.ID,
+        Username: row.Username,
+        Name:     row.Name,
+        Email:    row.Email,
     }, nil
 }
 ```
@@ -556,17 +557,17 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*interfaces.User,
 ### SQLC Query
 
 ```sql
--- name: GetUser :one
-SELECT id, name, email FROM users WHERE id = ?;
+-- name: GetUserByUsername :one
+SELECT id, username, name, email FROM users WHERE username = ?;
 ```
 
 ### Generated Code
 
 ```go
-func (q *Queries) GetUser(ctx context.Context, id string) (GetUserRow, error) {
-    row := q.db.QueryRowContext(ctx, getUser, id)
-    var i GetUserRow
-    err := row.Scan(&i.ID, &i.Name, &i.Email)
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
+    row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+    var i GetUserByUsernameRow
+    err := row.Scan(&i.ID, &i.Username, &i.Name, &i.Email)
     return i, err
 }
 ```
