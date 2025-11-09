@@ -82,9 +82,7 @@ Platform: linux/amd64
 
 ## `tracks new`
 
-Create a new Tracks application.
-
-**Status:** Placeholder implementation (full implementation coming soon)
+Create a new Tracks application with production-ready project structure.
 
 **Usage:**
 
@@ -92,29 +90,26 @@ Create a new Tracks application.
 tracks new <project-name> [flags]
 ```
 
-**Arguments:**
+**Flags:**
 
-- `<project-name>` - Name of the project to create (required)
+- `--db <driver>` - Database driver: `go-libsql` (default), `sqlite3`, `postgres`
+- `--module <path>` - Custom Go module path (default: `example.com/<project-name>`)
+- `--no-git` - Skip git repository initialization
 
 **Examples:**
 
 ```bash
-# Create new application
+# Create with defaults (LibSQL database, git initialized)
 tracks new myapp
 
-# With verbose output
-tracks -v new myapp
+# PostgreSQL database with custom module
+tracks new myapp --db postgres --module github.com/me/myapp
 
-# JSON output
-tracks --json new myapp
+# Skip git initialization
+tracks new myapp --no-git
 ```
 
-**Future Flags** (planned):
-
-- `--db <driver>` - Database driver (postgres, sqlite, libsql)
-- `--module <path>` - Custom Go module path
-- `--no-git` - Skip git initialization
-- `--auth <method>` - Authentication method (session, jwt)
+See [detailed documentation →](./new.md) for complete reference including platform requirements, troubleshooting, and FAQ
 
 ## `tracks help`
 
