@@ -15,7 +15,7 @@ func TestDockerCmdWithTimeout(t *testing.T) {
 		defer cancel()
 
 		if runtime.GOOS == "windows" {
-			assert.Equal(t, "wsl", cmd.Path, "should use wsl on Windows")
+			assert.Contains(t, cmd.Path, "wsl", "should use wsl on Windows")
 			expectedArgs := []string{"wsl", "--", "docker", "compose", "up", "-d"}
 			assert.Equal(t, expectedArgs, cmd.Args, "should prefix docker command with wsl --")
 		} else {

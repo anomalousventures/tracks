@@ -39,7 +39,7 @@ jobs:
       - name: Upload unit test coverage
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage-unit.out
+          files: ./coverage-unit.out
           flags: unittests-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
@@ -97,7 +97,7 @@ jobs:
       - name: Upload integration test coverage
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage-integration.out
+          files: ./coverage-integration.out
           flags: integration-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
@@ -126,7 +126,7 @@ jobs:
 
       - name: Setup Docker (macOS)
         if: runner.os == 'macOS'
-        uses: douglascamata/setup-docker-macos-action@v1.1.0
+        uses: douglascamata/setup-docker-macos-action@v1.0.1
 
       - name: Setup WSL (Windows)
         if: runner.os == 'Windows'
@@ -171,7 +171,7 @@ jobs:
       - name: Upload Docker E2E test coverage
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage-docker.out
+          files: ./coverage-docker.out
           flags: docker-e2e-${{ runner.os }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
