@@ -181,11 +181,9 @@ func TestRepository_Insert(t *testing.T) {
         t.Skip("skipping integration test")
     }
 
-    // Setup test database
     db := setupTestDB(t)
     defer db.Close()
 
-    // Start transaction (rollback at end for cleanup)
     tx, err := db.BeginTx(context.Background(), nil)
     require.NoError(t, err)
     defer tx.Rollback()

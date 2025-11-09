@@ -321,12 +321,10 @@ func NewService(repo interfaces.UserRepository) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, error) {
-    // Business validations
     if req.Age < 18 {
         return nil, ErrUserTooYoung
     }
 
-    // Domain logic
     user := &User{
         ID:        uuid.New().String(),
         Name:      req.Name,
@@ -335,7 +333,6 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, err
         CreatedAt: time.Now(),
     }
 
-    // Persist
     if err := s.repo.Insert(ctx, user); err != nil {
         return nil, fmt.Errorf("inserting user: %w", err)
     }
@@ -457,12 +454,10 @@ func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error) {
         return nil, fmt.Errorf("opening database: %w", err)
     }
 
-    // Configure connection pool
     db.SetMaxOpenConns(cfg.MaxOpenConns)
     db.SetMaxIdleConns(cfg.MaxIdleConns)
     db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
-    // Verify connection
     if err := db.PingContext(ctx); err != nil {
         return nil, fmt.Errorf("pinging database: %w", err)
     }
@@ -551,13 +546,11 @@ The `cmd/server/main.go` file wires everything together:
 func main() {
     ctx := context.Background()
 
-    // Load config
     cfg, err := config.Load()
     if err != nil {
         log.Fatal(err)
     }
 
-    // Setup logger
     logger := logging.New(cfg.Logging.Level)
 
     // TRACKS:DB:BEGIN
@@ -578,13 +571,11 @@ func main() {
     // userService := users.NewService(userRepo)  (added incrementally)
     // TRACKS:SERVICES:END
 
-    // Setup HTTP server
     srv := http.NewServer(&cfg.Server, logger).
         WithHealthService(healthService).
         // WithUserService(userService).  (added incrementally)
         RegisterRoutes()
 
-    // Start server
     if err := srv.Start(ctx); err != nil {
         logger.Fatal("server error", "error", err)
     }

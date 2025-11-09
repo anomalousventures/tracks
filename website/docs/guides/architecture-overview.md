@@ -36,7 +36,7 @@ var globalDB *sql.DB
 type Service struct{}
 
 func (s *Service) GetUser(id string) (*User, error) {
-    return globalDB.Query(...) // Hidden dependency!
+    return globalDB.Query(...)
 }
 ```
 

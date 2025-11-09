@@ -282,17 +282,17 @@ Update `cmd/server/main.go`:
 ```go
 // TRACKS:REPOSITORIES:BEGIN
 healthRepo := health.NewRepository(database)
-userRepo := users.NewRepository(database)  // ADD THIS
+userRepo := users.NewRepository(database)
 // TRACKS:REPOSITORIES:END
 
 // TRACKS:SERVICES:BEGIN
 healthService := health.NewService(healthRepo)
-userService := users.NewService(userRepo)  // ADD THIS
+userService := users.NewService(userRepo)
 // TRACKS:SERVICES:END
 
 srv := http.NewServer(&cfg.Server, logger).
     WithHealthService(healthService).
-    WithUserService(userService).  // ADD THIS
+    WithUserService(userService).
     RegisterRoutes()
 ```
 
