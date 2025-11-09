@@ -8,7 +8,7 @@ This phase establishes the basic CLI tool and project scaffolding capabilities. 
 
 **Target Version:** v0.1.0
 **Estimated Duration:** 2-3 weeks
-**Status:** In Progress (Epic 1 Complete)
+**Status:** In Progress (Epics 1, 2, 0.5, 3 Complete; Epic 4 ~80%, Epic 5 ~70%)
 
 ## Goals
 
@@ -22,14 +22,14 @@ This phase establishes the basic CLI tool and project scaffolding capabilities. 
 
 This phase has been broken down into 6 epics for implementation:
 
-1. ✅ [Epic 1: CLI Infrastructure](./epics/1-cli-infrastructure.md) - Foundation CLI with Cobra, version tracking, help system (COMPLETE)
-2. ✅ [Epic 2: Template Engine & Embedding](./epics/2-template-engine.md) - Go embed system, template rendering, variable substitution (COMPLETE)
-3. 🚨 **[Epic 0.5: Architecture Alignment](./epics/0.5-architecture-alignment.md) - CRITICAL STOP-THE-LINE EPIC** - Fix architectural issues before continuing Epic 3 (IN PROGRESS)
-4. [Epic 3: Project Generation](./epics/3-project-generation.md) - `tracks new` command, directory structure, config generation (Phases 1-2 COMPLETE, Phase 3+ BLOCKED by Epic 0.5)
-5. [Epic 4: Generated Project Tooling](./epics/4-generated-tooling.md) - Makefile, Air config, linting, Docker, CI/CD
-6. [Epic 5: Documentation & Installation](./epics/5-documentation.md) - README templates, Docusaurus updates, guides
+1. ✅ [Epic 1: CLI Infrastructure](./0-foundation/epics/1-cli-infrastructure.md) - Foundation CLI with Cobra, version tracking, help system (COMPLETE)
+2. ✅ [Epic 2: Template Engine & Embedding](./0-foundation/epics/2-template-engine.md) - Go embed system, template rendering, variable substitution (COMPLETE)
+3. ✅ [Epic 0.5: Architecture Alignment](./0-foundation/epics/0.5-architecture-alignment.md) - Fix architectural issues, establish DI pattern, clean architecture (COMPLETE)
+4. ✅ [Epic 3: Project Generation](./0-foundation/epics/3-project-generation.md) - `tracks new` command, directory structure, config generation (29/30 complete, #150 in PR)
+5. 🔄 [Epic 4: Generated Project Tooling](./0-foundation/epics/4-generated-tooling.md) - Makefile, Air config, linting, Docker, CI/CD (~80% complete)
+6. 🔄 [Epic 5: Documentation & Installation](./0-foundation/epics/5-documentation.md) - README templates, Docusaurus updates, guides (~70% complete)
 
-**⚠️ Current Focus:** Epic 0.5 is a stop-the-line architectural refactoring that addresses critical issues identified during Epic 3 Phases 1-2. This epic supercedes all other work until complete to prevent compounding technical debt and ensure the CLI follows the same clean architecture principles as generated applications.
+**Current Focus:** Completing Epic 4 and Epic 5 to finish Phase 0. Epic 3 is nearly complete (#150 pending merge). Remaining work tracked in v0.2.0 milestone.
 
 Each epic contains detailed task breakdowns that will become GitHub issues.
 

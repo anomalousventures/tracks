@@ -45,26 +45,38 @@ Tracks is in **Phase 0 (Foundation)** development. The CLI tool and project scaf
   - Mode detection (TTY, CI, flags, env vars)
   - Theme system with Lip Gloss styling
   - Comprehensive test coverage (unit + integration)
+- ✅ Project generation (`tracks new` command)
+  - Production-ready project scaffolding
+  - Choice of database drivers (LibSQL, SQLite3, PostgreSQL)
+  - Clean architecture with testable code
+  - Cross-platform support (Linux, macOS, Windows)
 
-**Try it now:**
+## Quick Start
+
+Install Tracks and create your first project:
 
 ```bash
-# Clone and build
-git clone https://github.com/anomalousventures/tracks.git
-cd tracks
-make build
+# Install (requires Go 1.25+)
+go install github.com/anomalousventures/tracks/cmd/tracks@latest
 
-# Run CLI
-./bin/tracks version
-./bin/tracks --help
-./bin/tracks --json version  # Machine-readable output
+# Create a new project
+tracks new myapp
+
+# Start development
+cd myapp
+make test   # Run tests
+make dev    # Start server with live reload
+
+# Verify health endpoint
+curl http://localhost:8080/api/health
 ```
+
+See the [CLI documentation](https://anomalousventures.github.io/tracks/cli/new) for all options and platform requirements.
 
 **Coming next:**
 
-- Phase 0: Complete `tracks new` command implementation
-- Phase 1: Core web layer (routing, handlers, middleware)
-- Phase 2: Database layer (SQLC, migrations)
+- Phase 1: Code generation (resources, handlers, services)
+- Phase 2: Authentication and authorization
 - See [Roadmap](#roadmap) for details
 
 ## Vision
@@ -83,7 +95,7 @@ Tracks will be a code-generating web framework for Go that produces idiomatic, p
 
 - HTMX integration for dynamic UIs without JavaScript
 - Server-rendered templates with progressive enhancement
-- RESTful patterns with HTML as the engine of application state
+- RESTful URL patterns with hypermedia (HTML) responses, not JSON APIs
 
 #### Idiomatic Go
 
@@ -205,7 +217,7 @@ HTMX enables rich interactions without JavaScript complexity:
 - Server renders HTML with templ templates
 - HTMX provides dynamic UI updates via HTML over the wire
 - Progressive enhancement with Alpine.js where needed
-- Standard HTTP and REST patterns
+- RESTful URL patterns with hypermedia (HTML) responses, not JSON APIs
 
 ### Convention Over Configuration
 

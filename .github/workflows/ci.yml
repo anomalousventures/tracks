@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# NOTE: Windows ARM (windows-11-arm) is temporarily disabled due to tooling limitations.
+# The `go tool` pattern used for mockery and sqlc does not work correctly on ARM64 Windows,
+# causing `make generate` failures in generated projects. We'll re-enable when Go 1.25+
+# tooling has better ARM64 Windows support. The conditional race detector logic remains
+# for future use when ARM is re-enabled.
+
 jobs:
   unit-tests:
     name: Unit Tests (${{ matrix.os }})
@@ -16,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -32,9 +38,18 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Set test flags
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-11-arm" ]]; then
+            echo "TEST_FLAGS=-v -short -coverprofile=coverage-unit.out -p 1" >> $GITHUB_ENV
+          else
+            echo "TEST_FLAGS=-v -race -short -coverprofile=coverage-unit.out -p 1" >> $GITHUB_ENV
+          fi
+
       - name: Run unit tests
         shell: bash
-        run: go test -v -race -short -coverprofile=coverage-unit.out -p 1 ./...
+        run: go test $TEST_FLAGS ./...
 
       - name: Upload unit test coverage
         uses: codecov/codecov-action@v5
@@ -50,7 +65,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -82,7 +97,7 @@ jobs:
               echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
               ;;
-            windows-2025)
+            windows-latest|windows-11-arm)
               echo "INTEGRATION_TEST_SHORT_TIMEOUT=6s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=30s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=45s" >> $GITHUB_ENV
@@ -144,7 +159,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-2025]
+        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
