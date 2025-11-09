@@ -36,7 +36,7 @@ The framework generates idiomatic Go code - the kind you'd write yourself. No ma
 
 - **HTMX** integration for dynamic UIs without JavaScript
 - Server-rendered templates with progressive enhancement
-- RESTful patterns with HTML as the engine of application state
+- RESTful URL patterns with hypermedia (HTML) responses, not JSON APIs
 
 ### Idiomatic Go
 
@@ -107,7 +107,7 @@ HTMX enables rich interactions without JavaScript complexity:
 - Server renders HTML with templ templates
 - HTMX provides dynamic UI updates via HTML over the wire
 - Progressive enhancement with Alpine.js where needed
-- Standard HTTP and REST patterns
+- RESTful URL patterns with hypermedia (HTML) responses, not JSON APIs
 
 ### Convention Over Configuration
 

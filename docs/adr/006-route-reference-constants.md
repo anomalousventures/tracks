@@ -79,16 +79,15 @@ We will use a **route constants package** where all route paths are defined as t
 package routes
 
 const (
-    // API routes
+    // API routes (JSON only, rare)
     APIHealth       = "/api/health"
-    APIUsersIndex   = "/api/users"
-    APIUsersShow    = "/api/users/{id}"
-    APIUsersCreate  = "/api/users"
 
-    // Web routes
+    // Web routes (hypermedia - HTML responses)
     WebHome         = "/"
     WebDashboard    = "/dashboard"
-    WebUserProfile  = "/users/{username}"
+    WebUsersList    = "/users"
+    WebUserProfile  = "/u/{username}"
+    WebUserCreate   = "/users"
 )
 
 // internal/http/routes.go (route registration)
@@ -104,9 +103,9 @@ func (s *Server) registerRoutes() {
 
     // Use constants for route registration
     r.Get(routes.APIHealth, s.healthHandler.Show)
-    r.Get(routes.APIUsersIndex, s.userHandler.Index)
-    r.Get(routes.APIUsersShow, s.userHandler.Show)
-    r.Post(routes.APIUsersCreate, s.userHandler.Create)
+    r.Get(routes.WebUsersList, s.userHandler.Index)
+    r.Get(routes.WebUserProfile, s.userHandler.ShowProfile)
+    r.Post(routes.WebUserCreate, s.userHandler.Create)
 
     s.router = r
 }
@@ -213,40 +212,42 @@ Route paths as string literals are prohibited except in `internal/http/routes/ro
 import "myapp/internal/http/routes"
 
 r.Get(routes.APIHealth, handler.Show)
+r.Get(routes.WebUserProfile, handler.ShowProfile)
 
 // ❌ WRONG
 r.Get("/api/health", handler.Show)  // Magic string prohibited
+r.Get("/u/{username}", handler.ShowProfile)  // Magic string prohibited
 ```
 
 ### Rule 2: Constant Naming Convention
 
 Route constants follow this pattern:
 
-- **Prefix:** `API` for API routes, `Web` for web page routes
-- **Resource:** Capitalized resource name (singular for REST, plural for collections)
-- **Action:** HTTP verb or page name
+- **Prefix:** `API` for rare JSON endpoints, `Web` for hypermedia routes
+- **Resource:** Capitalized resource name (plural for collections, singular for items)
+- **Action:** Page name or action verb
 
 ```go
 // ✅ CORRECT
 const (
-    // API REST endpoints
-    APIUsersIndex  = "/api/users"        // GET collection
-    APIUsersShow   = "/api/users/{id}"   // GET single
-    APIUsersCreate = "/api/users"        // POST
-    APIUsersUpdate = "/api/users/{id}"   // PUT/PATCH
-    APIUsersDelete = "/api/users/{id}"   // DELETE
+    // API endpoints (JSON only, rare)
+    APIHealth  = "/api/health"
+    APIVersion = "/api/version"
 
-    // Web pages
+    // Web pages (hypermedia - HTML responses)
     WebHome           = "/"
-    WebUserProfile    = "/users/{username}"
+    WebUsersList      = "/users"
+    WebUserProfile    = "/u/{username}"
+    WebUserCreate     = "/users"
     WebAdminDashboard = "/admin/dashboard"
+    WebSettingsProfile = "/settings/profile"
 )
 
 // ❌ WRONG
 const (
-    GetUsers      = "/api/users"       // Unclear if API or web
-    api_users     = "/api/users"       // Wrong case
-    UsersListPage = "/api/users"       // Ambiguous API vs web
+    GetUsers      = "/users"       // Unclear action
+    api_users     = "/api/users"   // Wrong case, wrong pattern (API route)
+    UsersListPage = "/api/users"   // Ambiguous, API pattern for web
 )
 ```
 
@@ -256,11 +257,16 @@ Every route in the application MUST have a corresponding constant, even simple o
 
 ```go
 // ✅ CORRECT
-const WebHome = "/"
+const (
+    WebHome = "/"
+    APIHealth = "/api/health"
+)
 r.Get(routes.WebHome, homeHandler.Show)
+r.Get(routes.APIHealth, healthHandler.Show)
 
 // ❌ WRONG
 r.Get("/", homeHandler.Show)  // Even simple routes need constants
+r.Get("/api/health", healthHandler.Show)  // Magic strings prohibited
 ```
 
 ### Rule 4: Path Parameters in Constants
@@ -270,21 +276,21 @@ Route constants include Chi/gorilla-style path parameters.
 ```go
 // ✅ CORRECT
 const (
-    APIUsersShow    = "/api/users/{id}"
-    WebUserProfile  = "/users/{username}"
+    APIHealth       = "/api/health"
+    WebUserProfile  = "/u/{username}"
 )
 
 // Usage in handler
-func (h *UserHandler) Show(w http.ResponseWriter, r *http.Request) {
-    id := chi.URLParam(r, "id")  // Extract parameter
+func (h *UserHandler) ShowProfile(w http.ResponseWriter, r *http.Request) {
+    username := chi.URLParam(r, "username")  // Extract parameter
     // ...
 }
 
 // Usage in template (construct with parameter)
-<a href={ templ.URL(fmt.Sprintf("/users/%s", username)) }>Profile</a>
+<a href={ templ.URL(fmt.Sprintf("/u/%s", username)) }>Profile</a>
 
 // Or use helper function
-<a href={ templ.URL(routes.UserProfilePath(username)) }>Profile</a>
+<a href={ templ.URL(routes.WebUserProfilePath(username)) }>Profile</a>
 ```
 
 ### Rule 5: Route Helper Functions (Optional)
@@ -298,17 +304,18 @@ package routes
 import "fmt"
 
 const (
-    APIUsersShow   = "/api/users/{id}"
-    WebUserProfile = "/users/{username}"
+    APIHealth      = "/api/health"
+    WebUserProfile = "/u/{username}"
+    WebPostView    = "/p/{slug}"
 )
 
 // Helper functions for constructing paths with parameters
-func APIUsersShowPath(id string) string {
-    return fmt.Sprintf("/api/users/%s", id)
+func WebUserProfilePath(username string) string {
+    return fmt.Sprintf("/u/%s", username)
 }
 
-func WebUserProfilePath(username string) string {
-    return fmt.Sprintf("/users/%s", username)
+func WebPostViewPath(slug string) string {
+    return fmt.Sprintf("/p/%s", slug)
 }
 
 // Usage in template
