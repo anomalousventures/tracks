@@ -88,9 +88,9 @@ if err != nil {
     return nil, fmt.Errorf("getting user %s: %w", id, err)
 }
 
-// ❌ WRONG: Lost error chain
+// ❌ WRONG: Error chain broken
 if err != nil {
-    return nil, fmt.Errorf("error getting user")
+    return nil, errors.New("failed to get user")
 }
 ```
 

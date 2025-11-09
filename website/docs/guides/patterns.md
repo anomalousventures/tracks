@@ -460,7 +460,7 @@ func (s *Service) CreateUserWithProfile(ctx context.Context, req CreateUserReque
     if err != nil {
         return nil, fmt.Errorf("starting transaction: %w", err)
     }
-    defer tx.Rollback()
+    defer tx.Rollback()  // No-op if tx.Commit() succeeds
 
     // Create user
     user := &User{

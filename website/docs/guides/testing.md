@@ -92,10 +92,8 @@ import (
 )
 
 func TestUserService_GetByID(t *testing.T) {
-    // Create mock
     mockRepo := mocks.NewMockUserRepository(t)
 
-    // Set expectations
     mockRepo.EXPECT().
         FindByID(mock.Anything, "123").
         Return(&interfaces.User{
@@ -104,10 +102,8 @@ func TestUserService_GetByID(t *testing.T) {
         }, nil).
         Once()
 
-    // Create service with mock
     svc := NewService(mockRepo)
 
-    // Test
     user, err := svc.GetByID(context.Background(), "123")
     assert.NoError(t, err)
     assert.Equal(t, "John Doe", user.Name)
@@ -196,7 +192,6 @@ func TestRepository_Insert(t *testing.T) {
 
     repo := NewRepository(tx)
 
-    // Test insert
     user := &interfaces.User{
         ID:    uuid.New().String(),
         Name:  "Test User",
@@ -206,7 +201,6 @@ func TestRepository_Insert(t *testing.T) {
     err = repo.Insert(context.Background(), user)
     assert.NoError(t, err)
 
-    // Verify inserted
     found, err := repo.FindByID(context.Background(), user.ID)
     assert.NoError(t, err)
     assert.Equal(t, user.Name, found.Name)
@@ -217,7 +211,6 @@ func setupTestDB(t *testing.T) *sql.DB {
     db, err := sql.Open("sqlite3", ":memory:")
     require.NoError(t, err)
 
-    // Run migrations
     migrationFiles := filepath.Glob("../../internal/db/migrations/*.sql")
     for _, file := range migrationFiles {
         sql, err := os.ReadFile(file)
@@ -259,18 +252,14 @@ func TestUserHandler_Create(t *testing.T) {
 
         handler := NewUserHandler(mockService)
 
-        // Create request
         reqBody := `{"name":"John Doe","email":"john@example.com"}`
         req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(reqBody))
         req.Header.Set("Content-Type", "application/json")
 
-        // Record response
         w := httptest.NewRecorder()
 
-        // Execute
         handler.Create(w, req)
 
-        // Assert
         assert.Equal(t, http.StatusOK, w.Code)
 
         var resp map[string]interface{}
@@ -333,13 +322,11 @@ func TestDashboardHandler_Get(t *testing.T) {
     mockPostService := mocks.NewMockPostService(t)
     mockStatsService := mocks.NewMockStatsService(t)
 
-    // Setup user expectation
     mockUserService.EXPECT().
         GetCurrent(mock.Anything).
         Return(&interfaces.User{ID: "123", Name: "John"}, nil).
         Once()
 
-    // Setup posts expectation
     mockPostService.EXPECT().
         ListByAuthor(mock.Anything, "123", 5).
         Return([]*interfaces.Post{
@@ -347,7 +334,6 @@ func TestDashboardHandler_Get(t *testing.T) {
         }, nil).
         Once()
 
-    // Setup stats expectation
     mockStatsService.EXPECT().
         GetForUser(mock.Anything, "123").
         Return(&interfaces.Stats{PostCount: 42}, nil).
@@ -379,10 +365,8 @@ Middleware tests verify the middleware chain behavior.
 
 ```go
 func TestLoggingMiddleware(t *testing.T) {
-    // Create mock logger
     mockLogger := mocks.NewMockLogger(t)
 
-    // Expect info logs
     mockLogger.EXPECT().
         Info("request started", mock.Anything).
         Once()
@@ -391,20 +375,16 @@ func TestLoggingMiddleware(t *testing.T) {
         Info("request completed", mock.Anything).
         Once()
 
-    // Create middleware
     mw := NewLogging(mockLogger)
 
-    // Create test handler
     called := false
     testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         called = true
         w.WriteHeader(http.StatusOK)
     })
 
-    // Wrap handler
     wrapped := mw(testHandler)
 
-    // Test
     req := httptest.NewRequest(http.MethodGet, "/test", nil)
     w := httptest.NewRecorder()
 
