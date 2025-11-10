@@ -291,32 +291,15 @@ func runE2ETest(t *testing.T, driver string) {
 	t.Log("E2E test completed successfully!")
 }
 
-//nolint:unused
-func runDockerE2ETest(t *testing.T, driver string) {
+type databaseSetup struct {
+	dbURL          string
+	composeStarted bool
+	cleanupFunc    func()
+}
+
+func buildDockerImage(t *testing.T, projectRoot, imageName string) func() {
 	t.Helper()
 
-	tmpDir := t.TempDir()
-	projectName := "testapp"
-	imageName := fmt.Sprintf("%s:test", projectName)
-
-	cfg := generator.ProjectConfig{
-		ProjectName:    projectName,
-		ModulePath:     fmt.Sprintf("github.com/test/%s-app", driver),
-		DatabaseDriver: driver,
-		EnvPrefix:      "APP",
-		InitGit:        true,
-		OutputPath:     tmpDir,
-	}
-
-	t.Log("1. Generating project...")
-	gen := generator.NewProjectGenerator()
-	ctx := context.Background()
-	err := gen.Generate(ctx, cfg)
-	require.NoError(t, err, "project generation should succeed")
-
-	projectRoot := filepath.Join(tmpDir, projectName)
-
-	t.Log("2. Building Docker image...")
 	buildCmd, cancel := dockerCmdWithTimeout(e2eTimeout, "build", "-t", imageName, ".")
 	buildCmd.Dir = projectRoot
 	defer cancel()
@@ -326,73 +309,76 @@ func runDockerE2ETest(t *testing.T, driver string) {
 	}
 	require.NoError(t, err, "docker build should succeed")
 
-	defer func() {
-		t.Log("Cleaning up Docker image...")
+	return func() {
 		rmiCmd, cancel := dockerCmdWithTimeout(shortTimeout, "rmi", "-f", imageName)
 		defer cancel()
 		_ = rmiCmd.Run()
-	}()
+	}
+}
 
-	t.Log("3. Scanning image with Trivy...")
-	trivyCmd, cancel2 := dockerCmdWithTimeout(e2eTimeout, "run", "--rm",
+func scanDockerImage(t *testing.T, imageName string) {
+	t.Helper()
+
+	trivyCmd, cancel := dockerCmdWithTimeout(e2eTimeout, "run", "--rm",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"aquasec/trivy:latest", "image",
 		"--severity", "CRITICAL,HIGH",
 		"--exit-code", "0",
 		imageName)
-	defer cancel2()
-	output, err = trivyCmd.CombinedOutput()
+	defer cancel()
+	output, err := trivyCmd.CombinedOutput()
 	if err != nil {
 		t.Logf("trivy scan output:\n%s", string(output))
 	}
 	assert.NoError(t, err, "trivy scan should complete successfully")
+}
 
-	var dbURL string
-	var composeStarted bool
+func setupDatabaseForDocker(t *testing.T, driver, tmpDir, projectRoot, projectName string) databaseSetup {
+	t.Helper()
+
+	setup := databaseSetup{}
 
 	switch driver {
 	case "sqlite3":
-		t.Log("4. Setting up SQLite database...")
 		dataDir := filepath.Join(tmpDir, "data")
-		err = os.MkdirAll(dataDir, 0755)
+		err := os.MkdirAll(dataDir, 0755)
 		require.NoError(t, err, "should create data directory")
-		dbURL = "file:/app/data/test.db"
+		setup.dbURL = "file:/app/data/test.db"
+		setup.cleanupFunc = func() {}
 
 	case "go-libsql", "postgres":
-		t.Logf("4. Starting docker compose services for %s...", driver)
-		composeUpCmd, cancel3 := dockerCmdWithTimeout(longTimeout, "compose", "up", "-d")
+		composeUpCmd, cancel := dockerCmdWithTimeout(longTimeout, "compose", "up", "-d")
 		composeUpCmd.Dir = projectRoot
-		defer cancel3()
-		output, err = composeUpCmd.CombinedOutput()
+		defer cancel()
+		output, err := composeUpCmd.CombinedOutput()
 		if err != nil {
 			t.Logf("docker compose up output:\n%s", string(output))
 		}
 		require.NoError(t, err, "docker compose up should succeed")
-		composeStarted = true
+		setup.composeStarted = true
 
-		defer func() {
-			if composeStarted {
-				t.Log("Stopping docker compose services...")
-				composeDownCmd, cancel := dockerCmdWithTimeout(mediumTimeout, "compose", "down", "-v")
-				defer cancel()
-				composeDownCmd.Dir = projectRoot
-				_ = composeDownCmd.Run()
-			}
-		}()
+		setup.cleanupFunc = func() {
+			composeDownCmd, cancel := dockerCmdWithTimeout(mediumTimeout, "compose", "down", "-v")
+			defer cancel()
+			composeDownCmd.Dir = projectRoot
+			_ = composeDownCmd.Run()
+		}
 
-		t.Logf("Waiting for %s to be ready...", driver)
 		time.Sleep(5 * time.Second)
 
 		if driver == "go-libsql" {
-			dbURL = "http://libsql:8080"
+			setup.dbURL = "http://libsql:8080"
 		} else {
-			dbURL = fmt.Sprintf("postgres://%s:%s@postgres:5432/%s?sslmode=disable", projectName, projectName, projectName)
+			setup.dbURL = fmt.Sprintf("postgres://%s:%s@postgres:5432/%s?sslmode=disable", projectName, projectName, projectName)
 		}
 	}
 
-	containerName := fmt.Sprintf("%s-test", projectName)
+	return setup
+}
 
-	t.Log("5. Starting container...")
+func startDockerContainer(t *testing.T, containerName, imageName, dbURL, driver, tmpDir, projectName string) func() {
+	t.Helper()
+
 	var runArgs []string
 	if driver == "sqlite3" {
 		dataDir := filepath.Join(tmpDir, "data")
@@ -416,16 +402,17 @@ func runDockerE2ETest(t *testing.T, driver string) {
 		}
 	}
 
-	runCmd, cancel4 := dockerCmdWithTimeout(mediumTimeout, runArgs...)
-	defer cancel4()
-	output, err = runCmd.CombinedOutput()
+	runCmd, cancel := dockerCmdWithTimeout(mediumTimeout, runArgs...)
+	defer cancel()
+	output, err := runCmd.CombinedOutput()
 	if err != nil {
 		t.Logf("docker run output:\n%s", string(output))
 	}
 	require.NoError(t, err, "docker run should succeed")
 
-	defer func() {
-		t.Log("Stopping and removing container...")
+	time.Sleep(3 * time.Second)
+
+	return func() {
 		stopCmd, cancel := dockerCmdWithTimeout(shortTimeout, "stop", containerName)
 		defer cancel()
 		_ = stopCmd.Run()
@@ -433,16 +420,17 @@ func runDockerE2ETest(t *testing.T, driver string) {
 		rmCmd, cancel2 := dockerCmdWithTimeout(shortTimeout, "rm", "-f", containerName)
 		defer cancel2()
 		_ = rmCmd.Run()
-	}()
+	}
+}
 
-	t.Log("Waiting for container to start...")
-	time.Sleep(3 * time.Second)
+func waitForHealthEndpoint(t *testing.T, containerName string, port int, maxRetries int) {
+	t.Helper()
 
-	t.Log("6. Checking health endpoint...")
 	var resp *http.Response
-	maxRetries := 30
+	var err error
+
 	for i := 0; i < maxRetries; i++ {
-		resp, err = http.Get("http://localhost:18082/api/health")
+		resp, err = http.Get(fmt.Sprintf("http://localhost:%d/api/health", port))
 		if err == nil && resp.StatusCode == http.StatusOK {
 			break
 		}
@@ -450,8 +438,8 @@ func runDockerE2ETest(t *testing.T, driver string) {
 			t.Logf("Health check attempt %d/%d failed: %v (retrying...)", i+1, maxRetries, err)
 			time.Sleep(1 * time.Second)
 		} else {
-			logsCmd, cancel5 := dockerCmdWithTimeout(shortTimeout, "logs", containerName)
-			defer cancel5()
+			logsCmd, cancel := dockerCmdWithTimeout(shortTimeout, "logs", containerName)
+			defer cancel()
 			if logs, logErr := logsCmd.CombinedOutput(); logErr == nil {
 				t.Logf("Container logs:\n%s", string(logs))
 			}
@@ -465,6 +453,4 @@ func runDockerE2ETest(t *testing.T, driver string) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode, "health endpoint should return 200 OK")
 		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"), "should return JSON")
 	}
-
-	t.Log("Docker E2E test completed successfully!")
 }
