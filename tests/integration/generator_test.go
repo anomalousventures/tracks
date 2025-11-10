@@ -147,6 +147,14 @@ func TestGenerateFullProject(t *testing.T) {
 			expectedDriver := driverMapping[tt.databaseDriver]
 			assert.Contains(t, string(dbContent), expectedDriver, "db.go should contain correct driver")
 
+			dockerignorePath := filepath.Join(projectRoot, ".dockerignore")
+			dockerignoreContent, err := os.ReadFile(dockerignorePath)
+			require.NoError(t, err, "should be able to read .dockerignore")
+			assert.Contains(t, string(dockerignoreContent), ".git/", ".dockerignore should exclude .git directory")
+			assert.Contains(t, string(dockerignoreContent), "*_test.go", ".dockerignore should exclude test files")
+			assert.Contains(t, string(dockerignoreContent), ".env", ".dockerignore should exclude .env files")
+			assert.Contains(t, string(dockerignoreContent), "!.env.example", ".dockerignore should include .env.example")
+
 			dockerfilePath := filepath.Join(projectRoot, "Dockerfile")
 			dockerfileContent, err := os.ReadFile(dockerfilePath)
 			require.NoError(t, err, "should be able to read Dockerfile")

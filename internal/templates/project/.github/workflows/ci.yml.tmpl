@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   lint:
@@ -94,6 +95,7 @@ jobs:
           image-ref: {{.ProjectName}}:${{"{{"}} github.sha {{"}}"}}
           format: sarif
           output: trivy-results.sarif
+          severity: CRITICAL,HIGH
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
@@ -114,12 +116,20 @@ jobs:
 {{- end}}
             {{.ProjectName}}:${{"{{"}} github.sha {{"}}"}}
 
-          # Wait for container to be ready
-          sleep 5
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/api/health >/dev/null 2>&1; then
+              echo "Container is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Container failed to become ready"
+              docker logs {{.ProjectName}}-test
+              exit 1
+            fi
+            sleep 1
+          done
 
-          # Hit health endpoint
           curl -f http://localhost:8080/api/health || exit 1
 
-          # Cleanup
           docker stop {{.ProjectName}}-test
           docker rm {{.ProjectName}}-test

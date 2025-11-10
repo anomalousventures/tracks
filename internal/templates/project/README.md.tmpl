@@ -75,22 +75,23 @@ docker build -t {{.ProjectName}}:latest .
 ### Running the Container
 
 ```bash
-# Run with default settings
+# Run with default settings (development/testing)
 docker run -p 8080:8080 {{.ProjectName}}:latest
 
-# Run with environment variables
+# Run with production database configuration
 docker run -p 8080:8080 \
-  -e APP_SERVER_PORT=8080 \
-  -e APP_SERVER_HOST=0.0.0.0 \
 {{- if eq .DBDriver "postgres"}}
   -e APP_DATABASE_URL=postgres://user:pass@host:5432/dbname \
 {{- else if eq .DBDriver "go-libsql"}}
   -e APP_DATABASE_URL=libsql://your-database.turso.io \
 {{- else}}
   -e APP_DATABASE_URL=file:data/{{.ProjectName}}.db \
+  -v $(pwd)/data:/app/data \
 {{- end}}
   {{.ProjectName}}:latest
 ```
+
+The health endpoint (`/api/health`) works with default settings for testing. Production deployments should configure `APP_DATABASE_URL` to connect to an actual database.
 
 ### Using Docker Compose
 
