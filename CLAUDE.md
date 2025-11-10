@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **Run `make generate-mocks`** - Generate test mocks from interfaces (see [ADR-004](./docs/adr/004-mockery-for-test-mock-generation.md))
 2. **Run `make lint`** - All linters must pass with zero errors
-3. **Run `make test`** - All tests must pass with zero failures
+3. **Run `make test-ci`** - All test suites must pass (unit, integration, docker e2e)
 4. **Remediate any errors** - Fix all issues found by linting and testing
 
 **Failure to complete these steps successfully means the code is NOT ready to commit.**
@@ -348,6 +348,7 @@ func TestE2E_Postgres(t *testing.T) {
 make test                           # Unit tests only (short)
 go test ./tests/integration         # Integration tests (no Docker)
 go test -tags=docker ./tests/integration  # Docker E2E tests
+make test-ci                        # All three test suites (as CI runs them)
 make test-coverage                  # All three with coverage reports
 ```
 
@@ -408,7 +409,7 @@ See [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for complete release wo
 Before creating any commit, you must SUCCESSFULLY complete:
 
 1. **`make lint`** - Fix ALL linting errors
-2. **`make test`** - Fix ALL test failures
+2. **`make test-ci`** - Fix ALL test failures (unit, integration, docker e2e)
 
 If either command fails, you MUST remediate the errors before proceeding. Code that fails linting or testing is NOT ready to commit.
 

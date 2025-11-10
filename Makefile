@@ -67,7 +67,7 @@ format-check: ## Check code formatting with Prettier
 lint: lint-md lint-go lint-mocks lint-js ## Run all linters
 
 # Go-related targets
-.PHONY: test test-coverage test-integration test-all build build-all
+.PHONY: test test-coverage test-integration test-all test-ci build build-all
 
 test: ## Run Go unit tests
 	@echo "Running unit tests..."
@@ -88,6 +88,15 @@ test-integration: ## Run integration tests
 	@go test -v -tags=integration ./...
 
 test-all: test test-integration ## Run all tests
+
+test-ci: ## Run all tests exactly as CI does (unit, integration, docker e2e)
+	@echo "Running unit tests with race detector..."
+	@go test -v -race -short -p 1 ./...
+	@echo "Running integration tests..."
+	@go test -v -p 1 ./tests/integration
+	@echo "Running Docker E2E tests..."
+	@go test -v -tags=docker -p 1 ./tests/integration
+	@echo "✅ All test suites passed!"
 
 build: ## Build tracks CLI
 	@echo "Building tracks..."
