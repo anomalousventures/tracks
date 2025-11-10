@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '{{.GoVersion}}'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run golangci-lint
+        run: go tool golangci-lint run
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+{{- if eq .DBDriver "postgres"}}
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: {{.ProjectName}}
+          POSTGRES_PASSWORD: {{.ProjectName}}
+          POSTGRES_DB: {{.ProjectName}}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+{{- end}}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '{{.GoVersion}}'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+        env:
+{{- if eq .DBDriver "postgres"}}
+          {{.EnvPrefix}}_DATABASE_URL: postgres://{{.ProjectName}}:{{.ProjectName}}@localhost:5432/{{.ProjectName}}?sslmode=disable
+{{- else if eq .DBDriver "go-libsql"}}
+          {{.EnvPrefix}}_DATABASE_URL: file:test.db
+{{- else}}
+          {{.EnvPrefix}}_DATABASE_URL: file:test.db
+{{- end}}
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.out
+          fail_ci_if_error: false
+
+  docker:
+    name: Docker Build & Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t {{.ProjectName}}:${{"{{"}} github.sha {{"}}"}} .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: {{.ProjectName}}:${{"{{"}} github.sha {{"}}"}}
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Test container
+        run: |
+          docker run -d -p 8080:8080 \
+            --name {{.ProjectName}}-test \
+{{- if eq .DBDriver "postgres"}}
+            -e {{.EnvPrefix}}_DATABASE_URL=postgres://user:pass@host:5432/db \
+{{- else if eq .DBDriver "go-libsql"}}
+            -e {{.EnvPrefix}}_DATABASE_URL=file:/tmp/test.db \
+{{- else}}
+            -e {{.EnvPrefix}}_DATABASE_URL=file:/tmp/test.db \
+{{- end}}
+            {{.ProjectName}}:${{"{{"}} github.sha {{"}}"}}
+
+          # Wait for container to be ready
+          sleep 5
+
+          # Hit health endpoint
+          curl -f http://localhost:8080/api/health || exit 1
+
+          # Cleanup
+          docker stop {{.ProjectName}}-test
+          docker rm {{.ProjectName}}-test

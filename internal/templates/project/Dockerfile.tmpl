@@ -1,0 +1,58 @@
+# Build stage
+FROM golang:{{.GoVersion}}-alpine AS builder
+
+{{- if or (eq .DBDriver "go-libsql") (eq .DBDriver "sqlite3")}}
+# Install build dependencies for CGO (required for LibSQL/SQLite3)
+RUN apk add --no-cache gcc musl-dev
+{{- end}}
+
+WORKDIR /app
+
+# Copy go.mod and go.sum first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application with optimizations
+{{- if or (eq .DBDriver "go-libsql") (eq .DBDriver "sqlite3")}}
+RUN CGO_ENABLED=1 go build -ldflags="-w -s" -trimpath -o server cmd/server/main.go
+{{- else}}
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -trimpath -o server cmd/server/main.go
+{{- end}}
+
+# Runtime stage
+{{- if or (eq .DBDriver "go-libsql") (eq .DBDriver "sqlite3")}}
+# CGO builds require libc - use alpine
+FROM alpine:latest
+
+# Install only essential runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata libc6-compat && \
+    addgroup -g 1000 appgroup && \
+    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
+
+WORKDIR /app
+
+# Copy only the binary
+COPY --from=builder --chown=appuser:appgroup /app/server /app/server
+
+# Run as non-root
+USER appuser
+{{- else}}
+# Non-CGO builds can use minimal distroless image
+FROM gcr.io/distroless/static-debian12:nonroot
+
+WORKDIR /app
+
+# Copy only the binary
+COPY --from=builder /app/server /app/server
+
+# Runs as nonroot user (uid 65532) by default
+{{- end}}
+
+# Expose the default port
+EXPOSE 8080
+
+# Run the server
+ENTRYPOINT ["/app/server"]
