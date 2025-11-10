@@ -71,12 +71,16 @@ func TestGenerateFullProject(t *testing.T) {
 				"go.mod",
 				"README.md",
 				".gitignore",
+				".dockerignore",
 				".golangci.yml",
 				".mockery.yaml",
 				".tracks.yaml",
 				".env.example",
 				"Makefile",
+				"Dockerfile",
+				"docker-compose.yml",
 				"sqlc.yaml",
+				".github/workflows/ci.yml",
 				"cmd/server/main.go",
 				"internal/config/config.go",
 				"internal/interfaces/health.go",
@@ -98,6 +102,8 @@ func TestGenerateFullProject(t *testing.T) {
 			}
 
 			expectedDirs := []string{
+				".github",
+				".github/workflows",
 				"cmd",
 				"cmd/server",
 				"internal",
@@ -140,6 +146,56 @@ func TestGenerateFullProject(t *testing.T) {
 			}
 			expectedDriver := driverMapping[tt.databaseDriver]
 			assert.Contains(t, string(dbContent), expectedDriver, "db.go should contain correct driver")
+
+			dockerignorePath := filepath.Join(projectRoot, ".dockerignore")
+			dockerignoreContent, err := os.ReadFile(dockerignorePath)
+			require.NoError(t, err, "should be able to read .dockerignore")
+			assert.Contains(t, string(dockerignoreContent), ".git/", ".dockerignore should exclude .git directory")
+			assert.Contains(t, string(dockerignoreContent), "*_test.go", ".dockerignore should exclude test files")
+			assert.Contains(t, string(dockerignoreContent), ".env", ".dockerignore should exclude .env files")
+			assert.Contains(t, string(dockerignoreContent), "!.env.example", ".dockerignore should include .env.example")
+
+			dockerfilePath := filepath.Join(projectRoot, "Dockerfile")
+			dockerfileContent, err := os.ReadFile(dockerfilePath)
+			require.NoError(t, err, "should be able to read Dockerfile")
+
+			if tt.databaseDriver == "postgres" {
+				assert.Contains(t, string(dockerfileContent), "CGO_ENABLED=0", "Dockerfile should disable CGO for postgres")
+				assert.NotContains(t, string(dockerfileContent), "gcc musl-dev", "Dockerfile should not install CGO dependencies for postgres")
+				assert.Contains(t, string(dockerfileContent), "distroless", "Dockerfile should use distroless for postgres (minimal image)")
+				assert.Contains(t, string(dockerfileContent), "nonroot", "Dockerfile should run as non-root for security")
+			} else {
+				assert.Contains(t, string(dockerfileContent), "CGO_ENABLED=1", "Dockerfile should enable CGO for %s", tt.databaseDriver)
+				assert.Contains(t, string(dockerfileContent), "gcc musl-dev", "Dockerfile should install CGO dependencies for %s", tt.databaseDriver)
+				assert.Contains(t, string(dockerfileContent), "libc6-compat", "Dockerfile should include runtime CGO dependencies for %s", tt.databaseDriver)
+				assert.Contains(t, string(dockerfileContent), "adduser", "Dockerfile should create non-root user for %s", tt.databaseDriver)
+				assert.Contains(t, string(dockerfileContent), "USER appuser", "Dockerfile should run as non-root for security")
+			}
+
+			assert.Contains(t, string(dockerfileContent), "-ldflags=\"-w -s\"", "Dockerfile should use build optimizations to reduce binary size")
+			assert.Contains(t, string(dockerfileContent), "-trimpath", "Dockerfile should use -trimpath to remove filesystem paths")
+			assert.NotContains(t, string(dockerfileContent), "migrations", "Dockerfile should not copy migrations (not implemented yet)")
+
+			readmePath := filepath.Join(projectRoot, "README.md")
+			readmeContent, err := os.ReadFile(readmePath)
+			require.NoError(t, err, "should be able to read README.md")
+			assert.Contains(t, string(readmeContent), "## Docker", "README should contain Docker section")
+			assert.Contains(t, string(readmeContent), "docker build", "README should contain docker build instructions")
+
+			ciWorkflowPath := filepath.Join(projectRoot, ".github/workflows/ci.yml")
+			ciWorkflowContent, err := os.ReadFile(ciWorkflowPath)
+			require.NoError(t, err, "should be able to read .github/workflows/ci.yml")
+			assert.Contains(t, string(ciWorkflowContent), "name: CI", "CI workflow should have name")
+			assert.Contains(t, string(ciWorkflowContent), "golangci-lint", "CI workflow should run linter")
+			assert.Contains(t, string(ciWorkflowContent), "go test", "CI workflow should run tests")
+			assert.Contains(t, string(ciWorkflowContent), "docker build", "CI workflow should build Docker image")
+			assert.Contains(t, string(ciWorkflowContent), "trivy", "CI workflow should scan with Trivy")
+			assert.Contains(t, string(ciWorkflowContent), "/api/health", "CI workflow should test health endpoint")
+
+			if tt.databaseDriver == "postgres" {
+				assert.Contains(t, string(ciWorkflowContent), "postgres:16-alpine", "CI workflow should include postgres service")
+				assert.Contains(t, string(ciWorkflowContent), "services:", "CI workflow should have services section for postgres")
+			}
 
 			if tt.initGit {
 				gitDir := filepath.Join(projectRoot, ".git")

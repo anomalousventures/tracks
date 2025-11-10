@@ -64,6 +64,50 @@ make mocks     # Generate mocks from interfaces
 make sqlc      # Generate type-safe SQL code
 ```
 
+## Docker
+
+### Building the Docker Image
+
+```bash
+docker build -t {{.ProjectName}}:latest .
+```
+
+### Running the Container
+
+```bash
+# Run with default settings (development/testing)
+docker run -p 8080:8080 {{.ProjectName}}:latest
+
+# Run with production database configuration
+docker run -p 8080:8080 \
+{{- if eq .DBDriver "postgres"}}
+  -e APP_DATABASE_URL=postgres://user:pass@host:5432/dbname \
+{{- else if eq .DBDriver "go-libsql"}}
+  -e APP_DATABASE_URL=libsql://your-database.turso.io \
+{{- else}}
+  -e APP_DATABASE_URL=file:data/{{.ProjectName}}.db \
+  -v $(pwd)/data:/app/data \
+{{- end}}
+  {{.ProjectName}}:latest
+```
+
+The health endpoint (`/api/health`) works with default settings for testing. Production deployments should configure `APP_DATABASE_URL` to connect to an actual database.
+
+### Using Docker Compose
+
+For local development with dependencies:
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
 ## Configuration
 
 This project uses separate configuration files for different purposes:

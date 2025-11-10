@@ -72,9 +72,12 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		".mockery.yaml.tmpl":                       ".mockery.yaml",
 		".tracks.yaml.tmpl":                        ".tracks.yaml",
 		".air.toml.tmpl":                           ".air.toml",
+		".dockerignore.tmpl":                       ".dockerignore",
+		".github/workflows/ci.yml.tmpl":            ".github/workflows/ci.yml",
 		"go.mod.tmpl":                              "go.mod",
 		"Makefile.tmpl":                            "Makefile",
 		"README.md.tmpl":                           "README.md",
+		"Dockerfile.tmpl":                          "Dockerfile",
 		"sqlc.yaml.tmpl":                           "sqlc.yaml",
 		"docker-compose.yml.tmpl":                  "docker-compose.yml",
 		"internal/config/config.go.tmpl":           "internal/config/config.go",
@@ -189,7 +192,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 
 	logger.Info().Msg("post-generate templates rendered successfully")
 
-	// Phase 4: Tidy dependencies again (post-generate templates may have new imports)
 	logger.Info().Msg("tidying dependencies after post-generate templates")
 	tidyCmd = exec.CommandContext(ctx, "go", "mod", "tidy")
 	tidyCmd.Dir = projectRoot

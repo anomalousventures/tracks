@@ -1,0 +1,44 @@
+# Build artifacts
+bin/
+tmp/
+*.out
+coverage*.out
+
+# Development files
+.air/
+.git/
+.gitignore
+
+# IDE configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+*_test.go
+
+# Dependencies (will be downloaded during build)
+vendor/
+
+# Documentation
+docs/
+*.md
+
+# Environment and configuration
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (don't need these in the image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# CI/CD
+.github/
