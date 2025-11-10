@@ -192,7 +192,6 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 
 	logger.Info().Msg("post-generate templates rendered successfully")
 
-	// Phase 4: Tidy dependencies again (post-generate templates may have new imports)
 	logger.Info().Msg("tidying dependencies after post-generate templates")
 	tidyCmd = exec.CommandContext(ctx, "go", "mod", "tidy")
 	tidyCmd.Dir = projectRoot
