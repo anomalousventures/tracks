@@ -125,33 +125,6 @@ jobs:
       matrix:
         driver: [sqlite3, postgres, go-libsql]
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        if: matrix.driver == 'postgres'
-        env:
-          POSTGRES_USER: testapp
-          POSTGRES_PASSWORD: testapp
-          POSTGRES_DB: testapp
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      libsql:
-        image: ghcr.io/tursodatabase/libsql-server:latest
-        if: matrix.driver == 'go-libsql'
-        options: >-
-          --health-cmd "curl -f http://localhost:8080/health"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 8080:8080
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -164,6 +137,39 @@ jobs:
 
       - name: Download dependencies
         run: go mod download
+
+      - name: Start Postgres
+        if: matrix.driver == 'postgres'
+        run: |
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_USER=testapp \
+            -e POSTGRES_PASSWORD=testapp \
+            -e POSTGRES_DB=testapp \
+            -p 5432:5432 \
+            --health-cmd="pg_isready -U testapp" \
+            --health-interval=5s \
+            --health-timeout=5s \
+            --health-retries=5 \
+            postgres:16-alpine
+
+          until docker exec postgres pg_isready -U testapp; do
+            echo "Waiting for postgres..."
+            sleep 1
+          done
+
+      - name: Start LibSQL
+        if: matrix.driver == 'go-libsql'
+        run: |
+          docker run -d \
+            --name libsql \
+            -p 8080:8080 \
+            ghcr.io/tursodatabase/libsql-server:latest
+
+          until curl -f http://localhost:8080/health; do
+            echo "Waiting for libsql..."
+            sleep 1
+          done
 
       - name: Build tracks CLI
         run: make build
