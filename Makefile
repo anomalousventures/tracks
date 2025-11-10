@@ -87,6 +87,10 @@ test-integration: ## Run integration tests
 
 test-all: test test-integration ## Run all tests
 
+# Use test-e2e-local when:
+# - Testing the developer workflow (tracks new, make test, make dev)
+# - Verifying generated project builds and runs correctly
+# - Quick local validation before pushing changes
 test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 	@echo "Testing E2E workflow for sqlite3..."
 	@./bin/tracks new testapp-e2e --driver=sqlite3 --module=github.com/test/app --no-interactive || true
@@ -96,9 +100,13 @@ test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 	@sleep 3
 	@curl -f http://localhost:18080/api/health || (echo "Health check failed" && exit 1)
 	@echo "✅ E2E workflow test passed!"
-	@pkill -f testapp-e2e || true
+	@pkill -f "testapp-e2e.*make dev" || true
 	@rm -rf testapp-e2e
 
+# Use test-docker-local when:
+# - Testing Docker containerization (build, scan, run)
+# - Verifying Dockerfile works correctly
+# - Testing production-like deployment before pushing
 test-docker-local: ## Test Docker workflow locally (mimics CI docker-workflow job)
 	@echo "Testing Docker workflow for sqlite3..."
 	@./bin/tracks new testapp-docker --driver=sqlite3 --module=github.com/test/app --no-interactive || true

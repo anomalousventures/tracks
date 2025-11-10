@@ -354,6 +354,22 @@ make test-e2e-local                 # Test E2E workflow locally (mimics CI)
 make test-docker-local              # Test Docker workflow locally (mimics CI)
 ```
 
+**Local E2E Testing:**
+
+- **`make test-e2e-local`** - Tests developer workflow (fast, no Docker required)
+  - **Use when:** Verifying generated projects build/test/run correctly
+  - **Tests:** `tracks new` → `make test` → `make dev` → health check
+  - **Database:** SQLite3 only (no external services needed)
+  - **Speed:** ~30 seconds
+
+- **`make test-docker-local`** - Tests containerization (slower, requires Docker)
+  - **Use when:** Verifying Dockerfile, security scans, production deployment
+  - **Tests:** `docker build` → Trivy scan → `docker run` → health check
+  - **Database:** SQLite3 only (no docker-compose needed)
+  - **Speed:** ~2-3 minutes (includes image build and scan)
+
+Both targets mimic CI workflows but only test sqlite3 for speed. CI tests all three drivers (sqlite3, postgres, go-libsql).
+
 **CI Test Jobs:**
 
 1. **unit-tests** - Runs on all platforms with `-race -short`
