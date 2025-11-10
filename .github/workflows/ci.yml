@@ -117,9 +117,40 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
-  docker-e2e-tests:
-    name: Docker E2E Tests
+  e2e-workflow:
+    name: E2E Workflow (${{ matrix.driver }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        driver: [sqlite3, postgres, go-libsql]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        if: matrix.driver == 'postgres'
+        env:
+          POSTGRES_USER: testapp
+          POSTGRES_PASSWORD: testapp
+          POSTGRES_DB: testapp
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      libsql:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        if: matrix.driver == 'go-libsql'
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/health"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 8080:8080
 
     steps:
       - name: Checkout code
@@ -134,24 +165,160 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Set integration test timeouts
+      - name: Build tracks CLI
+        run: make build
+
+      - name: Generate project
         run: |
-          echo "INTEGRATION_TEST_SHORT_TIMEOUT=2s" >> $GITHUB_ENV
-          echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=10s" >> $GITHUB_ENV
-          echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
-          echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
+          ./bin/tracks new testapp \
+            --driver=${{ matrix.driver }} \
+            --module=github.com/test/app \
+            --no-interactive
 
-      - name: Run Docker E2E tests
-        shell: bash
-        run: go test -v -tags=docker -coverprofile=coverage-docker.out -p 1 ./tests/integration
+      - name: Run project tests
+        run: |
+          cd testapp
+          make test
 
-      - name: Upload Docker E2E test coverage
-        uses: codecov/codecov-action@v5
+      - name: Set database URL
+        run: |
+          case "${{ matrix.driver }}" in
+            sqlite3)
+              echo "APP_DATABASE_URL=file:./data/test.db" >> $GITHUB_ENV
+              ;;
+            postgres)
+              echo "APP_DATABASE_URL=postgres://testapp:testapp@localhost:5432/testapp?sslmode=disable" >> $GITHUB_ENV
+              ;;
+            go-libsql)
+              echo "APP_DATABASE_URL=http://localhost:8080" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Start dev server
+        run: |
+          cd testapp
+          mkdir -p data
+          APP_SERVER_PORT=:18080 make dev &
+          sleep 3
+
+      - name: Verify health endpoint
+        run: |
+          max_retries=30
+          for i in $(seq 1 $max_retries); do
+            if curl -f http://localhost:18080/api/health; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i/$max_retries failed, retrying..."
+            sleep 1
+          done
+          echo "Health check failed after $max_retries attempts"
+          exit 1
+
+  docker-workflow:
+    name: Docker Workflow (${{ matrix.driver }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        driver: [sqlite3, postgres, go-libsql]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
-          files: ./coverage-docker.out
-          flags: docker-e2e-ubuntu
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
+          go-version: '1.25.3'
+          cache: true
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build tracks CLI
+        run: make build
+
+      - name: Generate project
+        run: |
+          ./bin/tracks new testapp \
+            --driver=${{ matrix.driver }} \
+            --module=github.com/test/app \
+            --no-interactive
+
+      - name: Build Docker image
+        run: |
+          cd testapp
+          docker build -t testapp:test .
+
+      - name: Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: testapp:test
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Start database services
+        if: matrix.driver != 'sqlite3'
+        run: |
+          cd testapp
+          docker compose up -d --wait
+
+      - name: Run container (sqlite3)
+        if: matrix.driver == 'sqlite3'
+        run: |
+          docker run -d \
+            --name testapp \
+            -p 18080:8080 \
+            -e APP_DATABASE_URL=file:/app/data/test.db \
+            testapp:test
+
+      - name: Run container (postgres)
+        if: matrix.driver == 'postgres'
+        run: |
+          docker run -d \
+            --name testapp \
+            --network testapp_default \
+            -p 18080:8080 \
+            -e APP_DATABASE_URL=postgres://testapp:testapp@postgres:5432/testapp?sslmode=disable \
+            testapp:test
+
+      - name: Run container (go-libsql)
+        if: matrix.driver == 'go-libsql'
+        run: |
+          docker run -d \
+            --name testapp \
+            --network testapp_default \
+            -p 18080:8080 \
+            -e APP_DATABASE_URL=http://libsql:8080 \
+            testapp:test
+
+      - name: Verify health endpoint
+        run: |
+          max_retries=30
+          for i in $(seq 1 $max_retries); do
+            if curl -f http://localhost:18080/api/health; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i/$max_retries failed, retrying..."
+            sleep 1
+          done
+          echo "Health check failed after $max_retries attempts"
+          docker logs testapp
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop testapp || true
+          docker rm testapp || true
+          cd testapp && docker compose down -v || true
 
   build-platforms:
     name: Build (${{ matrix.os }})
