@@ -132,6 +132,6 @@ Tracks is in active development (currently Phase 0). The API and generated code 
 
 ## Next Steps
 
-- [Install the Tracks CLI](./cli/overview.md#installation)
+- [Install the Tracks CLI](./getting-started/installation.md)
 - Explore the [CLI Documentation](./cli/overview.md)
 - Check out the [Roadmap](https://github.com/anomalousventures/tracks/blob/main/docs/roadmap/README.md)
