@@ -136,3 +136,4 @@ func TestGetTimeout(t *testing.T) {
 		assert.Equal(t, 30*time.Second, timeout, "should return parsed timeout from env var")
 	})
 }
+

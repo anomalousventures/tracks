@@ -67,7 +67,7 @@ format-check: ## Check code formatting with Prettier
 lint: lint-md lint-go lint-mocks lint-js ## Run all linters
 
 # Go-related targets
-.PHONY: test test-coverage test-integration test-all build build-all
+.PHONY: test test-coverage test-integration test-all test-e2e-local test-docker-local build build-all
 
 test: ## Run Go unit tests
 	@echo "Running unit tests..."
@@ -76,18 +76,52 @@ test: ## Run Go unit tests
 test-coverage: ## Run tests with coverage
 	@echo "Running unit tests with race detector and coverage..."
 	@go test -v -race -short -coverprofile=coverage-unit.out -p 1 ./...
-	@echo "Running integration tests with coverage (no race detector, no docker)..."
+	@echo "Running integration tests with coverage..."
 	@go test -v -coverprofile=coverage-integration.out -p 1 ./tests/integration
-	@echo "Running Docker E2E tests with coverage..."
-	@go test -v -tags=docker -coverprofile=coverage-docker.out -p 1 ./tests/integration
 	@go tool cover -html=coverage-unit.out -o coverage.html
-	@echo "Coverage reports generated: coverage-unit.out, coverage-integration.out, coverage-docker.out, coverage.html"
+	@echo "Coverage reports generated: coverage-unit.out, coverage-integration.out, coverage.html"
 
 test-integration: ## Run integration tests
 	@echo "Running integration tests..."
-	@go test -v -tags=integration ./...
+	@go test -v -p 1 ./tests/integration
 
 test-all: test test-integration ## Run all tests
+
+# Use test-e2e-local when:
+# - Testing the developer workflow (tracks new, make test, make dev)
+# - Verifying generated project builds and runs correctly
+# - Quick local validation before pushing changes
+test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
+	@echo "Testing E2E workflow for sqlite3..."
+	@./bin/tracks new testapp-e2e --db=sqlite3 --module=github.com/test/app || true
+	@cd testapp-e2e && make test
+	@echo "Starting dev server..."
+	@cd testapp-e2e && mkdir -p data && APP_SERVER_PORT=:18080 APP_DATABASE_URL=file:./data/test.db make dev &
+	@sleep 3
+	@curl -f http://localhost:18080/api/health || (echo "Health check failed" && exit 1)
+	@echo "✅ E2E workflow test passed!"
+	@pkill -f "testapp-e2e.*make dev" || true
+	@rm -rf testapp-e2e
+
+# Use test-docker-local when:
+# - Testing Docker containerization (build, scan, run)
+# - Verifying Dockerfile works correctly
+# - Testing production-like deployment before pushing
+test-docker-local: ## Test Docker workflow locally (mimics CI docker-workflow job)
+	@echo "Testing Docker workflow for sqlite3..."
+	@./bin/tracks new testapp-docker --db=sqlite3 --module=github.com/test/app || true
+	@cd testapp-docker && docker build -t testapp-docker:test .
+	@echo "Running Trivy scan..."
+	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity CRITICAL,HIGH --exit-code 0 testapp-docker:test
+	@echo "Starting container..."
+	@docker run -d --name testapp-docker -p 18080:8080 -e APP_DATABASE_URL=file:/app/data/test.db testapp-docker:test
+	@sleep 3
+	@curl -f http://localhost:18080/api/health || (echo "Health check failed" && exit 1)
+	@echo "✅ Docker workflow test passed!"
+	@docker stop testapp-docker || true
+	@docker rm testapp-docker || true
+	@docker rmi testapp-docker:test || true
+	@rm -rf testapp-docker
 
 build: ## Build tracks CLI
 	@echo "Building tracks..."

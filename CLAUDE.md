@@ -8,12 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **Run `make generate-mocks`** - Generate test mocks from interfaces (see [ADR-004](./docs/adr/004-mockery-for-test-mock-generation.md))
 2. **Run `make lint`** - All linters must pass with zero errors
-3. **Run `make test`** - All tests must pass with zero failures
+3. **Run `make test`** - Unit tests must pass with zero failures
 4. **Remediate any errors** - Fix all issues found by linting and testing
 
 **Failure to complete these steps successfully means the code is NOT ready to commit.**
 
 **Note:** Generated mocks must be committed to the repository. The lint job checks that mocks are up-to-date.
+
+**E2E and Docker testing:** Full E2E workflow and Docker container testing happens automatically in CI via GitHub Actions workflows. Use `make test-e2e-local` or `make test-docker-local` to test these workflows locally before pushing.
 
 ## Quick Start
 
@@ -346,16 +348,34 @@ func TestE2E_Postgres(t *testing.T) {
 
 ```bash
 make test                           # Unit tests only (short)
-go test ./tests/integration         # Integration tests (no Docker)
-go test -tags=docker ./tests/integration  # Docker E2E tests
-make test-coverage                  # All three with coverage reports
+make test-integration               # Integration tests (Go tests in tests/integration/)
+make test-coverage                  # Unit + integration with coverage reports
+make test-e2e-local                 # Test E2E workflow locally (mimics CI)
+make test-docker-local              # Test Docker workflow locally (mimics CI)
 ```
+
+**Local E2E Testing:**
+
+- **`make test-e2e-local`** - Tests developer workflow (fast, no Docker required)
+  - **Use when:** Verifying generated projects build/test/run correctly
+  - **Tests:** `tracks new` → `make test` → `make dev` → health check
+  - **Database:** SQLite3 only (no external services needed)
+  - **Speed:** ~30 seconds
+
+- **`make test-docker-local`** - Tests containerization (slower, requires Docker)
+  - **Use when:** Verifying Dockerfile, security scans, production deployment
+  - **Tests:** `docker build` → Trivy scan → `docker run` → health check
+  - **Database:** SQLite3 only (no docker-compose needed)
+  - **Speed:** ~2-3 minutes (includes image build and scan)
+
+Both targets mimic CI workflows but only test sqlite3 for speed. CI tests all three drivers (sqlite3, postgres, go-libsql).
 
 **CI Test Jobs:**
 
 1. **unit-tests** - Runs on all platforms with `-race -short`
-2. **integration-tests** - Runs on all platforms (no Docker tests)
-3. **docker-e2e-tests** - Runs on Ubuntu only with `-tags=docker`
+2. **integration-tests** - Runs on all platforms (Go integration tests)
+3. **e2e-workflow** - Tests developer workflow (`tracks new`, `make test`, `make dev`) for all database drivers
+4. **docker-workflow** - Tests Docker containerization (`docker build`, Trivy scan, `docker run`) for all database drivers
 
 Each job uploads separate coverage reports to Codecov with platform-specific flags.
 
@@ -408,9 +428,11 @@ See [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for complete release wo
 Before creating any commit, you must SUCCESSFULLY complete:
 
 1. **`make lint`** - Fix ALL linting errors
-2. **`make test`** - Fix ALL test failures
+2. **`make test`** - Fix ALL test failures (unit tests)
 
 If either command fails, you MUST remediate the errors before proceeding. Code that fails linting or testing is NOT ready to commit.
+
+E2E and Docker testing happens automatically in CI workflows.
 
 ---
 
