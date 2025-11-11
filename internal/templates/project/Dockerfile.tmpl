@@ -25,7 +25,9 @@ FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates tzdata libc6-compat && \
     addgroup -g 1000 appgroup && \
-    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
+    adduser -u 1000 -G appgroup -s /bin/sh -D appuser && \
+    mkdir -p /app/data && \
+    chown -R appuser:appgroup /app/data
 
 WORKDIR /app
 
