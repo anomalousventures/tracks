@@ -177,9 +177,8 @@ jobs:
       - name: Generate project
         run: |
           ./bin/tracks new testapp \
-            --driver=${{ matrix.driver }} \
-            --module=github.com/test/app \
-            --no-interactive
+            --db=${{ matrix.driver }} \
+            --module=github.com/test/app
 
       - name: Run project tests
         run: |
@@ -251,9 +250,8 @@ jobs:
       - name: Generate project
         run: |
           ./bin/tracks new testapp \
-            --driver=${{ matrix.driver }} \
-            --module=github.com/test/app \
-            --no-interactive
+            --db=${{ matrix.driver }} \
+            --module=github.com/test/app
 
       - name: Build Docker image
         run: |

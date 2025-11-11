@@ -93,7 +93,7 @@ test-all: test test-integration ## Run all tests
 # - Quick local validation before pushing changes
 test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 	@echo "Testing E2E workflow for sqlite3..."
-	@./bin/tracks new testapp-e2e --driver=sqlite3 --module=github.com/test/app --no-interactive || true
+	@./bin/tracks new testapp-e2e --db=sqlite3 --module=github.com/test/app || true
 	@cd testapp-e2e && make test
 	@echo "Starting dev server..."
 	@cd testapp-e2e && mkdir -p data && APP_SERVER_PORT=:18080 APP_DATABASE_URL=file:./data/test.db make dev &
@@ -109,7 +109,7 @@ test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 # - Testing production-like deployment before pushing
 test-docker-local: ## Test Docker workflow locally (mimics CI docker-workflow job)
 	@echo "Testing Docker workflow for sqlite3..."
-	@./bin/tracks new testapp-docker --driver=sqlite3 --module=github.com/test/app --no-interactive || true
+	@./bin/tracks new testapp-docker --db=sqlite3 --module=github.com/test/app || true
 	@cd testapp-docker && docker build -t testapp-docker:test .
 	@echo "Running Trivy scan..."
 	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity CRITICAL,HIGH --exit-code 0 testapp-docker:test
