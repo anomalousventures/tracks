@@ -25,7 +25,7 @@ If you only plan to use PostgreSQL databases, you don't need CGO tooling. Postgr
 
 Choose the installation method that best fits your workflow.
 
-### Package Managers (v0.1.0+)
+### Package Managers
 
 The easiest way to install and keep Tracks up to date.
 
@@ -42,7 +42,7 @@ scoop bucket add anomalousventures https://github.com/anomalousventures/scoop-bu
 scoop install tracks
 ```
 
-### Direct Binary Download (v0.1.0+)
+### Direct Binary Download
 
 Download pre-built binaries from [GitHub Releases](https://github.com/anomalousventures/tracks/releases/latest):
 
@@ -53,8 +53,8 @@ Download pre-built binaries from [GitHub Releases](https://github.com/anomalousv
 #### Linux/macOS Example
 
 ```bash
-# Download and extract (replace VERSION and PLATFORM as needed)
-curl -L https://github.com/anomalousventures/tracks/releases/download/v0.1.0/tracks_linux_amd64.tar.gz | tar xz
+# Download and extract (replace <version> and platform as needed)
+curl -L https://github.com/anomalousventures/tracks/releases/download/<version>/tracks_linux_amd64.tar.gz | tar xz
 
 # Move to PATH location
 sudo mv tracks /usr/local/bin/
@@ -66,21 +66,21 @@ tracks version
 #### Windows Example (PowerShell)
 
 ```powershell
-# Download and extract
-Invoke-WebRequest -Uri "https://github.com/anomalousventures/tracks/releases/download/v0.1.0/tracks_windows_amd64.zip" -OutFile "tracks.zip"
+# Download and extract (replace <version> as needed)
+Invoke-WebRequest -Uri "https://github.com/anomalousventures/tracks/releases/download/<version>/tracks_windows_amd64.zip" -OutFile "tracks.zip"
 Expand-Archive -Path "tracks.zip" -DestinationPath "."
 
 # Move to PATH location or add current directory to PATH
 Move-Item "tracks.exe" "$env:USERPROFILE\bin\"
 ```
 
-### Go Install (v0.1.0+)
+### Go Install
 
 Install using Go's built-in package manager:
 
 ```bash
 # Install specific version
-go install github.com/anomalousventures/tracks/cmd/tracks@v0.1.0
+go install github.com/anomalousventures/tracks/cmd/tracks@<version>
 
 # Install latest release
 go install github.com/anomalousventures/tracks/cmd/tracks@latest
@@ -90,16 +90,16 @@ go install github.com/anomalousventures/tracks/cmd/tracks@latest
 Using `go install` requires Go 1.25+ and adds the binary to `$GOPATH/bin`. Make sure this directory is in your `$PATH`.
 :::
 
-### Docker (v0.1.0+)
+### Docker
 
 Run Tracks without installing it locally:
 
 ```bash
-# Run tracks command via Docker
-docker run --rm ghcr.io/anomalousventures/tracks:0.1.0 version
+# Run tracks command via Docker (replace <version> as needed)
+docker run --rm ghcr.io/anomalousventures/tracks:<version> version
 
 # Pull specific version
-docker pull ghcr.io/anomalousventures/tracks:0.1.0
+docker pull ghcr.io/anomalousventures/tracks:<version>
 
 # Use latest stable release
 docker pull ghcr.io/anomalousventures/tracks:latest
@@ -150,9 +150,9 @@ tracks version
 You should see output like:
 
 ```text
-Tracks CLI v0.1.0
+Tracks CLI vX.X.X
 Commit: abc1234
-Built:  2024-01-15T10:30:00Z
+Built:  2025-01-15T10:30:00Z
 Go:     go1.25.0
 ```
 
