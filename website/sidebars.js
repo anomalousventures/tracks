@@ -17,8 +17,13 @@ const sidebars = {
     'intro',
     {
       type: 'category',
+      label: 'Getting Started',
+      items: ['getting-started/installation'],
+    },
+    {
+      type: 'category',
       label: 'CLI',
-      items: ['cli/overview', 'cli/commands', 'cli/output-modes'],
+      items: ['cli/overview', 'cli/commands', 'cli/new', 'cli/output-modes'],
     },
   ],
 };
