@@ -31,7 +31,7 @@ func TestMakefileTargets(t *testing.T) {
 		items []string
 	}{
 		{"phony declarations", []string{
-			".PHONY: help test build dev dev-services dev-full dev-down generate mocks sqlc lint clean",
+			".PHONY: help test build dev dev-services dev-down generate mocks sqlc lint clean",
 		}},
 		{"help target", []string{
 			"help: ## Show this help message",
@@ -47,7 +47,9 @@ func TestMakefileTargets(t *testing.T) {
 			"go build -o bin/server ./cmd/server",
 		}},
 		{"dev target", []string{
-			"dev: ## Start development server with hot reload",
+			"dev: ## Start development server (auto-starts services if needed)",
+			"grep -q '^  [a-z]' docker-compose.yml",
+			"docker-compose up -d",
 			"go tool air -c .air.toml",
 		}},
 		{"mocks target", []string{
@@ -82,9 +84,8 @@ func TestMakefileHelpText(t *testing.T) {
 		"help         - Show this help message",
 		"test         - Run all tests",
 		"build        - Build the server binary",
-		"dev          - Start development server with hot reload",
+		"dev          - Start development server (auto-starts services if needed)",
 		"dev-services - Start docker-compose services",
-		"dev-full     - Start docker services and dev server",
 		"dev-down     - Stop docker-compose services",
 		"generate     - Generate mocks and SQL code",
 		"mocks        - Generate mocks from interfaces",

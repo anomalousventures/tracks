@@ -1,13 +1,12 @@
-.PHONY: help test build dev dev-services dev-full dev-down generate mocks sqlc lint clean
+.PHONY: help test build dev dev-services dev-down generate mocks sqlc lint clean
 
 help: ## Show this help message
 	@echo "Available targets:"
 	@echo "  help         - Show this help message"
 	@echo "  test         - Run all tests"
 	@echo "  build        - Build the server binary"
-	@echo "  dev          - Start development server with hot reload"
+	@echo "  dev          - Start development server (auto-starts services if needed)"
 	@echo "  dev-services - Start docker-compose services"
-	@echo "  dev-full     - Start docker services and dev server"
 	@echo "  dev-down     - Stop docker-compose services"
 	@echo "  generate     - Generate mocks and SQL code"
 	@echo "  mocks        - Generate mocks from interfaces"
@@ -22,16 +21,17 @@ build: ## Build server binary
 	@mkdir -p bin
 	go build -o bin/server ./cmd/server
 
-dev: ## Start development server with hot reload
+dev: ## Start development server (auto-starts services if needed)
+	@if grep -q '^  [a-z]' docker-compose.yml 2>/dev/null; then \
+		echo "Starting services..."; \
+		docker-compose up -d; \
+		sleep 2; \
+	fi
+	@echo "Starting dev server..."
 	go tool air -c .air.toml
 
 dev-services: ## Start docker-compose services
 	docker-compose up -d
-
-dev-full: dev-services ## Start docker services and dev server
-	@echo "Services started. Starting development server..."
-	@sleep 2
-	go tool air -c .air.toml
 
 dev-down: ## Stop docker-compose services
 	docker-compose down

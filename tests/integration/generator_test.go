@@ -164,6 +164,15 @@ func TestGenerateFullProject(t *testing.T) {
 			assert.NotContains(t, string(envContent), "SECRET_KEY=your-secret-key-here", ".env should not contain placeholder secret key")
 			assert.Regexp(t, `SECRET_KEY=[A-Za-z0-9+/]{43}=`, string(envContent), ".env should contain valid base64-encoded secret key (44 chars)")
 
+			makefilePath := filepath.Join(projectRoot, "Makefile")
+			makefileContent, err := os.ReadFile(makefilePath)
+			require.NoError(t, err, "should be able to read Makefile")
+
+			assert.Contains(t, string(makefileContent), "grep -q '^  [a-z]' docker-compose.yml", "Makefile should contain auto-start logic")
+			assert.Contains(t, string(makefileContent), "docker-compose up -d", "Makefile should auto-start services")
+			assert.NotContains(t, string(makefileContent), "dev-full:", "Makefile should not contain dev-full target")
+			assert.NotContains(t, string(makefileContent), "dev-full     - Start docker services and dev server", "Makefile help should not mention dev-full")
+
 			dockerignorePath := filepath.Join(projectRoot, ".dockerignore")
 			dockerignoreContent, err := os.ReadFile(dockerignorePath)
 			require.NoError(t, err, "should be able to read .dockerignore")
