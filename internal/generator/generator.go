@@ -2,6 +2,8 @@ package generator
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
@@ -43,6 +45,14 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		Str("path", projectRoot).
 		Msg("starting project generation")
 
+	secretKey, err := generateSecretKey()
+	if err != nil {
+		logger.Error().
+			Err(err).
+			Msg("failed to generate secret key")
+		return fmt.Errorf("failed to generate secret key: %w", err)
+	}
+
 	data := template.TemplateData{
 		ModuleName:  projectCfg.ModulePath,
 		ProjectName: projectCfg.ProjectName,
@@ -50,6 +60,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		GoVersion:   "1.25",
 		Year:        time.Now().Year(),
 		EnvPrefix:   projectCfg.EnvPrefix,
+		SecretKey:   secretKey,
 	}
 
 	logger.Info().
@@ -67,6 +78,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 
 	preGenerateTemplates := map[string]string{
 		".env.example.tmpl":                        ".env.example",
+		".env.tmpl":                                ".env",
 		".gitignore.tmpl":                          ".gitignore",
 		".golangci.yml.tmpl":                       ".golangci.yml",
 		".mockery.yaml.tmpl":                       ".mockery.yaml",
@@ -278,4 +290,12 @@ func (g *projectGenerator) Validate(cfg any) error {
 	}
 
 	return nil
+}
+
+func generateSecretKey() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("failed to generate secret key: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(b), nil
 }

@@ -76,6 +76,7 @@ func TestGenerateFullProject(t *testing.T) {
 				".mockery.yaml",
 				".tracks.yaml",
 				".env.example",
+				".env",
 				"Makefile",
 				"Dockerfile",
 				"docker-compose.yml",
@@ -146,6 +147,22 @@ func TestGenerateFullProject(t *testing.T) {
 			}
 			expectedDriver := driverMapping[tt.databaseDriver]
 			assert.Contains(t, string(dbContent), expectedDriver, "db.go should contain correct driver")
+
+			envPath := filepath.Join(projectRoot, ".env")
+			envContent, err := os.ReadFile(envPath)
+			require.NoError(t, err, "should be able to read .env")
+
+			envDatabaseURLs := map[string]string{
+				"go-libsql": "APP_DATABASE_URL=http://localhost:8080",
+				"sqlite3":   "APP_DATABASE_URL=file:./data/testapp.db",
+				"postgres":  "APP_DATABASE_URL=postgres://postgres:postgres@localhost:5432/testapp?sslmode=disable",
+			}
+			expectedDBURL := envDatabaseURLs[tt.databaseDriver]
+			assert.Contains(t, string(envContent), expectedDBURL, ".env should contain correct database URL for %s", tt.databaseDriver)
+
+			assert.Contains(t, string(envContent), "SECRET_KEY=", ".env should contain SECRET_KEY")
+			assert.NotContains(t, string(envContent), "SECRET_KEY=your-secret-key-here", ".env should not contain placeholder secret key")
+			assert.Regexp(t, `SECRET_KEY=[A-Za-z0-9+/]{43}=`, string(envContent), ".env should contain valid base64-encoded secret key (44 chars)")
 
 			dockerignorePath := filepath.Join(projectRoot, ".dockerignore")
 			dockerignoreContent, err := os.ReadFile(dockerignorePath)

@@ -2,6 +2,7 @@ package generator
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"testing"
@@ -210,4 +211,40 @@ func TestProjectGenerator_Generate_AllDatabaseDrivers(t *testing.T) {
 			assert.Contains(t, string(content), expectedInFile)
 		})
 	}
+}
+
+func TestGenerateSecretKey(t *testing.T) {
+	key, err := generateSecretKey()
+	require.NoError(t, err)
+	assert.NotEmpty(t, key)
+}
+
+func TestGenerateSecretKey_Length(t *testing.T) {
+	key, err := generateSecretKey()
+	require.NoError(t, err)
+	assert.Len(t, key, 44)
+}
+
+func TestGenerateSecretKey_ValidBase64(t *testing.T) {
+	key, err := generateSecretKey()
+	require.NoError(t, err)
+
+	decoded, err := base64.StdEncoding.DecodeString(key)
+	assert.NoError(t, err, "key should be valid base64")
+	assert.Len(t, decoded, 32, "decoded key should be 32 bytes")
+}
+
+func TestGenerateSecretKey_Uniqueness(t *testing.T) {
+	keys := make(map[string]bool)
+	iterations := 100
+
+	for i := 0; i < iterations; i++ {
+		key, err := generateSecretKey()
+		require.NoError(t, err)
+
+		assert.False(t, keys[key], "generated key should be unique")
+		keys[key] = true
+	}
+
+	assert.Len(t, keys, iterations, "all keys should be unique")
 }
