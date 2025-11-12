@@ -27,4 +27,9 @@ type TemplateData struct {
 	// Default: "APP"
 	// Example: "MYAPP" results in MYAPP_DATABASE_URL, MYAPP_SERVER_PORT, etc.
 	EnvPrefix string
+
+	// SecretKey is a cryptographically secure random key for session management.
+	// Generated using crypto/rand and base64-encoded (32 bytes → 44 characters).
+	// Used in .env template for SECRET_KEY variable.
+	SecretKey string
 }
