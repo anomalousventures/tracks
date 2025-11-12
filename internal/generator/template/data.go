@@ -29,7 +29,5 @@ type TemplateData struct {
 	EnvPrefix string
 
 	// SecretKey is a cryptographically secure random key for session management.
-	// Generated using crypto/rand and base64-encoded (32 bytes → 44 characters).
-	// Used in .env template for SECRET_KEY variable.
 	SecretKey string
 }

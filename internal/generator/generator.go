@@ -292,9 +292,6 @@ func (g *projectGenerator) Validate(cfg any) error {
 	return nil
 }
 
-// generateSecretKey creates a cryptographically secure random key for session management.
-// Returns a base64-encoded string suitable for use as SECRET_KEY in .env files.
-// Generates 256 bits (32 bytes) of randomness, which becomes a 44-character base64 string.
 func generateSecretKey() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
