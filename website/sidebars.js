@@ -22,8 +22,16 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'CLI',
-      items: ['cli/overview', 'cli/commands', 'cli/new', 'cli/output-modes'],
+      label: 'CLI Reference',
+      items: [
+        'cli/overview',
+        {
+          type: 'category',
+          label: 'Commands',
+          items: ['cli/commands', 'cli/new', 'cli/version', 'cli/help'],
+        },
+        'cli/output-modes',
+      ],
     },
   ],
 };
