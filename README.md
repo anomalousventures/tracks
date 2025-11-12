@@ -1,19 +1,7 @@
 # Tracks
 
 <p align="center">
-  <picture>
-    <source type="image/webp"
-            srcset="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-256.webp 256w,
-                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.webp 512w"
-            sizes="(max-width: 768px) 256px, 400px">
-    <img src="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.png"
-         srcset="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-256.png 256w,
-                 https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.png 512w"
-         sizes="(max-width: 768px) 256px, 400px"
-         alt="Tracks Logo"
-         width="400"
-         loading="lazy">
-  </picture>
+  <img src="website/static/img/logo.png" alt="Tracks Logo" width="400">
 </p>
 
 <p align="center">
@@ -49,6 +37,10 @@ Tracks is in **Phase 0 (Foundation)** development. The CLI tool and project scaf
   - Production-ready project scaffolding
   - Choice of database drivers (LibSQL, SQLite3, PostgreSQL)
   - Clean architecture with testable code
+  - Auto-generated `.env` with sensible defaults
+  - Docker Compose for local development
+  - GitHub Actions CI workflow templates
+  - `make dev` auto-starts required services
   - Cross-platform support (Linux, macOS, Windows)
 
 ## Quick Start
@@ -62,16 +54,23 @@ go install github.com/anomalousventures/tracks/cmd/tracks@latest
 # Create a new project
 tracks new myapp
 
-# Start development
+# Start development (auto-starts Docker services and generates .env)
 cd myapp
-make test   # Run tests
-make dev    # Start server with live reload
+make dev    # Auto-starts required services, starts server with live reload
 
 # Verify health endpoint
 curl http://localhost:8080/api/health
 ```
 
-See the [CLI documentation](https://anomalousventures.github.io/tracks/cli/new) for all options and platform requirements.
+**What you get:**
+
+- Production-ready project structure with clean architecture
+- Docker Compose for local development (auto-started with `make dev`)
+- Auto-generated `.env` with sensible defaults
+- GitHub Actions CI workflow ready to use
+- All tests passing out of the box
+
+See the [CLI documentation](https://anomalousventures.github.io/tracks/cli/new) and [Getting Started guide](https://anomalousventures.github.io/tracks/getting-started/installation) for detailed instructions.
 
 **Coming next:**
 
@@ -242,6 +241,7 @@ Sensible defaults with escape hatches:
 **Logging:** zerolog - structured JSON logging
 **Testing:** Standard library + testify for assertions
 **CLI/TUI:** Cobra + Bubble Tea (Charm stack)
+**Development:** Docker Compose - local service orchestration
 
 ## Project Status
 

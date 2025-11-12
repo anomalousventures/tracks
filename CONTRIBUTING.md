@@ -62,11 +62,12 @@ git checkout -b feature/your-feature-name
 # Make your changes
 # ...
 
-# Run linters
-make lint
+# If you modified interfaces, regenerate mocks
+make generate-mocks
 
-# Run tests
-make test
+# Run pre-commit validation (MANDATORY)
+make lint              # Must pass with zero errors
+make test              # Must pass with zero failures
 
 # Commit your changes
 git add .
@@ -75,6 +76,24 @@ git commit -m "feat: add your feature description"
 # Push to your fork
 git push origin feature/your-feature-name
 ```
+
+## ⚠️ REQUIRED: Pre-Commit Validation
+
+**Before making ANY commit, you MUST successfully complete:**
+
+1. **`make generate-mocks`** - Generate test mocks from interfaces (required after interface changes)
+2. **`make lint`** - All linters must pass with zero errors
+3. **`make test`** - All tests must pass with zero failures
+
+**Failure to complete these steps successfully means the code is NOT ready to commit.**
+
+### Why This Matters
+
+- **Mocks:** Generated mocks are checked in CI. If mocks are out of date, CI will fail
+- **Linting:** Ensures code quality and consistency across the project
+- **Tests:** Validates that changes don't break existing functionality
+
+See [CLAUDE.md](./CLAUDE.md) for detailed development guidance.
 
 ## Coding Standards
 
@@ -259,57 +278,172 @@ operations.
 
 ```text
 tracks/
-├── cmd/                    # CLI commands
-├── internal/              # Internal packages
-│   ├── generator/        # Code generators
-│   ├── tui/             # Terminal UI
-│   └── mcp/             # MCP server
-├── docs/                 # Documentation
-│   └── prd/             # Product requirements
-├── tests/               # Integration tests
-└── examples/            # Example applications
+├── cmd/                         # Executables
+│   ├── tracks/                 # Main CLI tool
+│   └── tracks-mcp/             # MCP server
+├── internal/                    # Internal packages
+│   ├── cli/                    # CLI implementation
+│   │   ├── commands/          # Command implementations
+│   │   ├── interfaces/        # Interface definitions
+│   │   ├── renderer/          # Output formatting
+│   │   └── ui/                # Mode detection, theming
+│   ├── generator/             # Code generators
+│   │   └── template/          # Template rendering
+│   ├── templates/             # Embedded project templates
+│   └── testutil/              # Test utilities
+├── tests/                      # Test suites
+│   ├── integration/           # Integration tests
+│   └── mocks/                 # Generated mocks
+├── docs/                       # Documentation
+│   ├── prd/                   # Product requirements
+│   ├── roadmap/               # Phase planning
+│   └── adr/                   # Architecture Decision Records
+├── website/                    # Docusaurus documentation site
+│   ├── docs/                  # User documentation
+│   ├── blog/                  # Blog posts
+│   └── static/                # Static assets
+└── examples/                   # Example generated apps
 ```
 
 ## Development Tools
 
 ### Available Make Commands
 
+#### Code Generation
+
 ```bash
-make help             # Show all available commands
-make test             # Run test suite
-make test-integration # Run integration tests
-make lint             # Run all linters
-make lint-md          # Lint markdown files
-make build            # Build the CLI
-make install          # Install locally
+make generate-mocks   # Generate test mocks from interfaces (REQUIRED before commit)
 ```
+
+#### Testing
+
+```bash
+make test                # Run unit tests (-v -short with race detector)
+make test-integration    # Run integration tests
+make test-all           # Run both unit and integration tests
+make test-coverage       # Run all tests with coverage reports
+make test-e2e-local     # Test E2E workflow locally (mimics CI)
+make test-docker-local  # Test Docker workflow locally (mimics CI)
+```
+
+#### Linting
+
+```bash
+make lint              # Run all linters (Go, markdown, mocks, JavaScript)
+make lint-go           # Run golangci-lint on Go code
+make lint-md           # Lint markdown files
+make lint-md-fix       # Auto-fix markdown linting issues
+make lint-js           # Lint JavaScript/TypeScript (website)
+make lint-js-fix       # Auto-fix JavaScript linting issues
+make lint-mocks        # Verify mocks are up-to-date
+make format            # Format code with Prettier
+make format-check      # Check code formatting
+```
+
+#### Building
+
+```bash
+make help                  # Show all available commands
+make build                 # Build tracks CLI for current platform
+make build-mcp             # Build tracks-mcp server for current platform
+make build-all             # Build both binaries for current platform
+make build-all-platforms   # Build for all platforms (Linux, macOS, Windows)
+make install               # Install tracks locally
+make clean                 # Clean build artifacts
+```
+
+#### Website
+
+```bash
+make website-dev       # Start Docusaurus development server
+make website-build     # Build website for production
+make website-serve     # Serve built website locally
+```
+
+#### Utilities
+
+```bash
+make deps              # Download and tidy Go dependencies
+```
+
+### Code Generation
+
+Tracks uses [mockery](https://vektra.github.io/mockery/) to generate test mocks from interfaces. This is documented in [ADR-004](./docs/adr/004-mockery-for-test-mock-generation.md).
+
+**When to regenerate mocks:**
+
+- After adding or modifying interface definitions
+- Before committing changes that touch interfaces
+
+**How to generate:**
+
+```bash
+make generate-mocks
+```
+
+Generated mocks are stored in `tests/mocks/` and **must be committed** to the repository. CI checks that mocks are up-to-date via `make lint-mocks`.
 
 ### Linting
 
 We use multiple linters to maintain code quality:
 
-- **golangci-lint** - Go code linting
+- **golangci-lint** - Go code linting and formatting
 - **markdownlint-cli2** - Markdown documentation
-- **gofmt** - Go code formatting
+- **ESLint** - JavaScript/TypeScript (website code)
+- **Prettier** - Code formatting (JavaScript, TypeScript, JSON, YAML)
+- **Mock freshness check** - Verifies generated mocks are up-to-date
 
-Run all linters before committing:
+**Run all linters before committing:**
 
 ```bash
-make lint
+make lint  # Runs ALL linters (Go, markdown, mocks, JavaScript)
+```
+
+**Individual linters:**
+
+```bash
+make lint-go       # Go code only
+make lint-md       # Markdown only
+make lint-js       # JavaScript/TypeScript only
+make lint-mocks    # Check mocks are current
+```
+
+**Auto-fix issues:**
+
+```bash
+make lint-md-fix   # Fix markdown linting issues
+make lint-js-fix   # Fix JavaScript linting issues
+make format        # Format with Prettier
 ```
 
 ### Testing
 
+Tracks uses a multi-layered testing approach:
+
+**Test Types:**
+
+- **Unit Tests** - Fast, isolated tests colocated with source code. Run with `-short` flag and race detector.
+- **Integration Tests** - Test component integration without external services (file generation, validation, git operations). Run on all platforms.
+- **Docker E2E Tests** - Full end-to-end tests with databases (Postgres, LibSQL) via Docker Compose. Run only on Ubuntu in CI.
+
+**Running tests:**
+
 ```bash
-# Unit tests
-make test
-
-# Integration tests
-make test-integration
-
-# With coverage
-make test-coverage
+make test                # Unit tests only (fast, with race detector)
+make test-integration    # Integration tests
+make test-all            # Both unit and integration tests
+make test-coverage       # All tests with coverage reports
+make test-e2e-local      # E2E workflow locally (mimics CI)
+make test-docker-local   # Docker workflow locally (mimics CI)
 ```
+
+**Platform notes:**
+
+- Unit and integration tests run on all platforms (Linux, macOS, Windows)
+- Docker E2E tests require Docker and only run on Ubuntu in CI
+- Use `test-e2e-local` and `test-docker-local` for local CI validation
+
+See [CLAUDE.md](./CLAUDE.md) for detailed testing strategy and architecture tests.
 
 ## Documentation Guidelines
 
