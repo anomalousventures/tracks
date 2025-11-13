@@ -1,7 +1,19 @@
 # Tracks
 
 <p align="center">
-  <img src="website/static/img/logo.png" alt="Tracks Logo" width="400">
+  <picture>
+    <source type="image/webp"
+            srcset="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-256.webp 256w,
+                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-512.webp 512w"
+            sizes="(max-width: 768px) 256px, 400px">
+    <img src="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-512.png"
+         srcset="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-256.png 256w,
+                 https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-512.png 512w"
+         sizes="(max-width: 768px) 256px, 400px"
+         alt="Tracks Logo"
+         width="400"
+         loading="lazy">
+  </picture>
 </p>
 
 <p align="center">

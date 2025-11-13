@@ -234,7 +234,7 @@ tracks new myapp --db=postgres
 
 Now that Tracks is installed, you're ready to create your first project:
 
-- **Quickstart Tutorial** - Build your first Tracks application (Coming soon)
+- **[Quickstart Tutorial](./quickstart.md)** - Build your first Tracks application in 15 minutes
 - **[CLI Commands](../cli/commands.md)** - Complete command reference
 - **[tracks new Command](../cli/new.md)** - Detailed project generation guide
 

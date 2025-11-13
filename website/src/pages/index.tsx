@@ -15,14 +15,14 @@ function HomepageHeader() {
         <picture>
           <source
             type="image/webp"
-            srcSet="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-256.webp 256w,
-                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.webp 512w"
+            srcSet="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-256.webp 256w,
+                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-512.webp 512w"
             sizes="(max-width: 768px) 256px, 300px"
           />
           <img
-            src="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.png"
-            srcSet="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-256.png 256w,
-                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/logo-512.png 512w"
+            src="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-512.png"
+            srcSet="https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-256.png 256w,
+                    https://anomalous-ventures-public-assets.s3.us-west-1.amazonaws.com/tracks-logo-512.png 512w"
             sizes="(max-width: 768px) 256px, 300px"
             alt="Tracks Logo"
             style={{ width: '300px', marginBottom: '2rem' }}

@@ -31,7 +31,9 @@ func TestLoad(t *testing.T) {
 	t.Run("applies default database configuration", func(t *testing.T) {
 		cfg, err := Load()
 		require.NoError(t, err)
-{{- if or (eq .DBDriver "go-libsql") (eq .DBDriver "sqlite3")}}
+{{- if eq .DBDriver "go-libsql"}}
+		assert.Equal(t, "http://localhost:8081", cfg.Database.URL)
+{{- else if eq .DBDriver "sqlite3"}}
 		assert.Equal(t, ":memory:", cfg.Database.URL)
 {{- else if eq .DBDriver "postgres"}}
 		assert.Contains(t, cfg.Database.URL, "postgres://")
