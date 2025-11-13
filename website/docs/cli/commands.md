@@ -8,32 +8,17 @@ Quick reference for all Tracks CLI commands.
 
 ## Available Commands
 
-### [`tracks new`](./new.md)
+### [tracks new](new.md)
 
-Create a new Tracks application with production-ready structure.
+Create a new Tracks application with production-ready structure and database support.
 
-```bash
-tracks new myapp
-tracks new myapp --db postgres --module github.com/me/myapp
-```
-
-### [`tracks version`](./version.md)
+### [tracks version](version.md)
 
 Display version, commit, and build information.
 
-```bash
-tracks version
-tracks --json version
-```
+### [tracks help](help.md)
 
-### [`tracks help`](./help.md)
-
-Show help information for commands.
-
-```bash
-tracks help
-tracks help new
-```
+Show help information for any command.
 
 ## Global Flags
 
@@ -45,4 +30,9 @@ All commands support these flags:
 - `--quiet`, `-q` - Suppress non-error output
 - `--help` - Show help for command
 
-See [Output Modes](./output-modes.md) for details on JSON and formatting options.
+See [Output Modes](output-modes.md) for details on JSON and formatting options.
+
+## See Also
+
+- [CLI Overview](overview.md) - Getting started with Tracks CLI
+- [Output Modes](output-modes.md) - JSON and console output formatting

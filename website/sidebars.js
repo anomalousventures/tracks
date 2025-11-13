@@ -36,12 +36,12 @@ const sidebars = {
       label: 'CLI Reference',
       items: [
         'cli/overview',
+        'cli/output-modes',
         {
           type: 'category',
           label: 'Commands',
           items: ['cli/commands', 'cli/new', 'cli/version', 'cli/help'],
         },
-        'cli/output-modes',
       ],
     },
   ],

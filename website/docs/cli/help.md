@@ -68,3 +68,10 @@ tracks new --help
 ## Flags
 
 Supports all [global flags](./commands.md#global-flags).
+
+## See Also
+
+- [Commands Reference](commands.md) - All available commands
+- [Output Modes](output-modes.md) - JSON and console output
+- [tracks new](new.md) - Create a new Tracks application
+- [tracks version](version.md) - Display version information

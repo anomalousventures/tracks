@@ -2,6 +2,27 @@
 
 Learn by doing: implement a complete feature from start to finish in a Tracks-generated application.
 
+:::warning Incomplete - Awaiting Templ Template Support
+
+**This walkthrough is currently incomplete and shows JSON API patterns.**
+
+Tracks is a **hypermedia server framework** using templ templates and HTMX, not a JSON API framework. This guide currently demonstrates:
+
+- ❌ Handlers returning JSON responses (incorrect for Tracks)
+- ❌ Missing templ template rendering
+- ❌ Missing HTMX patterns for partial page updates
+
+**This guide will be completely rewritten** once templ template generation is implemented. For now, it demonstrates the lower layers (interfaces, repositories, services, testing) which remain valid, but the HTTP handler layer is incorrect.
+
+Use this guide to understand:
+
+- ✅ Database migrations and SQLC
+- ✅ Repository and service patterns
+- ✅ Testing with mocks
+- ⚠️ **Ignore the handler examples** - they will be replaced with templ/HTMX patterns
+
+:::
+
 ## What You'll Build
 
 In this tutorial, you'll add a complete **user management** feature to a Tracks application, implementing all layers from database schema to HTTP handlers. By the end, you'll have:
@@ -392,6 +413,20 @@ func validateCreateInput(name, email string) error {
 ## Step 6: Add HTTP Handler
 
 **Why:** Handlers convert HTTP requests/responses and orchestrate services.
+
+:::caution This Section Will Be Replaced
+
+**The code below shows JSON handlers, which is INCORRECT for Tracks.**
+
+Tracks handlers should:
+
+- Render **templ templates** returning HTML
+- Accept **HTMX requests** for partial page updates
+- Return **HTML fragments**, not JSON
+
+This section will be completely rewritten once templ template generation is implemented. The patterns below (dependency injection, error handling) remain valid, but the response format is wrong.
+
+:::
 
 Create `internal/http/handlers/user.go`:
 
