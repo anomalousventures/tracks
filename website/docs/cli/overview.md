@@ -33,6 +33,14 @@ tracks new --help
 tracks help
 ```
 
+## Quick Start Example
+
+Creating a new project is simple:
+
+![tracks new success output](/img/cli/tracks-new-success.png)
+
+See the [Quickstart Tutorial](../getting-started/quickstart.md) for a complete walkthrough.
+
 ## What's Next?
 
 - [Commands Reference](./commands.md) - Complete command list

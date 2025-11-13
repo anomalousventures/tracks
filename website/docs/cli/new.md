@@ -123,6 +123,8 @@ Next steps:
   3. make dev
 ```
 
+![tracks new command execution](/img/cli/tracks-new-command.gif)
+
 ## Generated Project Structure
 
 ```text

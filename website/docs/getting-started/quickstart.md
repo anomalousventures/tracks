@@ -34,19 +34,9 @@ tracks new myapp
 
 Tracks will generate a complete project with this output:
 
-```text
-✓ Project 'myapp' created successfully!
+![tracks new command execution](/img/cli/tracks-new-command.gif)
 
-Location:      /home/user/myapp
-Module:        example.com/myapp
-Database:      go-libsql
-Git:           initialized
-
-Next steps:
-  1. cd myapp
-  2. make test
-  3. make dev
-```
+![tracks new success output](/img/cli/tracks-new-success.png)
 
 **What just happened?**
 
@@ -96,27 +86,9 @@ Start the development server with hot reload:
 make dev
 ```
 
-The first time you run this, Docker Compose will start the required database service automatically. You'll see output similar to:
+The first time you run this, Docker Compose will start the required database service automatically:
 
-```text
-Starting services...
-Creating network "myapp_default"
-Creating libsql ... done
-Starting dev server...
-
-  __    _   ___
- / /\  | | | |_)
-/_/--\ |_| |_| \_ , built with Go
-
-watching .
-watching cmd
-watching cmd/server
-watching internal
-...
-Building...
-Running...
-INFO Starting HTTP server... port=:8080
-```
+![make dev with hot reload](/img/cli/make-dev-hot-reload.gif)
 
 The server is now running on **http://localhost:8080** with hot reload enabled. Any code changes will automatically rebuild and restart the server.
 
@@ -130,12 +102,7 @@ curl http://localhost:8080/api/health
 
 You should see a JSON response:
 
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-11-12T10:30:00Z"
-}
-```
+![health check response](/img/cli/health-check-response.png)
 
 This confirms your application is running correctly!
 
