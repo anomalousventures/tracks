@@ -33,27 +33,39 @@
 
 ## Current Status
 
-Tracks is in **Phase 0 (Foundation)** development. The CLI tool and project scaffolding are being built.
+**Phase 0 (Foundation) is complete!** 🎉
+
+The Tracks CLI tool is ready to generate production-ready Go web applications. Install it now and start building.
 
 **What works now:**
 
-- ✅ Project structure and monorepo setup
-- ✅ Documentation and roadmap
-- ✅ CLI infrastructure (complete - v0.1.0 ready)
+- ✅ CLI infrastructure (complete)
   - Root command with version, help, and global flags
   - Renderer pattern (Console, JSON, TUI-ready)
   - Mode detection (TTY, CI, flags, env vars)
   - Theme system with Lip Gloss styling
-  - Comprehensive test coverage (unit + integration)
+  - Comprehensive test coverage (unit + integration + Docker E2E)
 - ✅ Project generation (`tracks new` command)
   - Production-ready project scaffolding
   - Choice of database drivers (LibSQL, SQLite3, PostgreSQL)
-  - Clean architecture with testable code
+  - Clean architecture with layered structure (handlers → services → repositories)
   - Auto-generated `.env` with sensible defaults
-  - Docker Compose for local development
-  - GitHub Actions CI workflow templates
-  - `make dev` auto-starts required services
+  - Health check endpoint with repository pattern
   - Cross-platform support (Linux, macOS, Windows)
+- ✅ Complete development tooling
+  - Makefile with comprehensive targets (dev, test, lint, build, generate-mocks)
+  - Docker Compose for all database drivers (auto-started with `make dev`)
+  - Air for live reload during development
+  - golangci-lint configuration for code quality
+  - Mockery integration for automatic mock generation
+  - SQLC integration for type-safe database code
+  - GitHub Actions CI workflow (tests on Ubuntu, macOS, Windows)
+- ✅ Comprehensive documentation
+  - Live documentation site with guides and tutorials
+  - Architecture overview and layer-by-layer guide
+  - CLI reference with examples
+  - Testing strategies and patterns
+  - Installation guides for all platforms
 
 ## Quick Start
 
@@ -76,8 +88,12 @@ curl http://localhost:8080/api/health
 
 **What you get:**
 
-- Production-ready project structure with clean architecture
+- Production-ready project structure with clean layered architecture
+- Health check endpoint with database connectivity test
+- Complete development tooling (Makefile, Air live reload, golangci-lint)
 - Docker Compose for local development (auto-started with `make dev`)
+- Mockery for automatic test mock generation
+- SQLC for type-safe database queries
 - Auto-generated `.env` with sensible defaults
 - GitHub Actions CI workflow ready to use
 - All tests passing out of the box
@@ -125,19 +141,19 @@ Tracks will be a code-generating web framework for Go that produces idiomatic, p
 
 Tracks development is organized into 7 phases. See [`docs/roadmap`](./docs/roadmap) for detailed plans.
 
-### Phase 0: Foundation (Current)
+### Phase 0: Foundation ✅ Complete
 
 **Goal:** Working CLI that generates project scaffolds
 
-**Epics:**
+**Completed Epics:**
 
-1. [CLI Infrastructure](./docs/roadmap/phases/0-foundation/epics/1-cli-infrastructure.md) - Cobra framework, Renderer pattern, version tracking
-2. [Template Engine](./docs/roadmap/phases/0-foundation/epics/2-template-engine.md) - Embed system for project templates
-3. [Project Generation](./docs/roadmap/phases/0-foundation/epics/3-project-generation.md) - `tracks new` command
-4. [Generated Project Tooling](./docs/roadmap/phases/0-foundation/epics/4-generated-tooling.md) - Makefiles, Air, linting, Docker, CI/CD
-5. [Documentation](./docs/roadmap/phases/0-foundation/epics/5-documentation.md) - Installation guides, getting started
+1. ✅ [CLI Infrastructure](./docs/roadmap/phases/0-foundation/epics/1-cli-infrastructure.md) - Cobra framework, Renderer pattern, version tracking
+2. ✅ [Template Engine](./docs/roadmap/phases/0-foundation/epics/2-template-engine.md) - Embed system for project templates
+3. ✅ [Project Generation](./docs/roadmap/phases/0-foundation/epics/3-project-generation.md) - `tracks new` command
+4. ✅ [Generated Project Tooling](./docs/roadmap/phases/0-foundation/epics/4-generated-tooling.md) - Makefiles, Air, linting, Docker, CI/CD, Mockery, SQLC
+5. ✅ [Documentation](./docs/roadmap/phases/0-foundation/epics/5-documentation.md) - Installation guides, tutorials, architecture docs
 
-**Status:** In progress · **Target:** v0.1.0
+**Status:** Complete · **Released:** v0.1.0
 
 ### Future Phases
 

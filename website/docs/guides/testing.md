@@ -561,6 +561,6 @@ func TestValidateEmail(t *testing.T) {
 
 ## See Also
 
-- [CLI: tracks new](../cli/new.md) - Creating projects
+- [CLI: tracks new](../cli/new.mdx) - Creating projects
 - [testify Documentation](https://github.com/stretchr/testify) - Assertion library
 - [mockery Documentation](https://github.com/vektra/mockery) - Mock generation

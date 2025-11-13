@@ -109,19 +109,11 @@ tracks new myapp \
 
 After successfully creating a project, you'll see:
 
-```text
-✓ Project 'myapp' created successfully!
-
-Location:      /home/user/myapp
-Module:        github.com/user/myapp
-Database:      go-libsql
-Git:           initialized
-
-Next steps:
-  1. cd myapp
-  2. make test
-  3. make dev
-```
+<picture>
+  <source srcset={require('../../static/img/cli/tracks-new-command.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/tracks-new-command-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/tracks-new-command-screenshot.png').default} alt="Terminal output showing successful project creation with project location, module name, database type, and git status, followed by next steps to cd into the project, run tests, and start development server" />
+</picture>
 
 ## Generated Project Structure
 
@@ -202,11 +194,23 @@ make dev
 
 This starts the server with Air for live reload on port 8080.
 
+<picture>
+  <source srcset={require('../../static/img/cli/make-dev-hot-reload.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/make-dev-hot-reload-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/make-dev-hot-reload-screenshot.png').default} alt="Terminal showing make dev command starting Docker Compose services, Air live reload watching files, building the application, and starting HTTP server on port 8080. A code change triggers automatic rebuild and restart." />
+</picture>
+
 ### 4. Verify health check
 
 ```bash
-curl http://localhost:8080/api/health
+curl http://localhost:8080/api/health | jq
 ```
+
+<picture>
+  <source srcset={require('../../static/img/cli/health-check.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/health-check-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/health-check-screenshot.png').default} alt="Terminal showing curl command to localhost:8080/api/health endpoint piped to jq, returning JSON response with status ok and current timestamp" />
+</picture>
 
 Expected response:
 
@@ -462,7 +466,7 @@ Or use the generated Dockerfile (coming in later phases).
 
 ### CLI Documentation
 
-- [CLI Overview](./overview.md) - Installation and setup
+- [CLI Overview](./overview.mdx) - Installation and setup
 - [Commands Reference](./commands.md) - All CLI commands
 - [Output Modes](./output-modes.md) - JSON and console output
 

@@ -73,5 +73,5 @@ Supports all [global flags](./commands.md#global-flags).
 
 - [Commands Reference](commands.md) - All available commands
 - [Output Modes](output-modes.md) - JSON and console output
-- [tracks new](new.md) - Create a new Tracks application
+- [tracks new](new.mdx) - Create a new Tracks application
 - [tracks version](version.md) - Display version information

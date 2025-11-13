@@ -38,7 +38,7 @@ In this tutorial, you'll add a complete **user management** feature to a Tracks 
 
 Before starting, you should have:
 
-1. Completed the [quickstart tutorial](../getting-started/quickstart.md)
+1. Completed the [quickstart tutorial](../getting-started/quickstart.mdx)
 2. A generated Tracks project (we'll use `myapp` with `go-libsql` driver)
 3. Basic familiarity with Go and HTTP APIs
 

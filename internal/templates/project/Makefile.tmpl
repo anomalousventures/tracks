@@ -22,12 +22,13 @@ build: ## Build server binary
 	go build -o bin/server ./cmd/server
 
 dev: ## Start development server (auto-starts services if needed)
-	@if grep -q '^  [a-z]' docker-compose.yml 2>/dev/null; then \
+	@trap 'echo "Stopping services..."; docker-compose down' EXIT INT TERM; \
+	if grep -q '^  [a-z]' docker-compose.yml 2>/dev/null; then \
 		echo "Starting services..."; \
 		docker-compose up -d; \
 		sleep 2; \
-	fi
-	@echo "Starting dev server..."
+	fi; \
+	echo "Starting dev server..."; \
 	go tool air -c .air.toml
 
 dev-services: ## Start docker-compose services

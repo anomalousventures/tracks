@@ -668,4 +668,4 @@ chi.Walk(r, func(method, route string, handler http.Handler, middlewares ...func
 
 ## See Also
 
-- [CLI: tracks new](../cli/new.md) - Creating projects
+- [CLI: tracks new](../cli/new.mdx) - Creating projects

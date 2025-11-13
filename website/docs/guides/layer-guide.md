@@ -598,4 +598,4 @@ func main() {
 
 ## See Also
 
-- [CLI: tracks new](../cli/new.md) - Creating projects
+- [CLI: tracks new](../cli/new.mdx) - Creating projects
