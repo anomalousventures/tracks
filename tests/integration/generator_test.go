@@ -153,7 +153,7 @@ func TestGenerateFullProject(t *testing.T) {
 			require.NoError(t, err, "should be able to read .env")
 
 			envDatabaseURLs := map[string]string{
-				"go-libsql": "APP_DATABASE_URL=http://localhost:8080",
+				"go-libsql": "APP_DATABASE_URL=http://localhost:8081",
 				"sqlite3":   "APP_DATABASE_URL=file:./data/testapp.db",
 				"postgres":  "APP_DATABASE_URL=postgres://postgres:postgres@localhost:5432/testapp?sslmode=disable",
 			}
