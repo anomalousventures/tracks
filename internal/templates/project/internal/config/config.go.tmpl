@@ -62,7 +62,7 @@ func Load() (*Config, error) {
 
 	if _, err := os.Stat(".env"); err == nil {
 		v.SetConfigFile(".env")
-		v.SetConfigType("env") // Must specify type for dotfiles
+		v.SetConfigType("env")
 		if err := v.ReadInConfig(); err != nil {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
