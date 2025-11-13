@@ -22,6 +22,17 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Guides',
+      items: [
+        'guides/architecture-overview',
+        'guides/example-walkthrough',
+        'guides/layer-guide',
+        'guides/patterns',
+        'guides/testing',
+      ],
+    },
+    {
+      type: 'category',
       label: 'CLI Reference',
       items: [
         'cli/overview',
