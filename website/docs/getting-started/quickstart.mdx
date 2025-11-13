@@ -32,11 +32,13 @@ Create a new project called `myapp`:
 tracks new myapp
 ```
 
-Tracks will generate a complete project with this output:
+Tracks will generate a complete project:
 
-![tracks new command execution](/img/cli/tracks-new-command.gif)
-
-![tracks new success output](/img/cli/tracks-new-success.png)
+<picture>
+  <source srcset={require('../../static/img/cli/tracks-new-command.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/tracks-new-command-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/tracks-new-command-screenshot.png').default} alt="Terminal output showing successful project creation with project location, module name, database type, and git status, followed by next steps to cd into the project, run tests, and start development server" />
+</picture>
 
 **What just happened?**
 
@@ -63,6 +65,12 @@ Take a look at the generated structure:
 ls -la
 ```
 
+<picture>
+  <source srcset={require('../../static/img/cli/ls-la.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/ls-la-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/ls-la-screenshot.png').default} alt="Terminal showing ls -la command output displaying generated project structure including cmd/, internal/, .air.toml, .env, .gitignore, docker-compose.yml, go.mod, Makefile, and README.md files" />
+</picture>
+
 **Key directories and files:**
 
 - `cmd/server/main.go` - Application entry point
@@ -88,7 +96,11 @@ make dev
 
 The first time you run this, Docker Compose will start the required database service automatically:
 
-![make dev with hot reload](/img/cli/make-dev-hot-reload.gif)
+<picture>
+  <source srcset={require('../../static/img/cli/make-dev-hot-reload.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/make-dev-hot-reload-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/make-dev-hot-reload-screenshot.png').default} alt="Terminal showing make dev command starting Docker Compose services, Air live reload watching files, building the application, and starting HTTP server on port 8080. A code change triggers automatic rebuild and restart." />
+</picture>
 
 The server is now running on **http://localhost:8080** with hot reload enabled. Any code changes will automatically rebuild and restart the server.
 
@@ -96,13 +108,11 @@ The server is now running on **http://localhost:8080** with hot reload enabled. 
 
 In a new terminal, test the health check endpoint:
 
-```bash
-curl http://localhost:8080/api/health
-```
-
-You should see a JSON response:
-
-![health check response](/img/cli/health-check-response.png)
+<picture>
+  <source srcset={require('../../static/img/cli/health-check.gif').default} type="image/gif" media="(prefers-reduced-motion: no-preference)" />
+  <source srcset={require('../../static/img/cli/health-check-screenshot.webp').default} type="image/webp" media="(prefers-reduced-motion: reduce)" />
+  <img src={require('../../static/img/cli/health-check-screenshot.png').default} alt="Terminal showing curl command to localhost:8080/api/health endpoint piped to jq, returning JSON response with status ok and current timestamp" />
+</picture>
 
 This confirms your application is running correctly!
 
@@ -217,8 +227,8 @@ Congratulations! You've created your first Tracks project, explored the structur
 
 - **Understand the Architecture** - Read the [Architecture Overview](../guides/architecture-overview.md) to understand the clean architecture pattern
 - **Explore Layers** - Learn about each layer in the [Layer Guide](../guides/layer-guide.md)
-- **CLI Reference** - See all `tracks new` options in the [CLI Reference](../cli/new.md)
-- **Database Drivers** - Learn about [database driver choices](../cli/new.md#database-drivers) (LibSQL, SQLite, PostgreSQL)
+- **CLI Reference** - See all `tracks new` options in the [CLI Reference](../cli/new.mdx)
+- **Database Drivers** - Learn about [database driver choices](../cli/new.mdx#database-drivers) (LibSQL, SQLite, PostgreSQL)
 
 **Coming in Phase 1:**
 

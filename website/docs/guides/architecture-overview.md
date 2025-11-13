@@ -336,5 +336,5 @@ SQL is in `.sql` files, Go code is generated from it.
 
 ## See Also
 
-- [CLI: tracks new](../cli/new.md) - Creating projects
+- [CLI: tracks new](../cli/new.mdx) - Creating projects
 - [CLI: Commands Reference](../cli/commands.md) - All CLI commands

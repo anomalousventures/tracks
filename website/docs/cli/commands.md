@@ -8,7 +8,7 @@ Quick reference for all Tracks CLI commands.
 
 ## Available Commands
 
-### [tracks new](new.md)
+### [tracks new](new.mdx)
 
 Create a new Tracks application with production-ready structure and database support.
 
@@ -34,5 +34,5 @@ See [Output Modes](output-modes.md) for details on JSON and formatting options.
 
 ## See Also
 
-- [CLI Overview](overview.md) - Getting started with Tracks CLI
+- [CLI Overview](overview.mdx) - Getting started with Tracks CLI
 - [Output Modes](output-modes.md) - JSON and console output formatting

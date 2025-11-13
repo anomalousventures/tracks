@@ -446,6 +446,6 @@ fi
 
 ## Related Documentation
 
-- [CLI Overview](./overview.md) - Getting started
+- [CLI Overview](./overview.mdx) - Getting started
 - [Commands Reference](./commands.md) - Complete command list
 - [Contributing](https://github.com/anomalousventures/tracks/blob/main/CONTRIBUTING.md) - Development guide
