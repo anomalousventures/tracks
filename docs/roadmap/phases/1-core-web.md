@@ -48,9 +48,9 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 **Acceptance Criteria:**
 
 - [ ] templ installed and configured
-- [ ] Base layout templates
-- [ ] Component structure
-- [ ] Template generation command
+- [ ] Base layout templates (internal/http/views/layouts/)
+- [ ] Component directory structure (internal/http/views/components/)
+- [ ] Template generation added to `make generate`
 
 **PRD Reference:** [Templates & Assets - Template System](../../prd/7_templates_assets.md#template-system)
 
@@ -163,7 +163,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 ### Prerequisites
 
 - Phase 0 completed (CLI foundation)
-- Go 1.25+
+- Go 1.25+ (required for tool directive support - see CLAUDE.md)
 
 ### External Dependencies
 

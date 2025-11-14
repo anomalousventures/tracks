@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2025-11-13
+**Deciders:** Development Team
 **Context:** Phase 1 - Core Web Layer
 
 ## Context
@@ -49,6 +50,8 @@ We will adopt **templ-ui** (https://templui.io/) as the core UI component librar
 
 **Component Set Included by Default:**
 
+During `tracks new`, we automatically run `templui init` and install these starter components:
+
 ```bash
 # Forms
 - button, input, textarea, label
@@ -67,7 +70,7 @@ We will adopt **templ-ui** (https://templui.io/) as the core UI component librar
 
 **Integration Points:**
 
-1. **Project Generation** - `tracks new` runs `templui init` and installs default components
+1. **Project Generation** - `tracks new` automatically runs `templui init` and installs the starter set above
 2. **Tool Dependency** - Add `github.com/templui/templui` to go.mod tool block
 3. **CLI Commands** - `tracks ui add <component>` and `tracks ui list` wrap `templui` CLI
 4. **Documentation** - Guide users on component customization workflow
@@ -158,7 +161,7 @@ This decision affects the following Phase 1 epics:
 - **Epic 1.5 (Templ-UI Integration)** - NEW epic for templui installation and configuration
 - **Epic 1.6 (Documentation)** - Add component usage guide and customization workflow
 
-See `docs/roadmap/phases/phase-1/` for detailed epic breakdowns.
+See `docs/roadmap/phases/1-core-web.md` for detailed epic breakdowns.
 
 ## References
 

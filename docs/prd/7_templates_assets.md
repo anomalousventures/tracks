@@ -55,6 +55,8 @@ ui_dir: "internal/http/views/components/ui"
 
 ### Component Categories
 
+**Note:** In the examples below, `{ children... }` is templ's syntax for rendering child content passed to a component. The `@` symbol invokes a templ component.
+
 **Forms** (input, textarea, button, select, checkbox, radio, label)
 
 ```go
@@ -107,10 +109,10 @@ ui_dir: "internal/http/views/components/ui"
 
 ### Adding More Components
 
-Users can add additional components as needed:
+Tracks wraps the templui CLI for convenience. Users can add additional components as needed:
 
 ```bash
-# Via tracks CLI (recommended)
+# Via tracks CLI (recommended - wraps templui)
 tracks ui add calendar
 tracks ui add data-table
 
@@ -435,7 +437,7 @@ templ HeroImage(alt string) {
 package editor
 
 type EditorContent struct {
-    ID          int64           `db:"id"`
+    ID          string          `db:"id"` // UUIDv7
     LexicalJSON json.RawMessage `db:"lexical_json"`
     HTMLCache   string          `db:"html_cache"`
     UpdatedAt   time.Time       `db:"updated_at"`
@@ -476,7 +478,7 @@ func NewLexicalSanitizer() *bluemonday.Policy {
 
 // Save and sanitize content
 func (s *EditorService) SaveContent(ctx context.Context,
-                                    id int64,
+                                    id string, // UUIDv7
                                     lexicalJSON json.RawMessage,
                                     htmlContent string) error {
     // Sanitize HTML
