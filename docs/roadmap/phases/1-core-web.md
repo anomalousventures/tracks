@@ -90,6 +90,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 - [ ] Asset build targets in Makefile
 - [ ] Dark mode support
 - [ ] Development vs production builds
+- [ ] Air configuration watches .templ, .css, .js files and rebuilds assets
 
 **PRD Reference:** [Templates & Assets - CSS & JavaScript](../../prd/7_templates_assets.md#css--javascript)
 
@@ -99,6 +100,8 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 - Set up esbuild for JavaScript bundling
 - Include theme switcher component
 - Optimize for production builds
+- Update .air.toml to watch frontend assets and trigger asset rebuilds
+- Exclude generated outputs (`*_templ.go`, `internal/assets/dist`) from Air watch
 
 ### 1.5 Templ-UI Integration
 

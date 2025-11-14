@@ -756,6 +756,49 @@ images:
 	tracks image:prep web/images/*.{jpg,png} --all
 ```
 
+## Development Workflow (Air Configuration)
+
+Air provides live reload during development by watching source files and rebuilding on changes. Configuration must watch frontend assets alongside Go code.
+
+### Watch Configuration
+
+```toml
+# .air.toml
+[build]
+  cmd = "make generate && make assets && go build -o ./tmp/main ./cmd/server"
+  bin = "./tmp/main"
+
+  # Watch these file types
+  include_ext = ["go", "templ", "css", "js"]
+
+  # Watch these directories
+  include_dir = ["cmd", "internal", "web"]
+
+  # Ignore generated outputs
+  exclude_dir = ["tmp", "vendor", "node_modules", "internal/assets/dist"]
+  exclude_regex = ["_test\\.go$", "_templ\\.go$"]
+
+  delay = 1000
+```
+
+### Rebuild Flow
+
+When you edit a file, Air triggers this sequence:
+
+1. **Template changes** (`.templ`) → `make generate` → Rebuilds Go code → Restarts server
+2. **CSS changes** (`.css`) → `make assets` → Recompiles Tailwind → Restarts server
+3. **JS changes** (`.js`) → `make assets` → Rebuilds bundle → Restarts server
+4. **Go changes** (`.go`) → Rebuilds binary → Restarts server
+
+The server restart triggers browser LiveReload, giving instant feedback.
+
+### Performance Notes
+
+- `make generate` only runs `templ generate` when `.templ` files change
+- `make assets` uses Tailwind's JIT mode for fast rebuilds
+- Air's `delay` prevents rebuilds during rapid file saves
+- Exclude `*_templ.go` to avoid double-rebuilds (Air would see the generated file)
+
 ## Best Practices
 
 1. **Use templ-ui components for common UI patterns** - Don't rebuild what exists
