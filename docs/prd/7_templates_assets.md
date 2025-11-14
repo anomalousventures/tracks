@@ -15,6 +15,8 @@ Tracks uses **templ** for type-safe HTML generation and **hashfs** for content-a
 - Seamless integration with Go's type system
 - Zero runtime overhead
 - Asset fingerprinting for cache busting
+- Production-ready UI components out of the box
+- Component ownership and customization freedom
 
 ### User Stories
 
@@ -22,6 +24,154 @@ Tracks uses **templ** for type-safe HTML generation and **hashfs** for content-a
 - As a developer, I want IDE autocomplete for template functions and variables
 - As a developer, I want to compose UI from reusable components
 - As a frontend developer, I want to use familiar HTML syntax with Go expressions
+- As a developer, I want professional UI components without building from scratch
+- As a developer, I want to customize UI components to match my design
+
+## UI Component Library (Templ-UI)
+
+**Decision:** [ADR-009: Templ-UI for UI Components](../adr/009-templui-for-ui-components.md)
+
+Every Tracks project includes **templ-ui** as a core dependency, providing 40+ production-ready UI components styled with TailwindCSS. Components are copied into your project during generation, giving you full ownership and customization freedom.
+
+### Installation & Setup
+
+During `tracks new` project generation:
+
+```bash
+# Tracks automatically runs:
+templui init --dir internal/http/views/components
+templui add "*"  # Install full starter set
+```
+
+Configuration is stored in `templui.yaml`:
+
+```yaml
+# templui.yaml
+version: "1.0"
+module: "github.com/myuser/myapp"
+components_dir: "internal/http/views/components"
+ui_dir: "internal/http/views/components/ui"
+```
+
+### Component Categories
+
+**Forms** (input, textarea, button, select, checkbox, radio, label)
+
+```go
+// Using templ-ui form components
+@ui.Button(ui.ButtonProps{
+    Variant: "primary",
+    Size: "md",
+    Type: "submit",
+}) {
+    Log in
+}
+
+@ui.Input(ui.InputProps{
+    Type: "email",
+    Placeholder: "you@example.com",
+    Required: true,
+})
+```
+
+**Layout** (card, modal, dialog, sidebar, tabs, accordion, sheet)
+
+```go
+// Card component
+@ui.Card(ui.CardProps{Class: "max-w-md"}) {
+    @ui.CardHeader() {
+        <h2>Welcome</h2>
+    }
+    @ui.CardContent() {
+        <p>This is a templ-ui card component.</p>
+    }
+    @ui.CardFooter() {
+        @ui.Button(ui.ButtonProps{Variant: "outline"}) {
+            Learn more
+        }
+    }
+}
+```
+
+**Feedback** (alert, toast, progress, spinner, skeleton)
+
+```go
+// Alert component
+@ui.Alert(ui.AlertProps{Variant: "success"}) {
+    @ui.AlertTitle() { Success! }
+    @ui.AlertDescription() {
+        Your changes have been saved.
+    }
+}
+```
+
+### Adding More Components
+
+Users can add additional components as needed:
+
+```bash
+# Via Makefile
+make ui-add COMPONENT=calendar
+
+# Or directly with templui CLI
+templui add calendar
+templui add data-table
+```
+
+### Customization Workflow
+
+Components are copied into `internal/http/views/components/`, giving users full control:
+
+```go
+// internal/http/views/components/ui/button.templ
+// You own this code - customize freely!
+package ui
+
+type ButtonProps struct {
+    Variant  string // "primary" | "secondary" | "outline"
+    Size     string // "sm" | "md" | "lg"
+    Type     string // "button" | "submit"
+    Disabled bool
+    Class    string // Additional Tailwind classes
+}
+
+templ Button(props ButtonProps) {
+    <button
+        type={ props.Type }
+        disabled?={ props.Disabled }
+        class={
+            templ.CSSClasses({
+                "btn": true,
+                "btn-primary": props.Variant == "primary",
+                "btn-secondary": props.Variant == "secondary",
+                "btn-outline": props.Variant == "outline",
+                "btn-sm": props.Size == "sm",
+                "btn-md": props.Size == "md" || props.Size == "",
+                "btn-lg": props.Size == "lg",
+                props.Class: props.Class != "",
+            })
+        }
+    >
+        { children... }
+    </button>
+}
+```
+
+Users can modify styling, behavior, or structure without breaking upstream compatibility since they own the code.
+
+### Dark Mode Support
+
+All templ-ui components include dark mode support via Tailwind's `dark:` classes:
+
+```css
+/* Automatically included in components */
+.btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+    @apply dark:bg-blue-500 dark:hover:bg-blue-600;
+}
+```
+
+Theme switching handled by Alpine.js component (see CSS & JavaScript section).
 
 ### Asset Helper Components
 
@@ -591,18 +741,35 @@ images:
 
 .PHONY: templ
 templ:
-	templ generate
+	go tool templ generate
+
+.PHONY: ui-add
+ui-add:
+	@if [ -z "$(COMPONENT)" ]; then \
+		echo "Usage: make ui-add COMPONENT=<name>"; \
+		echo "Example: make ui-add COMPONENT=calendar"; \
+		exit 1; \
+	fi
+	go tool templui add $(COMPONENT)
+	go tool templ generate
+
+.PHONY: ui-list
+ui-list:
+	go tool templui list
 ```
 
 ## Best Practices
 
-1. **Use components for reusability** - Don't repeat HTML structures
-2. **Always sanitize user HTML** - Use bluemonday policies
-3. **Optimize images on build** - Don't serve unoptimized images
-4. **Use content-addressed URLs** - Enables aggressive caching
-5. **Keep translations organized** - Use nested keys for clarity
-6. **Test template rendering** - Templates can have runtime errors
-7. **Use Alpine for interactivity** - Keep JavaScript minimal
+1. **Use templ-ui components for common UI patterns** - Don't rebuild what exists
+2. **Customize components when needed** - You own the code, modify freely
+3. **Use components for reusability** - Don't repeat HTML structures
+4. **Always sanitize user HTML** - Use bluemonday policies
+5. **Optimize images on build** - Don't serve unoptimized images
+6. **Use content-addressed URLs** - Enables aggressive caching
+7. **Keep translations organized** - Use nested keys for clarity
+8. **Test template rendering** - Templates can have runtime errors
+9. **Use Alpine for interactivity** - Keep JavaScript minimal
+10. **Update components intentionally** - Run `templui add <component>` to update from upstream
 
 ## Testing
 
