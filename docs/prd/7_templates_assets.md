@@ -111,11 +111,11 @@ Users can add additional components as needed:
 
 ```bash
 # Via tracks CLI (recommended)
-tracks add-ui calendar
-tracks add-ui data-table
+tracks ui add calendar
+tracks ui add data-table
 
 # List available components
-tracks list-ui
+tracks ui list
 ```
 
 ### Customization Workflow

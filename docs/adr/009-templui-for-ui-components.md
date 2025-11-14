@@ -69,7 +69,7 @@ We will adopt **templ-ui** (https://templui.io/) as the core UI component librar
 
 1. **Project Generation** - `tracks new` runs `templui init` and installs default components
 2. **Tool Dependency** - Add `github.com/templui/templui` to go.mod tool block
-3. **CLI Commands** - `tracks add-ui <component>` and `tracks list-ui` wrap `templui` CLI
+3. **CLI Commands** - `tracks ui add <component>` and `tracks ui list` wrap `templui` CLI
 4. **Documentation** - Guide users on component customization workflow
 
 **Architecture:**
