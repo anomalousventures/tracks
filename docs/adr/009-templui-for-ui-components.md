@@ -102,6 +102,20 @@ myapp/
 └── templui.yaml               # Templ-UI configuration
 ```
 
+**Directory Structure Rationale:**
+
+The `components/ui/` nesting separates library components from application components:
+
+- **`components/ui/`** - templ-ui library components (owned by you, originated from templ-ui)
+- **`components/`** (root) - Your custom application-specific components
+
+This separation provides:
+
+1. **Clear ownership boundaries** - Easy to identify which components came from templ-ui
+2. **Update isolation** - When updating components via `tracks ui add`, you know exactly what's affected
+3. **Namespace clarity** - `@ui.Button()` vs `@components.CustomForm()` makes intent obvious
+4. **Organizational scalability** - As projects grow, the distinction between library and custom code remains clear
+
 ## Rationale
 
 **Why templ-ui aligns with Tracks philosophy:**
