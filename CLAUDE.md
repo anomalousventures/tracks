@@ -17,6 +17,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **E2E and Docker testing:** Full E2E workflow and Docker container testing happens automatically in CI via GitHub Actions workflows. Use `make test-e2e-local` or `make test-docker-local` to test these workflows locally before pushing.
 
+## ⚠️ CRITICAL: Command Line Tools
+
+**This repository uses modern replacements for standard Unix tools. NEVER use the old commands:**
+
+- **File search:** Use `fd` (NOT `find`)
+- **Content search:** Use `rg` (NOT `grep`)
+
+**Examples:**
+
+```bash
+# CORRECT:
+fd "*.md"
+rg "pattern" --type md
+
+# WRONG - NEVER USE THESE:
+find . -name "*.md"
+grep -r "pattern" --include="*.md"
+```
+
+**Always use the Glob and Grep tools when possible instead of Bash commands for file/content search.**
+
 ## Quick Start
 
 **For development setup, coding standards, and contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).**
