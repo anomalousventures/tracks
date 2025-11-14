@@ -10,6 +10,7 @@ on:
       - 'go.sum'
       - 'Makefile'
       - '**/*.md'
+      - '**/*.mdx'
 
 jobs:
   claude-review:
@@ -81,7 +82,7 @@ jobs:
             - Prefer descriptive variable/function names over explanatory comments
             - Code should be self-documenting through clear naming
 
-            **For Documentation Files (.md):**
+            **For Documentation Files (.md, .mdx):**
 
             **Documentation Quality:**
             - Clarity and completeness of instructions
@@ -91,6 +92,7 @@ jobs:
             - Step-by-step instructions are logical and complete
             - Verification procedures are adequate
             - Links and references are correct
+            - For .mdx files: JSX syntax is correct and imports are valid
 
             The CI pipeline will run tests, linting, and security scanning automatically.
             Be constructive and helpful in your feedback.
