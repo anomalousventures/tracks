@@ -71,37 +71,45 @@ The CHANGELOG.md file must be updated BEFORE creating the release tag.
 
 **How:**
 
-1. Generate changelog from commits:
+1. Create feature branch:
 
    ```bash
-   go tool git-chglog -o CHANGELOG.md
+   git checkout -b chore/changelog-v0.x.0
    ```
 
-2. Edit CHANGELOG.md to add release summary:
-   - Add a human-friendly summary at the top of the version section
+2. Generate changelog from commits:
+
+   ```bash
+   # IMPORTANT: Use --next-tag to generate for upcoming release
+   go tool git-chglog --next-tag v0.x.0 -o CHANGELOG.md
+   ```
+
+   **Note:** The `--next-tag` flag tells git-chglog to treat unreleased commits as part of the specified version. Without this flag, commits will appear under "Unreleased" instead of the version section.
+
+3. Edit CHANGELOG.md to add release summary:
+   - Add a human-friendly summary at the top of the version section (after the `## [v0.x.0]` line)
    - Include key highlights (3-5 bullet points)
    - Explain what's new for users downloading archives
    - See v0.1.0 in CHANGELOG.md for example format
 
-3. Fix any markdown linting issues:
+4. Fix any markdown linting issues:
 
    ```bash
    make lint-md
    ```
 
-4. Create PR for CHANGELOG:
+5. Create PR for CHANGELOG:
 
    ```bash
-   git checkout -b chore/changelog-v0.x.0
    git add CHANGELOG.md
    git commit -m "chore: add CHANGELOG.md for v0.x.0 release"
    git push -u origin chore/changelog-v0.x.0
    gh pr create --title "chore: add CHANGELOG.md for v0.x.0 release" --body "..."
    ```
 
-5. **Wait for PR approval and merge**
+6. **Wait for PR approval and merge**
 
-6. Pull latest main:
+7. Pull latest main:
 
    ```bash
    git checkout main
@@ -113,6 +121,12 @@ The CHANGELOG.md file must be updated BEFORE creating the release tag.
 - Attempt #1 failed: CHANGELOG.md was missing entirely
 - GoReleaser config line 69 includes CHANGELOG.md in archives
 - Always create CHANGELOG via PR BEFORE tagging
+
+**Lessons Learned (v0.2.0):**
+
+- Must use `--next-tag v0.x.0` flag with git-chglog
+- Create branch BEFORE generating changelog
+- Without `--next-tag`, commits appear under "Unreleased" section
 
 ### Phase 2: Create Release
 
