@@ -717,10 +717,26 @@ Alpine.start()
 
 ## Build Process
 
+### Code Generation
+
+Template generation is part of the standard `make generate` workflow:
+
 ```makefile
 # Makefile
+.PHONY: generate
+generate:
+	go tool sqlc generate
+	go tool templ generate
+	go tool mockery
+```
+
+Templ generates Go code from `.templ` files, similar to how SQLC generates from `.sql` files.
+
+### Asset Building
+
+```makefile
 .PHONY: assets
-assets: css js images templ
+assets: css js images
 
 .PHONY: css
 css:
@@ -738,11 +754,6 @@ js:
 .PHONY: images
 images:
 	tracks image:prep web/images/*.{jpg,png} --all
-
-.PHONY: templ
-templ:
-	go tool templ generate
-
 ```
 
 ## Best Practices

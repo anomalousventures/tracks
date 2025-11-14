@@ -57,7 +57,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 **Implementation Notes:**
 
 - Create layouts, pages, components directories
-- Set up templ generate in build process
+- Add templ generation to `make generate` target (alongside sqlc and mockery)
 - Create helper functions for common patterns
 
 ### 1.3 hashfs Assets
