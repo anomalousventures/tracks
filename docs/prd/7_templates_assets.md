@@ -743,19 +743,6 @@ images:
 templ:
 	go tool templ generate
 
-.PHONY: ui-add
-ui-add:
-	@if [ -z "$(COMPONENT)" ]; then \
-		echo "Usage: make ui-add COMPONENT=<name>"; \
-		echo "Example: make ui-add COMPONENT=calendar"; \
-		exit 1; \
-	fi
-	go tool templui add $(COMPONENT)
-	go tool templ generate
-
-.PHONY: ui-list
-ui-list:
-	go tool templui list
 ```
 
 ## Best Practices
@@ -769,7 +756,7 @@ ui-list:
 7. **Keep translations organized** - Use nested keys for clarity
 8. **Test template rendering** - Templates can have runtime errors
 9. **Use Alpine for interactivity** - Keep JavaScript minimal
-10. **Update components intentionally** - Run `templui add <component>` to update from upstream
+10. **Update components intentionally** - Run `tracks ui add <component>` to update from upstream
 
 ## Testing
 
