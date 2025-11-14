@@ -110,12 +110,12 @@ ui_dir: "internal/http/views/components/ui"
 Users can add additional components as needed:
 
 ```bash
-# Via Makefile
-make ui-add COMPONENT=calendar
+# Via tracks CLI (recommended)
+tracks add-ui calendar
+tracks add-ui data-table
 
-# Or directly with templui CLI
-templui add calendar
-templui add data-table
+# List available components
+tracks list-ui
 ```
 
 ### Customization Workflow

@@ -111,7 +111,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 - [ ] templui CLI installed as tool dependency
 - [ ] templui init runs during project generation
 - [ ] Full starter set components installed
-- [ ] Makefile targets for ui-add and ui-list
+- [ ] tracks add-ui and tracks list-ui commands implemented
 - [ ] Example pages using templ-ui components
 - [ ] Component customization documented
 
