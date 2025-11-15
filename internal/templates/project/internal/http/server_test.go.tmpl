@@ -1,0 +1,114 @@
+package http
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/tests/mocks"
+)
+
+func TestServer_NewServer(t *testing.T) {
+	cfg := &config.ServerConfig{
+		Port: ":8080",
+	}
+	mockLogger := mocks.NewMockLogger(t)
+
+	srv := NewServer(cfg, mockLogger)
+
+	require.NotNil(t, srv)
+	assert.NotNil(t, srv.router, "router should be initialized")
+	assert.Equal(t, cfg, srv.config, "config should be set")
+	assert.Equal(t, mockLogger, srv.logger, "logger should be set")
+}
+
+func TestServer_WithHealthService(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	mockLogger := mocks.NewMockLogger(t)
+	mockHealthSvc := mocks.NewMockHealthService(t)
+
+	srv := NewServer(cfg, mockLogger)
+	result := srv.WithHealthService(mockHealthSvc)
+
+	assert.Equal(t, srv, result, "WithHealthService should return self for chaining")
+	assert.Equal(t, mockHealthSvc, srv.healthService, "healthService should be set")
+}
+
+func TestServer_RegisterRoutes(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	mockLogger := mocks.NewMockLogger(t)
+
+	srv := NewServer(cfg, mockLogger)
+	result := srv.RegisterRoutes()
+
+	assert.Equal(t, srv, result, "RegisterRoutes should return self for chaining")
+}
+
+func TestServer_BuilderChain(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	mockLogger := mocks.NewMockLogger(t)
+	mockHealthSvc := mocks.NewMockHealthService(t)
+
+	srv := NewServer(cfg, mockLogger).
+		WithHealthService(mockHealthSvc).
+		RegisterRoutes()
+
+	require.NotNil(t, srv)
+	assert.Equal(t, mockHealthSvc, srv.healthService)
+}
+
+func TestServer_HealthEndpoint(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	mockLogger := mocks.NewMockLogger(t)
+	mockHealthSvc := mocks.NewMockHealthService(t)
+
+	mockHealthSvc.EXPECT().Check(gomock.Any()).Return(nil)
+
+	srv := NewServer(cfg, mockLogger).
+		WithHealthService(mockHealthSvc).
+		RegisterRoutes()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	rr := httptest.NewRecorder()
+
+	srv.router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code, "health endpoint should return 200 OK")
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"), "should return JSON content type")
+}
+
+func TestServer_NotFoundRoute(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	mockLogger := mocks.NewMockLogger(t)
+
+	srv := NewServer(cfg, mockLogger).RegisterRoutes()
+
+	req := httptest.NewRequest(http.MethodGet, "/does-not-exist", nil)
+	rr := httptest.NewRecorder()
+
+	srv.router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNotFound, rr.Code, "unknown route should return 404")
+}
+
+func TestServer_MiddlewareApplied(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	mockLogger := mocks.NewMockLogger(t)
+	mockHealthSvc := mocks.NewMockHealthService(t)
+
+	mockHealthSvc.EXPECT().Check(gomock.Any()).Return(nil)
+
+	srv := NewServer(cfg, mockLogger).
+		WithHealthService(mockHealthSvc).
+		RegisterRoutes()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	rr := httptest.NewRecorder()
+
+	srv.router.ServeHTTP(rr, req)
+
+	assert.NotEmpty(t, rr.Header().Get("X-Request-Id"), "X-Request-Id header should be set by middleware")
+}
