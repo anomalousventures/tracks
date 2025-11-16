@@ -3,10 +3,15 @@ package generator
 import (
 	"context"
 	"encoding/base64"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/anomalousventures/tracks/internal/generator/template"
+	"github.com/anomalousventures/tracks/internal/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -248,4 +253,55 @@ func TestGenerateSecretKey_Uniqueness(t *testing.T) {
 	}
 
 	assert.Len(t, keys, iterations, "all keys should be unique")
+}
+
+func TestUsersRouteTemplate_Renders(t *testing.T) {
+	tmpDir := t.TempDir()
+	outputPath := filepath.Join(tmpDir, "users.go")
+
+	renderer := template.NewRenderer(templates.FS)
+
+	data := template.TemplateData{
+		ModuleName:  "github.com/test/testapp",
+		ProjectName: "testapp",
+		DBDriver:    "sqlite3",
+		GoVersion:   "1.25",
+		Year:        time.Now().Year(),
+		EnvPrefix:   "APP",
+		SecretKey:   "test-secret-key",
+	}
+
+	err := renderer.RenderToFile("internal/http/routes/users.go.tmpl", data, outputPath)
+	require.NoError(t, err, "template should render without errors")
+
+	content, err := os.ReadFile(outputPath)
+	require.NoError(t, err, "rendered file should exist")
+
+	contentStr := string(content)
+
+	assert.Contains(t, contentStr, "package routes")
+	assert.Contains(t, contentStr, "const userSlug = \"users\"")
+
+	assert.Contains(t, contentStr, "UserIndex")
+	assert.Contains(t, contentStr, "UserShow")
+	assert.Contains(t, contentStr, "UserNew")
+	assert.Contains(t, contentStr, "UserCreate")
+	assert.Contains(t, contentStr, "UserEdit")
+	assert.Contains(t, contentStr, "UserUpdate")
+	assert.Contains(t, contentStr, "UserDelete")
+
+	assert.Contains(t, contentStr, "func RouteURL(route string, params ...string) string")
+	assert.Contains(t, contentStr, "func UserIndexURL() string")
+	assert.Contains(t, contentStr, "func UserShowURL(username string) string")
+	assert.Contains(t, contentStr, "func UserNewURL() string")
+	assert.Contains(t, contentStr, "func UserCreateURL() string")
+	assert.Contains(t, contentStr, "func UserEditURL(username string) string")
+	assert.Contains(t, contentStr, "func UserUpdateURL(username string) string")
+	assert.Contains(t, contentStr, "func UserDeleteURL(username string) string")
+
+	assert.Contains(t, contentStr, "url.PathEscape")
+
+	fset := token.NewFileSet()
+	_, err = parser.ParseFile(fset, outputPath, content, parser.AllErrors)
+	require.NoError(t, err, "generated code should be valid Go and compile without errors")
 }
