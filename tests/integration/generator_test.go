@@ -91,6 +91,7 @@ func TestGenerateFullProject(t *testing.T) {
 				"internal/http/server.go",
 				"internal/http/routes.go",
 				"internal/http/routes/routes.go",
+				"internal/http/routes/health.go",
 				"internal/http/handlers/health.go",
 				"internal/http/middleware/logging.go",
 				"internal/db/db.go",
