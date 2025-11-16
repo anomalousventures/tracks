@@ -57,18 +57,10 @@ const (
 	UserDelete = "/" + userSlug + "/:" + userSlug
 )
 
-// RouteURL constructs a route URL with parameter substitution.
-// It handles URL encoding for all parameter values to prevent injection attacks.
-//
-// Parameters:
-//   - route: The route constant (e.g., UserShow, UserEdit)
-//   - params: Key-value pairs for route parameters (e.g., "users", "john.doe")
-//
-// Example:
-//   url := RouteURL(UserShow, "users", "john.doe")
-//   // Result: "/users/john.doe"
-//
-// Note: This is a low-level helper. Prefer the typed helper functions below.
+// RouteURL is a low-level helper that constructs URLs with parameter substitution.
+// Prefer the typed helper functions (UserShowURL, etc.) for type safety and clarity.
+// This function exists to reduce code duplication across typed helpers while ensuring
+// consistent URL encoding via url.PathEscape.
 func RouteURL(route string, params ...string) string {
 	if len(params) == 0 {
 		return route
@@ -87,7 +79,7 @@ func RouteURL(route string, params ...string) string {
 	return result
 }
 
-// replaceFirst replaces the first occurrence of old with new in s.
+// replaceFirst avoids importing the strings package for a single use of strings.Replace(s, old, new, 1).
 func replaceFirst(s, old, new string) string {
 	idx := 0
 	for i := 0; i <= len(s)-len(old); i++ {
@@ -103,51 +95,30 @@ func replaceFirst(s, old, new string) string {
 // These functions provide compile-time safety and proper URL encoding.
 // Always prefer these over manual URL construction.
 
-// UserIndexURL returns the URL for the user index page.
-// Example: UserIndexURL() -> "/users"
 func UserIndexURL() string {
 	return UserIndex
 }
 
-// UserShowURL returns the URL for showing a specific user's profile.
-// The username parameter is automatically URL-encoded.
-// Example: UserShowURL("john.doe") -> "/users/john.doe"
 func UserShowURL(username string) string {
 	return RouteURL(UserShow, userSlug, username)
 }
 
-// UserNewURL returns the URL for the user creation form.
-// Example: UserNewURL() -> "/users/new"
 func UserNewURL() string {
 	return UserNew
 }
 
-// UserCreateURL returns the URL for the user creation endpoint.
-// This is typically used as a form action attribute.
-// Example: UserCreateURL() -> "/users"
 func UserCreateURL() string {
 	return UserCreate
 }
 
-// UserEditURL returns the URL for editing a specific user.
-// The username parameter is automatically URL-encoded.
-// Example: UserEditURL("john.doe") -> "/users/john.doe/edit"
 func UserEditURL(username string) string {
 	return RouteURL(UserEdit, userSlug, username)
 }
 
-// UserUpdateURL returns the URL for updating a specific user.
-// This is typically used as a form action attribute with method override.
-// The username parameter is automatically URL-encoded.
-// Example: UserUpdateURL("john.doe") -> "/users/john.doe"
 func UserUpdateURL(username string) string {
 	return RouteURL(UserUpdate, userSlug, username)
 }
 
-// UserDeleteURL returns the URL for deleting a specific user.
-// This is typically used with DELETE method or method override.
-// The username parameter is automatically URL-encoded.
-// Example: UserDeleteURL("john.doe") -> "/users/john.doe"
 func UserDeleteURL(username string) string {
 	return RouteURL(UserDelete, userSlug, username)
 }

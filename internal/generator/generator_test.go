@@ -305,3 +305,75 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 	_, err = parser.ParseFile(fset, outputPath, content, parser.AllErrors)
 	require.NoError(t, err, "generated code should be valid Go and compile without errors")
 }
+
+func TestUsersRouteTemplate_URLEncoding(t *testing.T) {
+	tmpDir := t.TempDir()
+	outputPath := filepath.Join(tmpDir, "users.go")
+
+	renderer := template.NewRenderer(templates.FS)
+
+	data := template.TemplateData{
+		ModuleName:  "github.com/test/testapp",
+		ProjectName: "testapp",
+		DBDriver:    "sqlite3",
+		GoVersion:   "1.25",
+		Year:        time.Now().Year(),
+		EnvPrefix:   "APP",
+		SecretKey:   "test-secret-key",
+	}
+
+	err := renderer.RenderToFile("internal/http/routes/users.go.tmpl", data, outputPath)
+	require.NoError(t, err)
+
+	content, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, outputPath, content, 0)
+	require.NoError(t, err)
+
+	tmpTestFile := filepath.Join(tmpDir, "users_test.go")
+	testCode := `package routes
+
+import (
+	"testing"
+)
+
+func TestUserShowURL_SpecialCharacters(t *testing.T) {
+	tests := []struct {
+		username string
+		expected string
+	}{
+		{"alice+bob@example", "/users/alice%2Bbob%40example"},
+		{"user with spaces", "/users/user%20with%20spaces"},
+		{"user/slash", "/users/user%2Fslash"},
+		{"user?query", "/users/user%3Fquery"},
+		{"user&ampersand", "/users/user%26ampersand"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.username, func(t *testing.T) {
+			result := UserShowURL(tt.username)
+			if result != tt.expected {
+				t.Errorf("UserShowURL(%q) = %q, want %q", tt.username, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestUserEditURL_SpecialCharacters(t *testing.T) {
+	result := UserEditURL("alice+bob@example")
+	expected := "/users/alice%2Bbob%40example/edit"
+	if result != expected {
+		t.Errorf("UserEditURL(%q) = %q, want %q", "alice+bob@example", result, expected)
+	}
+}
+`
+	err = os.WriteFile(tmpTestFile, []byte(testCode), 0644)
+	require.NoError(t, err)
+
+	_, err = parser.ParseFile(fset, tmpTestFile, nil, 0)
+	require.NoError(t, err, "test code should be valid Go")
+
+	assert.NotNil(t, f, "parsed file should not be nil")
+}
