@@ -9,7 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **Run `make generate-mocks`** - Generate test mocks from interfaces (see [ADR-004](./docs/adr/004-mockery-for-test-mock-generation.md))
 2. **Run `make lint`** - All linters must pass with zero errors
 3. **Run `make test`** - Unit tests must pass with zero failures
-4. **Remediate any errors** - Fix all issues found by linting and testing
+4. **Run `make test-integration`** - Integration tests must pass with zero failures
+5. **Remediate any errors** - Fix all issues found by linting and testing
 
 **Failure to complete these steps successfully means the code is NOT ready to commit.**
 
@@ -448,10 +449,12 @@ See [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for complete release wo
 
 Before creating any commit, you must SUCCESSFULLY complete:
 
-1. **`make lint`** - Fix ALL linting errors
-2. **`make test`** - Fix ALL test failures (unit tests)
+1. **`make generate-mocks`** - Generate test mocks
+2. **`make lint`** - Fix ALL linting errors
+3. **`make test`** - Fix ALL test failures (unit tests)
+4. **`make test-integration`** - Fix ALL integration test failures
 
-If either command fails, you MUST remediate the errors before proceeding. Code that fails linting or testing is NOT ready to commit.
+If any command fails, you MUST remediate the errors before proceeding. Code that fails linting or testing is NOT ready to commit.
 
 E2E and Docker testing happens automatically in CI workflows.
 

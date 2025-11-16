@@ -1,0 +1,75 @@
+package http
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/internal/interfaces"
+	"{{.ModuleName}}/internal/logging"
+	"{{.ModuleName}}/tests/mocks"
+)
+
+func init() {
+	zerolog.SetGlobalLevel(zerolog.Disabled)
+}
+
+func newTestLogger() *logging.Logger {
+	return logging.NewLogger("test")
+}
+
+func TestServer_NewServer(t *testing.T) {
+	cfg := &config.ServerConfig{
+		Port: ":8080",
+	}
+	logger := newTestLogger()
+
+	srv := NewServer(cfg, logger)
+
+	require.NotNil(t, srv)
+}
+
+func TestServer_HealthEndpoint(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	logger := newTestLogger()
+	mockHealthSvc := mocks.NewMockHealthService(t)
+
+	mockHealthSvc.EXPECT().
+		Check(mock.Anything).
+		Return(interfaces.HealthStatus{
+			Status:    "ok",
+			Timestamp: time.Now(),
+		})
+
+	srv := NewServer(cfg, logger).
+		WithHealthService(mockHealthSvc).
+		RegisterRoutes()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	rr := httptest.NewRecorder()
+
+	srv.router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+}
+
+func TestServer_NotFoundRoute(t *testing.T) {
+	cfg := &config.ServerConfig{Port: ":8080"}
+	logger := newTestLogger()
+
+	srv := NewServer(cfg, logger).RegisterRoutes()
+
+	req := httptest.NewRequest(http.MethodGet, "/does-not-exist", nil)
+	rr := httptest.NewRecorder()
+
+	srv.router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNotFound, rr.Code)
+}

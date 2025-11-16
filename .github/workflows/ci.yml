@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -65,7 +65,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:
@@ -91,7 +91,7 @@ jobs:
               echo "INTEGRATION_TEST_LONG_TIMEOUT=15s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_E2E_TIMEOUT=120s" >> $GITHUB_ENV
               ;;
-            macos-latest|macos-latest-large)
+            macos-latest)
               echo "INTEGRATION_TEST_SHORT_TIMEOUT=4s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=20s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
@@ -330,7 +330,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest-large, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         go-version: ['1.25.3']
 
     steps:

@@ -3,6 +3,7 @@ package template
 import (
 	"go/parser"
 	"go/token"
+	"os"
 	"strings"
 	"testing"
 
@@ -178,6 +179,54 @@ func TestServerBuilderChain(t *testing.T) {
 	assert.Contains(t, output, "return s", "Builder methods should return self for chaining")
 }
 
+func TestServerNoGlobalState(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.NotContains(t, output, "var server", "should not use global server variable")
+	assert.NotContains(t, output, "var config", "should not use global config variable")
+	assert.NotContains(t, output, "var logger", "should not use global logger variable")
+}
+
+func TestServerErrorWrapping(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, `fmt.Errorf("failed to start server: %w", err)`)
+}
+
+func TestServerContextAwareLogging(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "s.logger.Info(ctx)")
+	assert.Contains(t, output, "s.logger.Error(ctx)")
+}
+
+func TestServerTemplateRegistration(t *testing.T) {
+	generatorFile := "../generator.go"
+	content, err := os.ReadFile(generatorFile)
+	require.NoError(t, err)
+
+	generatorCode := string(content)
+	assert.Contains(t, generatorCode, `"internal/http/server.go.tmpl":             "internal/http/server.go",`)
+}
+
 // HTTP Routes Template Tests (internal/http/routes.go.tmpl)
 
 func TestHTTPRoutesTemplateRender(t *testing.T) {
@@ -336,6 +385,131 @@ func TestHTTPRoutesModuleNameInterpolation(t *testing.T) {
 
 			assert.Contains(t, output, expectedHandlersImport, "should interpolate module name in handlers import")
 			assert.Contains(t, output, expectedRoutesImport, "should interpolate module name in routes import")
+		})
+	}
+}
+
+// Server Test Template Tests (internal/http/server_test.go.tmpl)
+
+func TestServerTestTemplateRender(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+	require.NoError(t, err)
+	assert.NotEmpty(t, output)
+	assert.Contains(t, output, "package http")
+	assert.Contains(t, output, "func TestServer_NewServer")
+}
+
+func TestServerTestValidGoCode(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+	require.NoError(t, err)
+
+	fset := token.NewFileSet()
+	_, err = parser.ParseFile(fset, "server_test.go", output, parser.AllErrors)
+	assert.NoError(t, err, "Generated server_test.go should be valid Go code")
+}
+
+func TestServerTestUsesHTTPTest(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "net/http/httptest", "should import httptest package")
+	assert.Contains(t, output, "httptest.NewRequest", "should use httptest.NewRequest")
+	assert.Contains(t, output, "httptest.NewRecorder", "should use httptest.NewRecorder")
+}
+
+func TestServerTestUsesMocks(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+	require.NoError(t, err)
+
+	mocksImport := data.ModuleName + "/tests/mocks"
+	loggingImport := data.ModuleName + "/internal/logging"
+	assert.Contains(t, output, mocksImport, "should import from tests/mocks")
+	assert.Contains(t, output, loggingImport, "should import from internal/logging")
+	assert.Contains(t, output, "newTestLogger()", "should use test logger helper")
+	assert.Contains(t, output, "mocks.NewMockHealthService", "should use MockHealthService")
+}
+
+func TestServerTestHasIntegrationTests(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "func TestServer_NewServer(t *testing.T)")
+	assert.Contains(t, output, "func TestServer_HealthEndpoint(t *testing.T)")
+	assert.Contains(t, output, "func TestServer_NotFoundRoute(t *testing.T)")
+}
+
+func TestServerTestUsesRealRouter(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "srv.router.ServeHTTP(rr, req)", "should use real chi.Router via ServeHTTP")
+	assert.NotContains(t, output, "MockRouter", "should not mock chi.Router")
+}
+
+func TestServerTestModuleNameInterpolation(t *testing.T) {
+	testCases := []struct {
+		name       string
+		moduleName string
+	}{
+		{
+			name:       "simple module",
+			moduleName: "myapp",
+		},
+		{
+			name:       "github module",
+			moduleName: "github.com/user/project",
+		},
+		{
+			name:       "nested module",
+			moduleName: "example.com/org/team/service",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			renderer := NewRenderer(templates.FS)
+			data := TemplateData{
+				ModuleName: tc.moduleName,
+			}
+
+			output, err := renderer.Render("internal/http/server_test.go.tmpl", data)
+			require.NoError(t, err)
+
+			expectedConfigImport := tc.moduleName + "/internal/config"
+			expectedMocksImport := tc.moduleName + "/tests/mocks"
+
+			assert.Contains(t, output, expectedConfigImport, "should interpolate module name in config import")
+			assert.Contains(t, output, expectedMocksImport, "should interpolate module name in mocks import")
 		})
 	}
 }
