@@ -119,6 +119,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/domain/health/service_test.go.tmpl": "internal/domain/health/service_test.go",
 		"internal/http/server_test.go.tmpl":           "internal/http/server_test.go",
 		"internal/http/handlers/health_test.go.tmpl":  "internal/http/handlers/health_test.go",
+		"internal/http/routes/health_test.go.tmpl":    "internal/http/routes/health_test.go",
 	}
 
 	logger.Info().

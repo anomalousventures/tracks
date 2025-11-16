@@ -1,0 +1,13 @@
+package routes
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestHealthRoutes(t *testing.T) {
+	t.Run("APIHealth constant", func(t *testing.T) {
+		assert.Equal(t, "/api/health", APIHealth)
+	})
+}
