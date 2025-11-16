@@ -11,8 +11,8 @@ const config = {
   tagline: 'Go, fast. A batteries included toolkit for hypermedia servers',
   favicon: 'img/favicon.ico',
 
-  url: 'https://anomalousventures.github.io',
-  baseUrl: '/tracks/',
+  url: 'https://go-tracks.io',
+  baseUrl: '/',
 
   organizationName: 'anomalousventures',
   projectName: 'tracks',
