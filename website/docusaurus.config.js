@@ -18,6 +18,7 @@ const config = {
   projectName: 'tracks',
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
 
   markdown: {
     hooks: {
