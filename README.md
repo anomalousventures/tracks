@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="https://anomalousventures.github.io/tracks/">Docs</a> ·
+  <a href="https://go-tracks.io/">Docs</a> ·
   <a href="#current-status">Status</a> ·
   <a href="#vision">Vision</a> ·
   <a href="#roadmap">Roadmap</a> ·
@@ -98,7 +98,7 @@ curl http://localhost:8080/api/health
 - GitHub Actions CI workflow ready to use
 - All tests passing out of the box
 
-See the [CLI documentation](https://anomalousventures.github.io/tracks/cli/new) and [Getting Started guide](https://anomalousventures.github.io/tracks/getting-started/installation) for detailed instructions.
+See the [CLI documentation](https://go-tracks.io/cli/new) and [Getting Started guide](https://go-tracks.io/getting-started/installation) for detailed instructions.
 
 **Coming next:**
 
@@ -171,7 +171,7 @@ Tracks development is organized into 7 phases. See [`docs/roadmap`](./docs/roadm
 
 ### Live Documentation
 
-**[📚 View Full Documentation →](https://anomalousventures.github.io/tracks/)**
+**[📚 View Full Documentation →](https://go-tracks.io/)**
 
 The complete documentation site includes guides, tutorials, API references, and examples.
 
