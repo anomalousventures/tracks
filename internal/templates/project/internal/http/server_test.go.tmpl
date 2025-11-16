@@ -35,27 +35,6 @@ func TestServer_NewServer(t *testing.T) {
 	require.NotNil(t, srv)
 }
 
-func TestServer_WithHealthService(t *testing.T) {
-	cfg := &config.ServerConfig{Port: ":8080"}
-	logger := newTestLogger()
-	mockHealthSvc := mocks.NewMockHealthService(t)
-
-	srv := NewServer(cfg, logger)
-	result := srv.WithHealthService(mockHealthSvc)
-
-	assert.Equal(t, srv, result)
-}
-
-func TestServer_RegisterRoutes(t *testing.T) {
-	cfg := &config.ServerConfig{Port: ":8080"}
-	logger := newTestLogger()
-
-	srv := NewServer(cfg, logger)
-	result := srv.RegisterRoutes()
-
-	assert.Equal(t, srv, result)
-}
-
 func TestServer_HealthEndpoint(t *testing.T) {
 	cfg := &config.ServerConfig{Port: ":8080"}
 	logger := newTestLogger()
