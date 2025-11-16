@@ -3,6 +3,7 @@ package template
 import (
 	"go/parser"
 	"go/token"
+	"os"
 	"strings"
 	"testing"
 
@@ -176,6 +177,54 @@ func TestServerBuilderChain(t *testing.T) {
 	assert.Contains(t, output, "func (s *Server) WithHealthService(svc interfaces.HealthService) *Server", "WithHealthService should return *Server")
 	assert.Contains(t, output, "func (s *Server) RegisterRoutes() *Server", "RegisterRoutes should return *Server")
 	assert.Contains(t, output, "return s", "Builder methods should return self for chaining")
+}
+
+func TestServerNoGlobalState(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.NotContains(t, output, "var server", "should not use global server variable")
+	assert.NotContains(t, output, "var config", "should not use global config variable")
+	assert.NotContains(t, output, "var logger", "should not use global logger variable")
+}
+
+func TestServerErrorWrapping(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, `fmt.Errorf("failed to start server: %w", err)`)
+}
+
+func TestServerContextAwareLogging(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/server.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "s.logger.Info(ctx)")
+	assert.Contains(t, output, "s.logger.Error(ctx)")
+}
+
+func TestServerTemplateRegistration(t *testing.T) {
+	generatorFile := "../generator.go"
+	content, err := os.ReadFile(generatorFile)
+	require.NoError(t, err)
+
+	generatorCode := string(content)
+	assert.Contains(t, generatorCode, `"internal/http/server.go.tmpl":             "internal/http/server.go",`)
 }
 
 // HTTP Routes Template Tests (internal/http/routes.go.tmpl)
