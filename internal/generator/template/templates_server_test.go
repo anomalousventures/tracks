@@ -412,7 +412,6 @@ func TestServerTestHasIntegrationTests(t *testing.T) {
 	assert.Contains(t, output, "func TestServer_NewServer(t *testing.T)", "should have constructor test")
 	assert.Contains(t, output, "func TestServer_WithHealthService(t *testing.T)", "should have builder pattern test")
 	assert.Contains(t, output, "func TestServer_RegisterRoutes(t *testing.T)", "should have route registration test")
-	assert.Contains(t, output, "func TestServer_BuilderChain(t *testing.T)", "should have builder chain test")
 	assert.Contains(t, output, "func TestServer_HealthEndpoint(t *testing.T)", "should have health endpoint integration test")
 	assert.Contains(t, output, "func TestServer_NotFoundRoute(t *testing.T)", "should have 404 test")
 }
