@@ -21,7 +21,12 @@ func TestRoutesTemplate(t *testing.T) {
 
 	assert.Contains(t, result, "package routes")
 	assert.Contains(t, result, "const (")
-	assert.Contains(t, result, `APIHealth = "/api/health"`)
+	assert.Contains(t, result, `APIPrefix = "/api"`)
+	assert.Contains(t, result, `Sitemap = "/sitemap.xml"`)
+	assert.Contains(t, result, `"/robots.txt"`)
+	assert.Contains(t, result, `"/llms.txt"`)
+	assert.Contains(t, result, `"/.well-known/security.txt"`)
+	assert.Contains(t, result, `"/.well-known/change-password"`)
 }
 
 func TestRoutesValidGoCode(t *testing.T) {
@@ -50,7 +55,7 @@ func TestRoutesPackageDeclaration(t *testing.T) {
 	assert.NotContains(t, result, "package main", "should not have 'main' package")
 }
 
-func TestRoutesAPIHealthConstant(t *testing.T) {
+func TestRoutesSharedConstantsOnly(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	data := TemplateData{}
@@ -58,8 +63,10 @@ func TestRoutesAPIHealthConstant(t *testing.T) {
 	result, err := renderer.Render("internal/http/routes/routes.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "APIHealth", "should define APIHealth constant")
-	assert.Contains(t, result, `"/api/health"`, "APIHealth should have value /api/health")
+	assert.NotContains(t, result, "APIHealth", "APIHealth should be in health.go, not routes.go")
+	assert.Contains(t, result, "APIPrefix", "should define shared APIPrefix constant")
+	assert.Contains(t, result, "Sitemap", "should define shared Sitemap constant")
+	assert.Contains(t, result, "Robots", "should define shared Robots constant")
 }
 
 func TestRoutesConstBlock(t *testing.T) {
@@ -71,5 +78,44 @@ func TestRoutesConstBlock(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, result, "const (", "should use const block syntax")
-	assert.NotContains(t, result, "const APIHealth", "should not use individual const declarations")
+	assert.NotContains(t, result, "const APIPrefix", "should not use individual const declarations")
+}
+
+func TestRoutesHealthTemplate(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{}
+
+	result, err := renderer.Render("internal/http/routes/health.go.tmpl", data)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result)
+
+	assert.Contains(t, result, "package routes")
+	assert.Contains(t, result, "const (")
+	assert.Contains(t, result, `APIHealth = "/api/health"`)
+}
+
+func TestRoutesHealthValidGoCode(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{}
+
+	result, err := renderer.Render("internal/http/routes/health.go.tmpl", data)
+	require.NoError(t, err)
+
+	fset := token.NewFileSet()
+	_, err = parser.ParseFile(fset, "health.go", result, parser.AllErrors)
+	require.NoError(t, err, "generated code should be valid Go")
+}
+
+func TestRoutesHealthAPIHealthConstant(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{}
+
+	result, err := renderer.Render("internal/http/routes/health.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, result, "APIHealth", "should define APIHealth constant")
+	assert.Contains(t, result, `"/api/health"`, "APIHealth should have value /api/health")
 }
