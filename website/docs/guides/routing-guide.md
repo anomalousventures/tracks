@@ -92,11 +92,11 @@ import (
     "net/url"
 )
 
-// UsernameParam is exported so handlers can extract parameters without magic strings.
+// UserSlugParam is exported so handlers can extract parameters without magic strings.
 // usersPath remains unexported as it's an internal routing detail.
 const (
     usersPath     = "users"
-    UsernameParam = "username"
+    UserSlugParam = "username"
 )
 
 // HYPERMEDIA-First Pattern (Default for all generated resources):
@@ -109,12 +109,12 @@ const (
 // Provides compile-time safety and automatic URL encoding to prevent injection attacks.
 const (
     UserIndex  = "/" + usersPath
-    UserShow   = "/" + usersPath + "/:" + UsernameParam
+    UserShow   = "/" + usersPath + "/:" + UserSlugParam
     UserNew    = "/" + usersPath + "/new"
     UserCreate = "/" + usersPath
-    UserEdit   = "/" + usersPath + "/:" + UsernameParam + "/edit"
-    UserUpdate = "/" + usersPath + "/:" + UsernameParam
-    UserDelete = "/" + usersPath + "/:" + UsernameParam
+    UserEdit   = "/" + usersPath + "/:" + UserSlugParam + "/edit"
+    UserUpdate = "/" + usersPath + "/:" + UserSlugParam
+    UserDelete = "/" + usersPath + "/:" + UserSlugParam
 )
 
 // RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
@@ -153,7 +153,7 @@ func UserIndexURL() string {
 }
 
 func UserShowURL(username string) string {
-    return RouteURL(UserShow, UsernameParam, username)
+    return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserNewURL() string {
@@ -165,15 +165,15 @@ func UserCreateURL() string {
 }
 
 func UserEditURL(username string) string {
-    return RouteURL(UserEdit, UsernameParam, username)
+    return RouteURL(UserEdit, UserSlugParam, username)
 }
 
 func UserUpdateURL(username string) string {
-    return RouteURL(UserUpdate, UsernameParam, username)
+    return RouteURL(UserUpdate, UserSlugParam, username)
 }
 
 func UserDeleteURL(username string) string {
-    return RouteURL(UserDelete, UsernameParam, username)
+    return RouteURL(UserDelete, UserSlugParam, username)
 }
 ```
 
@@ -218,20 +218,21 @@ Separate constants for paths and parameters prevent magic strings and keep the c
 ```go
 const (
     usersPath     = "users"
-    UsernameParam = "username"
+    UserSlugParam = "username"
 )
 
 const (
-    UserShow = "/" + usersPath + "/:" + UsernameParam  // "/users/:username"
-    UserEdit = "/" + usersPath + "/:" + UsernameParam + "/edit"  // "/users/:username/edit"
+    UserShow = "/" + usersPath + "/:" + UserSlugParam  // "/users/:username"
+    UserEdit = "/" + usersPath + "/:" + UserSlugParam + "/edit"  // "/users/:username/edit"
 )
 ```
 
 **Why separate constants?**
 
 - **Path constant** (`usersPath`) - The base path segment in the URL (unexported, internal detail)
-- **Parameter constant** (`UsernameParam`) - The parameter name used in route patterns, RouteURL calls, and handlers (exported so handlers can use `chi.URLParam(r, routes.UsernameParam)`)
+- **Parameter constant** (`UserSlugParam`) - The parameter name used in route patterns, RouteURL calls, and handlers (exported so handlers can use `chi.URLParam(r, routes.UserSlugParam)`)
 - **No magic strings** - Both are referenced by constant, not hardcoded strings
+- **Consistent naming** - All resources follow `{Resource}SlugParam` pattern (e.g., `UserSlugParam`, `PostSlugParam`)
 
 **Why not `:id`?**
 
@@ -277,10 +278,10 @@ func RouteURL(route string, params ...string) string {
 url := RouteURL(UserIndex)  // "/users"
 
 // With parameters - use constant, not magic string
-url := RouteURL(UserShow, routes.UsernameParam, "johndoe")  // "/users/johndoe"
+url := RouteURL(UserShow, routes.UserSlugParam, "johndoe")  // "/users/johndoe"
 
 // Special characters are encoded
-url := RouteURL(UserShow, routes.UsernameParam, "user@example.com")  // "/users/user%40example.com"
+url := RouteURL(UserShow, routes.UserSlugParam, "user@example.com")  // "/users/user%40example.com"
 ```
 
 ## Typed Helper Functions
@@ -289,11 +290,11 @@ Domain files provide type-safe helper functions:
 
 ```go
 func UserShowURL(username string) string {
-    return RouteURL(UserShow, UsernameParam, username)
+    return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserEditURL(username string) string {
-    return RouteURL(UserEdit, UsernameParam, username)
+    return RouteURL(UserEdit, UserSlugParam, username)
 }
 ```
 
@@ -308,7 +309,7 @@ func UserEditURL(username string) string {
 
 ```go
 func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
-    username := chi.URLParam(r, routes.UsernameParam)
+    username := chi.URLParam(r, routes.UserSlugParam)
     user, err := h.service.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, "Not found", http.StatusNotFound)
@@ -424,7 +425,7 @@ func TestUserRoutes(t *testing.T) {
 
     t.Run("parameter constants have correct values", func(t *testing.T) {
         assert.Equal(t, "users", usersPath)
-        assert.Equal(t, "username", UsernameParam)
+        assert.Equal(t, "username", UserSlugParam)
     })
 }
 

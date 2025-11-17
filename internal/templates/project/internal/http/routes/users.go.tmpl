@@ -6,7 +6,7 @@ import (
 
 const (
 	usersPath     = "users"
-	UsernameParam = "username"
+	UserSlugParam = "username"
 )
 
 // HYPERMEDIA-First Pattern (Default for all generated resources):
@@ -19,12 +19,12 @@ const (
 // Provides compile-time safety and automatic URL encoding to prevent injection attacks.
 const (
 	UserIndex  = "/" + usersPath
-	UserShow   = "/" + usersPath + "/:" + UsernameParam
+	UserShow   = "/" + usersPath + "/:" + UserSlugParam
 	UserNew    = "/" + usersPath + "/new"
 	UserCreate = "/" + usersPath
-	UserEdit   = "/" + usersPath + "/:" + UsernameParam + "/edit"
-	UserUpdate = "/" + usersPath + "/:" + UsernameParam
-	UserDelete = "/" + usersPath + "/:" + UsernameParam
+	UserEdit   = "/" + usersPath + "/:" + UserSlugParam + "/edit"
+	UserUpdate = "/" + usersPath + "/:" + UserSlugParam
+	UserDelete = "/" + usersPath + "/:" + UserSlugParam
 )
 
 // RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
@@ -63,7 +63,7 @@ func UserIndexURL() string {
 }
 
 func UserShowURL(username string) string {
-	return RouteURL(UserShow, UsernameParam, username)
+	return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserNewURL() string {
@@ -75,13 +75,13 @@ func UserCreateURL() string {
 }
 
 func UserEditURL(username string) string {
-	return RouteURL(UserEdit, UsernameParam, username)
+	return RouteURL(UserEdit, UserSlugParam, username)
 }
 
 func UserUpdateURL(username string) string {
-	return RouteURL(UserUpdate, UsernameParam, username)
+	return RouteURL(UserUpdate, UserSlugParam, username)
 }
 
 func UserDeleteURL(username string) string {
-	return RouteURL(UserDelete, UsernameParam, username)
+	return RouteURL(UserDelete, UserSlugParam, username)
 }

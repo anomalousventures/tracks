@@ -281,7 +281,7 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 
 	assert.Contains(t, contentStr, "package routes")
 	assert.Contains(t, contentStr, "usersPath     = \"users\"")
-	assert.Contains(t, contentStr, "UsernameParam = \"username\"")
+	assert.Contains(t, contentStr, "UserSlugParam = \"username\"")
 
 	assert.Contains(t, contentStr, "UserIndex")
 	assert.Contains(t, contentStr, "UserShow")

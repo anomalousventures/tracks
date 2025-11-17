@@ -168,7 +168,7 @@ func NewUserHandler(userService interfaces.UserService) *UserHandler {
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
     // 1. Extract parameters - use exported constant to avoid magic strings
-    username := chi.URLParam(r, routes.UsernameParam)
+    username := chi.URLParam(r, routes.UserSlugParam)
     if username == "" {
         http.Error(w, "username required", http.StatusBadRequest)
         return

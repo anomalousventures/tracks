@@ -282,7 +282,7 @@ const (
 
 // Usage in handler - use exported constant to avoid magic strings
 func (h *UserHandler) ShowProfile(w http.ResponseWriter, r *http.Request) {
-    username := chi.URLParam(r, routes.UsernameParam)  // Extract parameter using constant
+    username := chi.URLParam(r, routes.UserSlugParam)  // Extract parameter using constant
     // ...
 }
 
