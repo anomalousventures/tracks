@@ -110,8 +110,24 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Getting Started',
+                label: 'Introduction',
                 to: '/docs/intro',
+              },
+              {
+                label: 'Installation',
+                to: '/docs/getting-started/installation',
+              },
+              {
+                label: 'Quick Start',
+                to: '/docs/getting-started/quickstart',
+              },
+              {
+                label: 'Architecture',
+                to: '/docs/guides/architecture-overview',
+              },
+              {
+                label: 'CLI Reference',
+                to: '/docs/cli/overview',
               },
             ],
           },
@@ -119,8 +135,16 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'GitHub Discussions',
+                label: 'GitHub',
+                href: 'https://github.com/anomalousventures/tracks',
+              },
+              {
+                label: 'Discussions',
                 href: 'https://github.com/anomalousventures/tracks/discussions',
+              },
+              {
+                label: 'Issues',
+                href: 'https://github.com/anomalousventures/tracks/issues',
               },
             ],
           },
@@ -132,8 +156,16 @@ const config = {
                 to: '/blog',
               },
               {
-                label: 'GitHub',
-                href: 'https://github.com/anomalousventures/tracks',
+                label: 'Roadmap',
+                href: 'https://github.com/anomalousventures/tracks/blob/main/docs/roadmap/README.md',
+              },
+              {
+                label: 'Releases',
+                href: 'https://github.com/anomalousventures/tracks/releases',
+              },
+              {
+                label: 'License',
+                href: 'https://github.com/anomalousventures/tracks/blob/main/LICENSE',
               },
             ],
           },
