@@ -27,6 +27,7 @@ const sidebars = {
         'guides/architecture-overview',
         'guides/example-walkthrough',
         'guides/layer-guide',
+        'guides/routing-guide',
         'guides/patterns',
         'guides/testing',
       ],

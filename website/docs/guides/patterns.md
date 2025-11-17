@@ -240,20 +240,29 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Step 7: Register Routes
+### Step 7: Register Routes (Domain-Based)
 
-Update `internal/http/routes/routes.go`:
+Create `internal/http/routes/users.go` with domain-specific routes:
 
 ```go
-const (
-    // API (JSON only, rare)
-    HealthCheck = "/api/health"
+package routes
 
-    // Users (hypermedia routes - HTML responses)
-    UsersList   = "/users"
-    UsersCreate = "/users"
-    UserProfile = "/u/{username}"
+const userSlug = "users"
+
+// HYPERMEDIA routes serve HTML via templ (default pattern)
+const (
+    UserIndex  = "/" + userSlug
+    UserShow   = "/" + userSlug + "/:" + userSlug
+    UserNew    = "/" + userSlug + "/new"
+    UserCreate = "/" + userSlug
+    UserEdit   = "/" + userSlug + "/:" + userSlug + "/edit"
+    UserUpdate = "/" + userSlug + "/:" + userSlug
 )
+
+func UserShowURL(username string) string {
+    return RouteURL(UserShow, userSlug, username)
+}
+// ... other helpers
 ```
 
 Update `internal/http/routes.go`:
@@ -264,16 +273,19 @@ func registerRoutes(s *Server) {
 
     // ... existing middleware ...
 
-    // Health
-    r.Get(routes.HealthCheck, handlers.NewHealthHandler(s.healthService).Handle)
+    // Health (API endpoint)
+    r.Get(routes.APIHealth, handlers.NewHealthHandler(s.healthService).Handle)
 
-    // Users
+    // Users (HYPERMEDIA routes - serve HTML)
     userHandler := handlers.NewUserHandler(s.userService)
-    r.Get(routes.UsersList, userHandler.List)
-    r.Post(routes.UsersCreate, userHandler.Create)
-    r.Get(routes.UserProfile, userHandler.ShowProfile)
+    r.Get(routes.UserIndex, userHandler.HandleIndex)
+    r.Get(routes.UserShow, userHandler.HandleShow)
+    r.Get(routes.UserNew, userHandler.HandleNew)
+    r.Post(routes.UserCreate, userHandler.HandleCreate)
 }
 ```
+
+See [Routing Guide](./routing-guide.md) for complete domain-based routing patterns.
 
 ### Step 8: Wire Dependencies
 
@@ -512,14 +524,20 @@ GET /u/johndoe HTTP/1.1
 ### Handler
 
 ```go
-func (h *UserHandler) ShowProfile(w http.ResponseWriter, r *http.Request) {
-    username := chi.URLParam(r, "username")
+// Route is registered using domain route constant: routes.UserShow
+func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
+    username := chi.URLParam(r, "users")  // Matches slug constant
     user, err := h.userService.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, err.Error(), 500)
         return
     }
-    views.UserProfile(user).Render(r.Context(), w)
+
+    // Use helper function to generate edit URL for template
+    editURL := routes.UserEditURL(user.Username)
+
+    // Render HYPERMEDIA response (HTML via templ)
+    views.UserProfile(user, editURL).Render(r.Context(), w)
 }
 ```
 
@@ -664,6 +682,7 @@ chi.Walk(r, func(method, route string, handler http.Handler, middlewares ...func
 
 - [**Architecture Overview**](./architecture-overview.md) - Core principles
 - [**Layer Guide**](./layer-guide.md) - Deep dive on each layer
+- [**Routing Guide**](./routing-guide.md) - HYPERMEDIA-first routing and domain-based organization
 - [**Testing**](./testing.md) - Testing strategies
 
 ## See Also

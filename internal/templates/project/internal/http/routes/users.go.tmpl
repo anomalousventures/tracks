@@ -1,11 +1,10 @@
 package routes
 
 import (
-	"fmt"
 	"net/url"
 )
 
-// Private to prevent external dependencies on this implementation detail.
+// userSlug is unexported to prevent tight coupling with parameter names across packages.
 const userSlug = "users"
 
 // HYPERMEDIA-First Pattern (Default for all generated resources):
@@ -26,9 +25,7 @@ const (
 	UserDelete = "/" + userSlug + "/:" + userSlug
 )
 
-// Exists to reduce code duplication across typed helpers while ensuring
-// consistent URL encoding. Prefer the typed helper functions (UserShowURL, etc.)
-// for type safety and clarity.
+// RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
 func RouteURL(route string, params ...string) string {
 	if len(params) == 0 {
 		return route
@@ -47,7 +44,7 @@ func RouteURL(route string, params ...string) string {
 	return result
 }
 
-// replaceFirst avoids importing the strings package for a single use of strings.Replace(s, old, new, 1).
+// replaceFirst avoids importing strings package to keep route files lightweight.
 func replaceFirst(s, old, new string) string {
 	idx := 0
 	for i := 0; i <= len(s)-len(old); i++ {
