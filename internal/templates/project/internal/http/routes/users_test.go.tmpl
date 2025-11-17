@@ -1,0 +1,142 @@
+package routes
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestUserRoutes(t *testing.T) {
+	t.Run("route constants have correct values", func(t *testing.T) {
+		assert.Equal(t, "/users", UserIndex)
+		assert.Equal(t, "/users/:users", UserShow)
+		assert.Equal(t, "/users/new", UserNew)
+		assert.Equal(t, "/users", UserCreate)
+		assert.Equal(t, "/users/:users/edit", UserEdit)
+		assert.Equal(t, "/users/:users", UserUpdate)
+		assert.Equal(t, "/users/:users", UserDelete)
+	})
+
+	t.Run("routes follow HYPERMEDIA pattern", func(t *testing.T) {
+		// HYPERMEDIA routes use readable slugs like :users (not :id)
+		assert.Contains(t, UserShow, ":users")
+		assert.Contains(t, UserEdit, ":users")
+		assert.Contains(t, UserUpdate, ":users")
+		assert.Contains(t, UserDelete, ":users")
+	})
+
+	t.Run("routes do not contain /api/ prefix", func(t *testing.T) {
+		// HYPERMEDIA routes serve HTML, not JSON APIs
+		assert.NotContains(t, UserIndex, "/api/")
+		assert.NotContains(t, UserShow, "/api/")
+		assert.NotContains(t, UserNew, "/api/")
+		assert.NotContains(t, UserCreate, "/api/")
+		assert.NotContains(t, UserEdit, "/api/")
+		assert.NotContains(t, UserUpdate, "/api/")
+		assert.NotContains(t, UserDelete, "/api/")
+	})
+
+	t.Run("routes include form routes for HYPERMEDIA", func(t *testing.T) {
+		// HYPERMEDIA patterns include /new and /edit for HTML forms
+		assert.Contains(t, UserNew, "/new")
+		assert.Contains(t, UserEdit, "/edit")
+	})
+
+	t.Run("userSlug constant has correct value", func(t *testing.T) {
+		// The slug is used for parameter substitution
+		assert.Equal(t, "users", userSlug)
+	})
+}
+
+func TestRouteURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		route    string
+		params   []string
+		expected string
+	}{
+		{
+			name:     "no parameters",
+			route:    "/users",
+			params:   nil,
+			expected: "/users",
+		},
+		{
+			name:     "single parameter",
+			route:    "/users/:users",
+			params:   []string{"users", "john"},
+			expected: "/users/john",
+		},
+		{
+			name:     "multiple parameters",
+			route:    "/users/:users/posts/:posts",
+			params:   []string{"users", "john", "posts", "hello-world"},
+			expected: "/users/john/posts/hello-world",
+		},
+		{
+			name:     "URL encodes spaces",
+			route:    "/users/:users",
+			params:   []string{"users", "john doe"},
+			expected: "/users/john%20doe",
+		},
+		{
+			name:     "URL encodes special characters",
+			route:    "/users/:users",
+			params:   []string{"users", "user@example.com"},
+			expected: "/users/user%40example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := RouteURL(tt.route, tt.params...)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestUserHelpers(t *testing.T) {
+	t.Run("UserIndexURL returns correct path", func(t *testing.T) {
+		assert.Equal(t, "/users", UserIndexURL())
+	})
+
+	t.Run("UserShowURL with normal username", func(t *testing.T) {
+		assert.Equal(t, "/users/john", UserShowURL("john"))
+	})
+
+	t.Run("UserShowURL with special characters", func(t *testing.T) {
+		assert.Equal(t, "/users/user%40example.com", UserShowURL("user@example.com"))
+	})
+
+	t.Run("UserNewURL returns correct path", func(t *testing.T) {
+		assert.Equal(t, "/users/new", UserNewURL())
+	})
+
+	t.Run("UserCreateURL returns correct path", func(t *testing.T) {
+		assert.Equal(t, "/users", UserCreateURL())
+	})
+
+	t.Run("UserEditURL with normal username", func(t *testing.T) {
+		assert.Equal(t, "/users/john/edit", UserEditURL("john"))
+	})
+
+	t.Run("UserEditURL with special characters", func(t *testing.T) {
+		assert.Equal(t, "/users/user%40example.com/edit", UserEditURL("user@example.com"))
+	})
+
+	t.Run("UserUpdateURL with normal username", func(t *testing.T) {
+		assert.Equal(t, "/users/john", UserUpdateURL("john"))
+	})
+
+	t.Run("UserUpdateURL with special characters", func(t *testing.T) {
+		assert.Equal(t, "/users/user%40example.com", UserUpdateURL("user@example.com"))
+	})
+
+	t.Run("UserDeleteURL with normal username", func(t *testing.T) {
+		assert.Equal(t, "/users/john", UserDeleteURL("john"))
+	})
+
+	t.Run("UserDeleteURL with special characters", func(t *testing.T) {
+		assert.Equal(t, "/users/user%40example.com", UserDeleteURL("user@example.com"))
+	})
+}
