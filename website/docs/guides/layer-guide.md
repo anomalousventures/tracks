@@ -56,9 +56,9 @@ func (s *Server) Start(ctx context.Context) error {
 **File structure:**
 
 - `internal/http/routes.go` - Route registration and middleware chain
-- `internal/http/routes/routes.go` - Route constants (URL patterns)
+- `internal/http/routes/` - Domain-based route files (health.go, users.go, etc.) with constants and helpers
 
-Registers routes and applies middleware chain:
+Registers routes and applies middleware chain. Routes serve HTML by default (HYPERMEDIA-first):
 
 ```go
 func registerRoutes(s *Server) {
@@ -72,20 +72,17 @@ func registerRoutes(s *Server) {
     r.Use(middleware.Security())
 
     // Health check (no auth required)
-    r.Get(routes.HealthCheck, handlers.NewHealthHandler(s.healthService).Handle)
+    r.Get(health.APIHealth, handlers.NewHealthHandler(s.healthService).Handle)
 
-    // API routes (with auth middleware)
-    r.Route("/api", func(r chi.Router) {
-        r.Use(middleware.Auth(s.authService))
-
-        // User routes
-        r.Route("/users", func(r chi.Router) {
-            h := handlers.NewUserHandler(s.userService)
-            r.Get("/", h.List)
-            r.Post("/", h.Create)
-            r.Get("/{id}", h.Get)
-        })
-    })
+    // User routes (HYPERMEDIA - serve HTML via templ)
+    userHandler := handlers.NewUserHandler(s.userService)
+    r.Get(users.UserIndex, userHandler.HandleIndex)       // List users
+    r.Get(users.UserShow, userHandler.HandleShow)         // Show user profile
+    r.Get(users.UserNew, userHandler.HandleNew)           // New user form
+    r.Post(users.UserCreate, userHandler.HandleCreate)    // Create user
+    r.Get(users.UserEdit, userHandler.HandleEdit)         // Edit user form
+    r.Post(users.UserUpdate, userHandler.HandleUpdate)    // Update user
+    r.Post(users.UserDelete, userHandler.HandleDelete)    // Delete user
 }
 ```
 
@@ -95,28 +92,66 @@ func registerRoutes(s *Server) {
 - Group routes with `r.Route()` to share middleware
 - Route patterns use route constants (not magic strings)
 
-### Route Constants (`routes/routes.go`)
+### Route Constants (`routes/`)
 
-Type-safe route references:
+Routes are organized by domain in separate files. Each file contains route constants, slug constants (for parameterized routes), and helper functions for type-safe URL generation.
+
+**Simple Domain (`routes/health.go` - API endpoint, no parameters):**
 
 ```go
 package routes
 
 const (
-    // API (JSON only, rare)
-    HealthCheck = "/api/health"
-
-    // Users (hypermedia routes - HTML responses)
-    UsersList      = "/users"
-    UsersCreate    = "/users"
-    UserProfile    = "/u/{username}"
-    EditProfile    = "/settings/profile"
-    UpdateProfile  = "/settings/profile"
-    DeleteAccount  = "/settings/account/delete"
+    APIHealth = "/api/health"  // JSON endpoint
 )
 ```
 
-**Why?** Prevents typos, enables compile-time checking, easier refactoring.
+**Complex Domain (`routes/users.go` - HYPERMEDIA routes with helpers):**
+
+```go
+package routes
+
+import "net/url"
+
+// Private slug constant for DRY parameter naming
+const userSlug = "users"
+
+// HYPERMEDIA route constants (serve HTML via templ)
+const (
+    UserIndex  = "/" + userSlug                           // GET  /users
+    UserShow   = "/" + userSlug + "/:" + userSlug         // GET  /users/:users
+    UserNew    = "/" + userSlug + "/new"                  // GET  /users/new
+    UserCreate = "/" + userSlug                           // POST /users
+    UserEdit   = "/" + userSlug + "/:" + userSlug + "/edit" // GET  /users/:users/edit
+    UserUpdate = "/" + userSlug + "/:" + userSlug         // POST /users/:users
+    UserDelete = "/" + userSlug + "/:" + userSlug         // POST /users/:users
+)
+
+// RouteURL substitutes parameters and URL-encodes values
+func RouteURL(route string, params ...string) string {
+    // ... implementation with url.PathEscape
+}
+
+// Typed helper functions for type safety
+func UserShowURL(username string) string {
+    return RouteURL(UserShow, userSlug, username)
+}
+
+func UserEditURL(username string) string {
+    return RouteURL(UserEdit, userSlug, username)
+}
+// ... other helpers
+```
+
+**Key Benefits:**
+
+- **Domain-based organization** - All user routes in one file
+- **Type safety** - Compile-time checks prevent typos
+- **URL encoding** - Automatic via RouteURL helper
+- **Typed helpers** - IDE autocomplete, refactoring support
+- **HYPERMEDIA-first** - Form routes (/new, /edit) for HTML
+
+See the [Routing Guide](./routing-guide.md) for complete details on domain-based routing patterns.
 
 ### Handlers (`handlers/`)
 
@@ -593,6 +628,7 @@ func main() {
 ## Next Steps
 
 - [**Architecture Overview**](./architecture-overview.md) - Core principles and request flow
+- [**Routing Guide**](./routing-guide.md) - HYPERMEDIA-first routing and domain-based organization
 - [**Patterns**](./patterns.md) - Common patterns for extending your app
 - [**Testing**](./testing.md) - Testing strategies and examples
 

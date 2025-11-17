@@ -135,7 +135,8 @@ Here's the journey of an HTTP request through a Tracks application:
 │  • Validates input (DTOs)           │
 │  • Calls service(s) via interfaces  │
 │  • Orchestrates cross-domain ops    │
-│  • Formats response                 │
+│  • Formats response (HTML via templ │
+│    or JSON for APIs)                │
 └────────┬────────────────────────────┘
          │
          ▼
@@ -177,11 +178,12 @@ Handles web-facing concerns:
 
 - **server.go** - HTTP server setup, graceful shutdown
 - **routes.go** - Route registration, middleware chain
-- **routes/routes.go** - Type-safe route constants
+- **routes/** - Domain-based route files (health.go, users.go, etc.) with type-safe constants
 - **handlers/** - HTTP request/response handling
 - **middleware/** - Composable middleware functions
+- **views/** - templ components for HTML rendering (HYPERMEDIA-first)
 
-**Responsibility:** Convert HTTP into domain operations and back.
+**Responsibility:** Convert HTTP into domain operations and back. Serves HTML by default via templ.
 
 ### Interfaces Package (`internal/interfaces/`)
 
@@ -331,6 +333,7 @@ SQL is in `.sql` files, Go code is generated from it.
 ## Next Steps
 
 - [**Layer Guide**](./layer-guide.md) - Deep dive into each layer's responsibilities
+- [**Routing Guide**](./routing-guide.md) - HYPERMEDIA-first routing and domain-based organization
 - [**Patterns**](./patterns.md) - Common patterns for extending your app
 - [**Testing**](./testing.md) - Testing strategies and examples
 
