@@ -72,7 +72,7 @@ We will **separate configuration into two distinct files** with a clear principl
 
 ## `.tracks.yaml` Schema
 
-### Phase 0 (Current - v0.1.0)
+### Phase 0 (v0.1.0-v0.2.0)
 
 ```yaml
 # Schema version for .tracks.yaml format migrations
@@ -195,7 +195,7 @@ middleware:
 
 ## `.env` Schema
 
-### Phase 0 (Current - v0.1.0)
+### Phase 0 (v0.1.0-v0.2.0)
 
 ```bash
 # ============================================================================
