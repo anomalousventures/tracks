@@ -291,7 +291,7 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 	assert.Contains(t, contentStr, "UserUpdate")
 	assert.Contains(t, contentStr, "UserDelete")
 
-	assert.Contains(t, contentStr, "func RouteURL(route string, params ...string) string")
+	// Helper functions are in the template, but RouteURL is now in routes.go (shared)
 	assert.Contains(t, contentStr, "func UserIndexURL() string")
 	assert.Contains(t, contentStr, "func UserShowURL(username string) string")
 	assert.Contains(t, contentStr, "func UserNewURL() string")
@@ -299,8 +299,6 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 	assert.Contains(t, contentStr, "func UserEditURL(username string) string")
 	assert.Contains(t, contentStr, "func UserUpdateURL(username string) string")
 	assert.Contains(t, contentStr, "func UserDeleteURL(username string) string")
-
-	assert.Contains(t, contentStr, "url.PathEscape")
 
 	fset := token.NewFileSet()
 	_, err = parser.ParseFile(fset, outputPath, content, parser.AllErrors)

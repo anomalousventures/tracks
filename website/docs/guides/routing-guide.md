@@ -56,7 +56,7 @@ Some domains have simple routes with no parameters. The health check is a good e
 package routes
 
 const (
-    APIHealth = "/api/health"
+    APIHealth = APIPrefix + "/health"
 )
 ```
 
@@ -88,10 +88,6 @@ Most domains serve HTML and have parameterized routes. The user domain demonstra
 ```go
 package routes
 
-import (
-    "net/url"
-)
-
 // UserSlugParam is exported so handlers can extract parameters without magic strings.
 // usersPath remains unexported as it's an internal routing detail.
 const (
@@ -116,37 +112,6 @@ const (
     UserUpdate = "/" + usersPath + "/:" + UserSlugParam
     UserDelete = "/" + usersPath + "/:" + UserSlugParam
 )
-
-// RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
-func RouteURL(route string, params ...string) string {
-    if len(params) == 0 {
-        return route
-    }
-
-    result := route
-    for i := 0; i < len(params); i += 2 {
-        if i+1 >= len(params) {
-            break
-        }
-        key := params[i]
-        value := params[i+1]
-        placeholder := ":" + key
-        result = replaceFirst(result, placeholder, url.PathEscape(value))
-    }
-    return result
-}
-
-// replaceFirst avoids importing strings package to keep route files lightweight.
-func replaceFirst(s, old, new string) string {
-    idx := 0
-    for i := 0; i <= len(s)-len(old); i++ {
-        if s[i:i+len(old)] == old {
-            idx = i
-            return s[:idx] + new + s[idx+len(old):]
-        }
-    }
-    return s
-}
 
 func UserIndexURL() string {
     return UserIndex
@@ -243,9 +208,16 @@ HYPERMEDIA routes use readable identifiers (slugs) in URLs:
 
 ## RouteURL Helper Pattern
 
-Each domain includes a `RouteURL` helper function for parameter substitution:
+The `RouteURL` helper function is defined in `routes.go` and shared across all domain route files:
+
+**`internal/http/routes/routes.go`:**
 
 ```go
+import (
+    "net/url"
+    "strings"
+)
+
 func RouteURL(route string, params ...string) string {
     if len(params) == 0 {
         return route
@@ -259,7 +231,7 @@ func RouteURL(route string, params ...string) string {
         key := params[i]
         value := params[i+1]
         placeholder := ":" + key
-        result = replaceFirst(result, placeholder, url.PathEscape(value))
+        result = strings.Replace(result, placeholder, url.PathEscape(value), 1)
     }
     return result
 }

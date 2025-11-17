@@ -1,5 +1,10 @@
 package routes
 
+import (
+	"net/url"
+	"strings"
+)
+
 const (
 	APIPrefix = "/api"
 
@@ -10,3 +15,23 @@ const (
 	WellKnownSecurityTxt    = "/.well-known/security.txt"
 	WellKnownChangePassword = "/.well-known/change-password"
 )
+
+// RouteURL is a low-level helper for substituting route parameters with URL-encoded values.
+// Use typed helper functions (e.g., UserShowURL) instead of calling this directly.
+func RouteURL(route string, params ...string) string {
+	if len(params) == 0 {
+		return route
+	}
+
+	result := route
+	for i := 0; i < len(params); i += 2 {
+		if i+1 >= len(params) {
+			break
+		}
+		key := params[i]
+		value := params[i+1]
+		placeholder := ":" + key
+		result = strings.Replace(result, placeholder, url.PathEscape(value), 1)
+	}
+	return result
+}
