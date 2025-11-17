@@ -89,7 +89,6 @@ Most domains serve HTML and have parameterized routes. The user domain demonstra
 package routes
 
 import (
-    "fmt"
     "net/url"
 )
 
@@ -133,7 +132,7 @@ func RouteURL(route string, params ...string) string {
     return result
 }
 
-// replaceFirst minimizes dependencies since we only need one string operation.
+// replaceFirst avoids importing strings package to keep route files lightweight.
 func replaceFirst(s, old, new string) string {
     idx := 0
     for i := 0; i <= len(s)-len(old); i++ {
