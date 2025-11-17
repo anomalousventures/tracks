@@ -1,0 +1,88 @@
+package routes
+
+import (
+	"fmt"
+	"net/url"
+)
+
+// Private to prevent external dependencies on this implementation detail.
+const userSlug = "users"
+
+// HYPERMEDIA-First Pattern (Default for all generated resources):
+// Routes serve HTML via templ and include form routes (/new, /edit) for RESTful HTML.
+//
+// API Alternative: Use --api flag to generate JSON routes with /api prefix and no forms.
+//
+// Type-Safe URL Generation:
+// Use typed helpers (UserShowURL, UserEditURL, etc.) instead of manual string concatenation.
+// Provides compile-time safety and automatic URL encoding to prevent injection attacks.
+const (
+	UserIndex  = "/" + userSlug
+	UserShow   = "/" + userSlug + "/:" + userSlug
+	UserNew    = "/" + userSlug + "/new"
+	UserCreate = "/" + userSlug
+	UserEdit   = "/" + userSlug + "/:" + userSlug + "/edit"
+	UserUpdate = "/" + userSlug + "/:" + userSlug
+	UserDelete = "/" + userSlug + "/:" + userSlug
+)
+
+// Exists to reduce code duplication across typed helpers while ensuring
+// consistent URL encoding. Prefer the typed helper functions (UserShowURL, etc.)
+// for type safety and clarity.
+func RouteURL(route string, params ...string) string {
+	if len(params) == 0 {
+		return route
+	}
+
+	result := route
+	for i := 0; i < len(params); i += 2 {
+		if i+1 >= len(params) {
+			break
+		}
+		key := params[i]
+		value := params[i+1]
+		placeholder := ":" + key
+		result = replaceFirst(result, placeholder, url.PathEscape(value))
+	}
+	return result
+}
+
+// replaceFirst avoids importing the strings package for a single use of strings.Replace(s, old, new, 1).
+func replaceFirst(s, old, new string) string {
+	idx := 0
+	for i := 0; i <= len(s)-len(old); i++ {
+		if s[i:i+len(old)] == old {
+			idx = i
+			return s[:idx] + new + s[idx+len(old):]
+		}
+	}
+	return s
+}
+
+func UserIndexURL() string {
+	return UserIndex
+}
+
+func UserShowURL(username string) string {
+	return RouteURL(UserShow, userSlug, username)
+}
+
+func UserNewURL() string {
+	return UserNew
+}
+
+func UserCreateURL() string {
+	return UserCreate
+}
+
+func UserEditURL(username string) string {
+	return RouteURL(UserEdit, userSlug, username)
+}
+
+func UserUpdateURL(username string) string {
+	return RouteURL(UserUpdate, userSlug, username)
+}
+
+func UserDeleteURL(username string) string {
+	return RouteURL(UserDelete, userSlug, username)
+}

@@ -3,10 +3,15 @@ package generator
 import (
 	"context"
 	"encoding/base64"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/anomalousventures/tracks/internal/generator/template"
+	"github.com/anomalousventures/tracks/internal/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -248,4 +253,127 @@ func TestGenerateSecretKey_Uniqueness(t *testing.T) {
 	}
 
 	assert.Len(t, keys, iterations, "all keys should be unique")
+}
+
+func TestUsersRouteTemplate_Renders(t *testing.T) {
+	tmpDir := t.TempDir()
+	outputPath := filepath.Join(tmpDir, "users.go")
+
+	renderer := template.NewRenderer(templates.FS)
+
+	data := template.TemplateData{
+		ModuleName:  "github.com/test/testapp",
+		ProjectName: "testapp",
+		DBDriver:    "sqlite3",
+		GoVersion:   "1.25",
+		Year:        time.Now().Year(),
+		EnvPrefix:   "APP",
+		SecretKey:   "test-secret-key",
+	}
+
+	err := renderer.RenderToFile("internal/http/routes/users.go.tmpl", data, outputPath)
+	require.NoError(t, err, "template should render without errors")
+
+	content, err := os.ReadFile(outputPath)
+	require.NoError(t, err, "rendered file should exist")
+
+	contentStr := string(content)
+
+	assert.Contains(t, contentStr, "package routes")
+	assert.Contains(t, contentStr, "const userSlug = \"users\"")
+
+	assert.Contains(t, contentStr, "UserIndex")
+	assert.Contains(t, contentStr, "UserShow")
+	assert.Contains(t, contentStr, "UserNew")
+	assert.Contains(t, contentStr, "UserCreate")
+	assert.Contains(t, contentStr, "UserEdit")
+	assert.Contains(t, contentStr, "UserUpdate")
+	assert.Contains(t, contentStr, "UserDelete")
+
+	assert.Contains(t, contentStr, "func RouteURL(route string, params ...string) string")
+	assert.Contains(t, contentStr, "func UserIndexURL() string")
+	assert.Contains(t, contentStr, "func UserShowURL(username string) string")
+	assert.Contains(t, contentStr, "func UserNewURL() string")
+	assert.Contains(t, contentStr, "func UserCreateURL() string")
+	assert.Contains(t, contentStr, "func UserEditURL(username string) string")
+	assert.Contains(t, contentStr, "func UserUpdateURL(username string) string")
+	assert.Contains(t, contentStr, "func UserDeleteURL(username string) string")
+
+	assert.Contains(t, contentStr, "url.PathEscape")
+
+	fset := token.NewFileSet()
+	_, err = parser.ParseFile(fset, outputPath, content, parser.AllErrors)
+	require.NoError(t, err, "generated code should be valid Go and compile without errors")
+}
+
+func TestUsersRouteTemplate_URLEncoding(t *testing.T) {
+	tmpDir := t.TempDir()
+	outputPath := filepath.Join(tmpDir, "users.go")
+
+	renderer := template.NewRenderer(templates.FS)
+
+	data := template.TemplateData{
+		ModuleName:  "github.com/test/testapp",
+		ProjectName: "testapp",
+		DBDriver:    "sqlite3",
+		GoVersion:   "1.25",
+		Year:        time.Now().Year(),
+		EnvPrefix:   "APP",
+		SecretKey:   "test-secret-key",
+	}
+
+	err := renderer.RenderToFile("internal/http/routes/users.go.tmpl", data, outputPath)
+	require.NoError(t, err)
+
+	content, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, outputPath, content, 0)
+	require.NoError(t, err)
+
+	tmpTestFile := filepath.Join(tmpDir, "users_test.go")
+	testCode := `package routes
+
+import (
+	"testing"
+)
+
+func TestUserShowURL_SpecialCharacters(t *testing.T) {
+	tests := []struct {
+		username string
+		expected string
+	}{
+		{"alice+bob@example", "/users/alice%2Bbob%40example"},
+		{"user with spaces", "/users/user%20with%20spaces"},
+		{"user/slash", "/users/user%2Fslash"},
+		{"user?query", "/users/user%3Fquery"},
+		{"user&ampersand", "/users/user%26ampersand"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.username, func(t *testing.T) {
+			result := UserShowURL(tt.username)
+			if result != tt.expected {
+				t.Errorf("UserShowURL(%q) = %q, want %q", tt.username, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestUserEditURL_SpecialCharacters(t *testing.T) {
+	result := UserEditURL("alice+bob@example")
+	expected := "/users/alice%2Bbob%40example/edit"
+	if result != expected {
+		t.Errorf("UserEditURL(%q) = %q, want %q", "alice+bob@example", result, expected)
+	}
+}
+`
+	err = os.WriteFile(tmpTestFile, []byte(testCode), 0644)
+	require.NoError(t, err)
+
+	_, err = parser.ParseFile(fset, tmpTestFile, nil, 0)
+	require.NoError(t, err, "test code should be valid Go")
+
+	assert.NotNil(t, f, "parsed file should not be nil")
 }
