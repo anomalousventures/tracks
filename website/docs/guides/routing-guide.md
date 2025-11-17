@@ -70,14 +70,18 @@ const (
 **Usage:**
 
 ```go
+import "yourapp/internal/http/routes"
+
 func (s *Server) routes() {
-    s.router.Get(health.APIHealth, s.handleHealthCheck())
+    s.router.Get(routes.APIHealth, s.handleHealthCheck())
 }
 ```
 
 ## Complex Domains (HYPERMEDIA Routes)
 
-Most domains serve HTML and have parameterized routes. The user domain demonstrates the full pattern:
+Most domains serve HTML and have parameterized routes. The user domain demonstrates the full pattern.
+
+**Note:** The examples below are taken directly from Tracks' production templates (`users.go.tmpl`, `users_test.go.tmpl`), ensuring they represent actual generated code.
 
 **`internal/http/routes/users.go`:**
 
@@ -89,7 +93,7 @@ import (
     "net/url"
 )
 
-// Private to prevent external dependencies on this implementation detail.
+// userSlug is unexported to prevent tight coupling with parameter names across packages.
 const userSlug = "users"
 
 // HYPERMEDIA-First Pattern (Default for all generated resources):
@@ -110,9 +114,7 @@ const (
     UserDelete = "/" + userSlug + "/:" + userSlug
 )
 
-// Exists to reduce code duplication across typed helpers while ensuring
-// consistent URL encoding. Prefer the typed helper functions (UserShowURL, etc.)
-// for type safety and clarity.
+// RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
 func RouteURL(route string, params ...string) string {
     if len(params) == 0 {
         return route
@@ -131,7 +133,7 @@ func RouteURL(route string, params ...string) string {
     return result
 }
 
-// replaceFirst avoids importing the strings package for a single use of strings.Replace(s, old, new, 1).
+// replaceFirst minimizes dependencies since we only need one string operation.
 func replaceFirst(s, old, new string) string {
     idx := 0
     for i := 0; i <= len(s)-len(old); i++ {
@@ -302,8 +304,8 @@ func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
     }
 
     // Use helper to generate URLs in templates
-    editURL := users.UserEditURL(user.Username)
-    deleteURL := users.UserDeleteURL(user.Username)
+    editURL := routes.UserEditURL(user.Username)
+    deleteURL := routes.UserDeleteURL(user.Username)
 
     // Render templ template with URLs
     component := views.UserProfile(user, editURL, deleteURL)
@@ -323,8 +325,7 @@ import (
     "github.com/go-chi/chi/v5/middleware"
 
     "yourapp/internal/http/handlers"
-    "yourapp/internal/http/routes/health"
-    "yourapp/internal/http/routes/users"
+    "yourapp/internal/http/routes"
     httpmiddleware "yourapp/internal/http/middleware"
 )
 
@@ -335,26 +336,28 @@ func (s *Server) routes() {
     s.router.Use(middleware.Recoverer)
 
     // Health check (no auth required)
-    s.router.Get(health.APIHealth, s.handleHealthCheck())
+    s.router.Get(routes.APIHealth, s.handleHealthCheck())
 
     // User routes (HYPERMEDIA)
     userHandler := handlers.NewUserHandler(s.userService, s.logger)
-    s.router.Get(users.UserIndex, userHandler.HandleIndex)
-    s.router.Get(users.UserShow, userHandler.HandleShow)
-    s.router.Get(users.UserNew, userHandler.HandleNew)
-    s.router.Post(users.UserCreate, userHandler.HandleCreate)
-    s.router.Get(users.UserEdit, userHandler.HandleEdit)
-    s.router.Post(users.UserUpdate, userHandler.HandleUpdate)
-    s.router.Post(users.UserDelete, userHandler.HandleDelete)
+    s.router.Get(routes.UserIndex, userHandler.HandleIndex)
+    s.router.Get(routes.UserShow, userHandler.HandleShow)
+    s.router.Get(routes.UserNew, userHandler.HandleNew)
+    s.router.Post(routes.UserCreate, userHandler.HandleCreate)
+    s.router.Get(routes.UserEdit, userHandler.HandleEdit)
+    s.router.Post(routes.UserUpdate, userHandler.HandleUpdate)
+    s.router.Post(routes.UserDelete, userHandler.HandleDelete)
 }
 ```
 
 **Pattern:**
 
-1. Import domain route packages (`routes/health`, `routes/users`)
-2. Use route constants from imported packages
+1. Import the routes package (`"yourapp/internal/http/routes"`)
+2. Use route constants from the package (e.g., `routes.APIHealth`, `routes.UserIndex`, `routes.UserShow`)
 3. Register with appropriate HTTP methods
 4. HYPERMEDIA routes use GET for forms, POST for mutations
+
+**Note:** All domain route files (health.go, users.go, etc.) are in the same `routes` package. They're organized into separate files for maintainability, but share the same package namespace.
 
 ## Testing Routes
 
@@ -430,6 +433,12 @@ func TestRouteURL(t *testing.T) {
             route:    "/users/:users",
             params:   []string{"users", "john"},
             expected: "/users/john",
+        },
+        {
+            name:     "multiple parameters",
+            route:    "/users/:users/posts/:posts",
+            params:   []string{"users", "john", "posts", "hello-world"},
+            expected: "/users/john/posts/hello-world",
         },
         {
             name:     "URL encodes spaces",

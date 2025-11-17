@@ -72,17 +72,17 @@ func registerRoutes(s *Server) {
     r.Use(middleware.Security())
 
     // Health check (no auth required)
-    r.Get(health.APIHealth, handlers.NewHealthHandler(s.healthService).Handle)
+    r.Get(routes.APIHealth, handlers.NewHealthHandler(s.healthService).Handle)
 
     // User routes (HYPERMEDIA - serve HTML via templ)
     userHandler := handlers.NewUserHandler(s.userService)
-    r.Get(users.UserIndex, userHandler.HandleIndex)       // List users
-    r.Get(users.UserShow, userHandler.HandleShow)         // Show user profile
-    r.Get(users.UserNew, userHandler.HandleNew)           // New user form
-    r.Post(users.UserCreate, userHandler.HandleCreate)    // Create user
-    r.Get(users.UserEdit, userHandler.HandleEdit)         // Edit user form
-    r.Post(users.UserUpdate, userHandler.HandleUpdate)    // Update user
-    r.Post(users.UserDelete, userHandler.HandleDelete)    // Delete user
+    r.Get(routes.UserIndex, userHandler.HandleIndex)       // List users
+    r.Get(routes.UserShow, userHandler.HandleShow)         // Show user profile
+    r.Get(routes.UserNew, userHandler.HandleNew)           // New user form
+    r.Post(routes.UserCreate, userHandler.HandleCreate)    // Create user
+    r.Get(routes.UserEdit, userHandler.HandleEdit)         // Edit user form
+    r.Post(routes.UserUpdate, userHandler.HandleUpdate)    // Update user
+    r.Post(routes.UserDelete, userHandler.HandleDelete)    // Delete user
 }
 ```
 

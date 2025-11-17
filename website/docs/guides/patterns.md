@@ -274,14 +274,14 @@ func registerRoutes(s *Server) {
     // ... existing middleware ...
 
     // Health (API endpoint)
-    r.Get(health.APIHealth, handlers.NewHealthHandler(s.healthService).Handle)
+    r.Get(routes.APIHealth, handlers.NewHealthHandler(s.healthService).Handle)
 
     // Users (HYPERMEDIA routes - serve HTML)
     userHandler := handlers.NewUserHandler(s.userService)
-    r.Get(users.UserIndex, userHandler.HandleIndex)
-    r.Get(users.UserShow, userHandler.HandleShow)
-    r.Get(users.UserNew, userHandler.HandleNew)
-    r.Post(users.UserCreate, userHandler.HandleCreate)
+    r.Get(routes.UserIndex, userHandler.HandleIndex)
+    r.Get(routes.UserShow, userHandler.HandleShow)
+    r.Get(routes.UserNew, userHandler.HandleNew)
+    r.Post(routes.UserCreate, userHandler.HandleCreate)
 }
 ```
 
@@ -524,7 +524,7 @@ GET /u/johndoe HTTP/1.1
 ### Handler
 
 ```go
-// Route is registered using domain route constant: users.UserShow
+// Route is registered using domain route constant: routes.UserShow
 func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
     username := chi.URLParam(r, "users")  // Matches slug constant
     user, err := h.userService.GetByUsername(r.Context(), username)
@@ -534,7 +534,7 @@ func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
     }
 
     // Use helper function to generate edit URL for template
-    editURL := users.UserEditURL(user.Username)
+    editURL := routes.UserEditURL(user.Username)
 
     // Render HYPERMEDIA response (HTML via templ)
     views.UserProfile(user, editURL).Render(r.Context(), w)
