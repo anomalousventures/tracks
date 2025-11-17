@@ -5,48 +5,17 @@ import (
 	"net/url"
 )
 
-// userSlug is the base path segment for user routes.
 // Private to prevent external dependencies on this implementation detail.
 const userSlug = "users"
 
-// User route constants define HYPERMEDIA routes serving HTML via templ templates.
+// HYPERMEDIA-First Pattern (Default for all generated resources):
+// Routes serve HTML via templ and include form routes (/new, /edit) for RESTful HTML.
 //
-// PATTERN: HYPERMEDIA-First (Default)
-// These routes serve HTML pages and include form routes (/new, /edit) following
-// RESTful HTML conventions. This is the default pattern for all generated resources.
-//
-// Route Structure:
-//   - UserIndex:  GET  /users              - List all users (HTML table/cards)
-//   - UserShow:   GET  /users/:username    - Show single user (HTML profile)
-//   - UserNew:    GET  /users/new          - Render user creation form (HTML form)
-//   - UserCreate: POST /users              - Process form submission (redirect on success)
-//   - UserEdit:   GET  /users/:username/edit - Render user edit form (HTML form)
-//   - UserUpdate: PUT  /users/:username    - Process form submission (redirect on success)
-//   - UserDelete: DELETE /users/:username  - Delete user (redirect on success)
-//
-// API Alternative (Future):
-// For JSON APIs, use the --api flag with `tracks generate resource user --api`.
-// This generates API routes with the /api prefix and no form routes:
-//   - GET    /api/users              - List users (JSON array)
-//   - GET    /api/users/:id          - Show user (JSON object)
-//   - POST   /api/users              - Create user (JSON body, returns 201)
-//   - PUT    /api/users/:id          - Update user (JSON body, returns 200)
-//   - DELETE /api/users/:id          - Delete user (returns 204)
+// API Alternative: Use --api flag to generate JSON routes with /api prefix and no forms.
 //
 // Type-Safe URL Generation:
-// Use the typed helper functions (UserShowURL, UserEditURL, etc.) instead of
-// constructing URLs manually. This provides compile-time safety and proper URL encoding.
-//
-// Example Usage:
-//   // GOOD: Type-safe, handles URL encoding
-//   url := routes.UserShowURL("john.doe")
-//   // Result: "/users/john.doe"
-//
-//   url := routes.UserEditURL("alice+bob@example")
-//   // Result: "/users/alice%2Bbob%40example/edit"
-//
-//   // BAD: Error-prone, no encoding, no compile-time checks
-//   url := "/users/" + username + "/edit"
+// Use typed helpers (UserShowURL, UserEditURL, etc.) instead of manual string concatenation.
+// Provides compile-time safety and automatic URL encoding to prevent injection attacks.
 const (
 	UserIndex  = "/" + userSlug
 	UserShow   = "/" + userSlug + "/:" + userSlug
@@ -57,10 +26,9 @@ const (
 	UserDelete = "/" + userSlug + "/:" + userSlug
 )
 
-// RouteURL is a low-level helper that constructs URLs with parameter substitution.
-// Prefer the typed helper functions (UserShowURL, etc.) for type safety and clarity.
-// This function exists to reduce code duplication across typed helpers while ensuring
-// consistent URL encoding via url.PathEscape.
+// Exists to reduce code duplication across typed helpers while ensuring
+// consistent URL encoding. Prefer the typed helper functions (UserShowURL, etc.)
+// for type safety and clarity.
 func RouteURL(route string, params ...string) string {
 	if len(params) == 0 {
 		return route
@@ -90,10 +58,6 @@ func replaceFirst(s, old, new string) string {
 	}
 	return s
 }
-
-// Typed helper functions for type-safe URL generation.
-// These functions provide compile-time safety and proper URL encoding.
-// Always prefer these over manual URL construction.
 
 func UserIndexURL() string {
 	return UserIndex
