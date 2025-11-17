@@ -102,7 +102,7 @@ See the [CLI documentation](https://go-tracks.io/cli/new) and [Getting Started g
 
 **Coming next:**
 
-- Phase 1: Code generation (resources, handlers, services)
+- Phase 1 (In Progress): Code generation (resources, handlers, services)
 - Phase 2: Authentication and authorization
 - See [Roadmap](#roadmap) for details
 
@@ -157,7 +157,7 @@ Tracks development is organized into 7 phases. See [`docs/roadmap`](./docs/roadm
 
 ### Future Phases
 
-- **Phase 1:** Core Web Layer - Chi router, handlers, middleware, templ templates
+- **Phase 1 (Current):** Core Web Layer - Chi router, handlers, middleware, templ templates
 - **Phase 2:** Database Layer - SQLC, Goose migrations, LibSQL/PostgreSQL support
 - **Phase 3:** Authentication - Magic links, OTP, OAuth providers
 - **Phase 4:** Interactive TUI - Bubble Tea interface for generators
@@ -273,7 +273,7 @@ Sensible defaults with escape hatches:
 
 ## Project Status
 
-Tracks is in **pre-alpha development** (Phase 0). The API and generated code structure may change significantly before v1.0.
+Tracks is in **pre-alpha development** (Phase 1). The API and generated code structure may change significantly before v1.0.
 
 **Not ready for production use.** Follow development progress via [GitHub Issues](https://github.com/anomalousventures/tracks/issues) and [Roadmap](./docs/roadmap/README.md).
 

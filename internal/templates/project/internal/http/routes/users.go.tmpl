@@ -4,8 +4,10 @@ import (
 	"net/url"
 )
 
-// userSlug is unexported to prevent tight coupling with parameter names across packages.
-const userSlug = "users"
+const (
+	usersPath     = "users"
+	UserSlugParam = "username"
+)
 
 // HYPERMEDIA-First Pattern (Default for all generated resources):
 // Routes serve HTML via templ and include form routes (/new, /edit) for RESTful HTML.
@@ -16,13 +18,13 @@ const userSlug = "users"
 // Use typed helpers (UserShowURL, UserEditURL, etc.) instead of manual string concatenation.
 // Provides compile-time safety and automatic URL encoding to prevent injection attacks.
 const (
-	UserIndex  = "/" + userSlug
-	UserShow   = "/" + userSlug + "/:" + userSlug
-	UserNew    = "/" + userSlug + "/new"
-	UserCreate = "/" + userSlug
-	UserEdit   = "/" + userSlug + "/:" + userSlug + "/edit"
-	UserUpdate = "/" + userSlug + "/:" + userSlug
-	UserDelete = "/" + userSlug + "/:" + userSlug
+	UserIndex  = "/" + usersPath
+	UserShow   = "/" + usersPath + "/:" + UserSlugParam
+	UserNew    = "/" + usersPath + "/new"
+	UserCreate = "/" + usersPath
+	UserEdit   = "/" + usersPath + "/:" + UserSlugParam + "/edit"
+	UserUpdate = "/" + usersPath + "/:" + UserSlugParam
+	UserDelete = "/" + usersPath + "/:" + UserSlugParam
 )
 
 // RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
@@ -61,7 +63,7 @@ func UserIndexURL() string {
 }
 
 func UserShowURL(username string) string {
-	return RouteURL(UserShow, userSlug, username)
+	return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserNewURL() string {
@@ -73,13 +75,13 @@ func UserCreateURL() string {
 }
 
 func UserEditURL(username string) string {
-	return RouteURL(UserEdit, userSlug, username)
+	return RouteURL(UserEdit, UserSlugParam, username)
 }
 
 func UserUpdateURL(username string) string {
-	return RouteURL(UserUpdate, userSlug, username)
+	return RouteURL(UserUpdate, UserSlugParam, username)
 }
 
 func UserDeleteURL(username string) string {
-	return RouteURL(UserDelete, userSlug, username)
+	return RouteURL(UserDelete, UserSlugParam, username)
 }

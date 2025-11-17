@@ -22,16 +22,16 @@ This roadmap outlines the development phases for the Tracks framework across **7
 
 Track progress across all 7 phases below.
 
-### Phase 0: Foundation - Not Started
+### Phase 0: Foundation - ✅ Complete
 
 | ID  | Feature | Status | Started | Completed | PRD Link | Notes |
 |-----|---------|--------|---------|-----------|----------|-------|
-| 0.1 | CLI with Cobra | Not Started | - | - | [Core Architecture](../prd/1_core_architecture.md#cli-tool-structure) | - |
-| 0.2 | Project scaffolding | Not Started | - | - | [Core Architecture](../prd/1_core_architecture.md#generated-application-structure) | - |
-| 0.3 | Build system | Not Started | - | - | [Core Architecture](../prd/1_core_architecture.md#build-system) | - |
-| 0.4 | Basic documentation | Not Started | - | - | - | Docusaurus already set up |
+| 0.1 | CLI with Cobra | Complete | 2025-10-21 | 2025-11-13 | [Core Architecture](../prd/1_core_architecture.md#cli-tool-structure) | Released in v0.2.0 |
+| 0.2 | Project scaffolding | Complete | 2025-10-21 | 2025-11-13 | [Core Architecture](../prd/1_core_architecture.md#generated-application-structure) | Released in v0.2.0 |
+| 0.3 | Build system | Complete | 2025-10-21 | 2025-11-13 | [Core Architecture](../prd/1_core_architecture.md#build-system) | Released in v0.2.0 |
+| 0.4 | Basic documentation | Complete | 2025-10-21 | 2025-11-13 | - | Released in v0.2.0 |
 
-### Phase 1: Core Web - Not Started
+### Phase 1: Core Web - 🚧 In Progress
 
 | ID  | Feature | Status | Started | Completed | PRD Link | Notes |
 |-----|---------|--------|---------|-----------|----------|-------|

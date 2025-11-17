@@ -92,8 +92,12 @@ import (
     "net/url"
 )
 
-// userSlug is unexported to prevent tight coupling with parameter names across packages.
-const userSlug = "users"
+// UserSlugParam is exported so handlers can extract parameters without magic strings.
+// usersPath remains unexported as it's an internal routing detail.
+const (
+    usersPath     = "users"
+    UserSlugParam = "username"
+)
 
 // HYPERMEDIA-First Pattern (Default for all generated resources):
 // Routes serve HTML via templ and include form routes (/new, /edit) for RESTful HTML.
@@ -104,13 +108,13 @@ const userSlug = "users"
 // Use typed helpers (UserShowURL, UserEditURL, etc.) instead of manual string concatenation.
 // Provides compile-time safety and automatic URL encoding to prevent injection attacks.
 const (
-    UserIndex  = "/" + userSlug
-    UserShow   = "/" + userSlug + "/:" + userSlug
-    UserNew    = "/" + userSlug + "/new"
-    UserCreate = "/" + userSlug
-    UserEdit   = "/" + userSlug + "/:" + userSlug + "/edit"
-    UserUpdate = "/" + userSlug + "/:" + userSlug
-    UserDelete = "/" + userSlug + "/:" + userSlug
+    UserIndex  = "/" + usersPath
+    UserShow   = "/" + usersPath + "/:" + UserSlugParam
+    UserNew    = "/" + usersPath + "/new"
+    UserCreate = "/" + usersPath
+    UserEdit   = "/" + usersPath + "/:" + UserSlugParam + "/edit"
+    UserUpdate = "/" + usersPath + "/:" + UserSlugParam
+    UserDelete = "/" + usersPath + "/:" + UserSlugParam
 )
 
 // RouteURL is a low-level helper. Use typed functions (UserShowURL, etc.) for better type safety.
@@ -149,7 +153,7 @@ func UserIndexURL() string {
 }
 
 func UserShowURL(username string) string {
-    return RouteURL(UserShow, userSlug, username)
+    return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserNewURL() string {
@@ -161,21 +165,21 @@ func UserCreateURL() string {
 }
 
 func UserEditURL(username string) string {
-    return RouteURL(UserEdit, userSlug, username)
+    return RouteURL(UserEdit, UserSlugParam, username)
 }
 
 func UserUpdateURL(username string) string {
-    return RouteURL(UserUpdate, userSlug, username)
+    return RouteURL(UserUpdate, UserSlugParam, username)
 }
 
 func UserDeleteURL(username string) string {
-    return RouteURL(UserDelete, userSlug, username)
+    return RouteURL(UserDelete, UserSlugParam, username)
 }
 ```
 
 **Characteristics:**
 
-- **Slug constant** - DRY principle for parameter name
+- **Path and parameter constants** - Separate constants for base path and parameter name (no magic strings)
 - **Route constants** - RESTful HYPERMEDIA pattern
 - **Form routes** - `/new` and `/edit` for HTML forms
 - **URL encoding** - Automatic via `url.PathEscape`
@@ -198,33 +202,43 @@ Route constants provide compile-time safety and prevent typos:
 ```go
 const (
     UserIndex  = "/users"                    // List all users
-    UserShow   = "/users/:users"             // Show specific user
+    UserShow   = "/users/:username"             // Show specific user
     UserNew    = "/users/new"                // New user form
     UserCreate = "/users"                    // Create user (POST)
-    UserEdit   = "/users/:users/edit"        // Edit user form
-    UserUpdate = "/users/:users"             // Update user (PUT/PATCH)
-    UserDelete = "/users/:users"             // Delete user (DELETE)
+    UserEdit   = "/users/:username/edit"        // Edit user form
+    UserUpdate = "/users/:username"             // Update user (PUT/PATCH)
+    UserDelete = "/users/:username"             // Delete user (DELETE)
 )
 ```
 
-## Slug Constants
+## Path and Parameter Constants
 
-Slug constants keep parameter names consistent:
+Separate constants for paths and parameters prevent magic strings and keep the code maintainable:
 
 ```go
-const userSlug = "users"
+const (
+    usersPath     = "users"
+    UserSlugParam = "username"
+)
 
 const (
-    UserShow = "/" + userSlug + "/:" + userSlug  // "/users/:users"
-    UserEdit = "/" + userSlug + "/:" + userSlug + "/edit"  // "/users/:users/edit"
+    UserShow = "/" + usersPath + "/:" + UserSlugParam  // "/users/:username"
+    UserEdit = "/" + usersPath + "/:" + UserSlugParam + "/edit"  // "/users/:username/edit"
 )
 ```
+
+**Why separate constants?**
+
+- **Path constant** (`usersPath`) - The base path segment in the URL (unexported, internal detail)
+- **Parameter constant** (`UserSlugParam`) - The parameter name used in route patterns, RouteURL calls, and handlers (exported so handlers can use `chi.URLParam(r, routes.UserSlugParam)`)
+- **No magic strings** - Both are referenced by constant, not hardcoded strings
+- **Consistent naming** - All resources follow `{Resource}SlugParam` pattern (e.g., `UserSlugParam`, `PostSlugParam`)
 
 **Why not `:id`?**
 
-HYPERMEDIA routes use readable identifiers in URLs:
+HYPERMEDIA routes use readable identifiers (slugs) in URLs:
 
-- `/users/:users` → `/users/johndoe` ✓ (readable, SEO-friendly)
+- `/users/:username` → `/users/johndoe` ✓ (readable, SEO-friendly)
 - `/users/:id` → `/users/12345` ✗ (opaque, not SEO-friendly)
 
 ## RouteURL Helper Pattern
@@ -263,11 +277,11 @@ func RouteURL(route string, params ...string) string {
 // Simple case
 url := RouteURL(UserIndex)  // "/users"
 
-// With parameters
-url := RouteURL(UserShow, "users", "johndoe")  // "/users/johndoe"
+// With parameters - use constant, not magic string
+url := RouteURL(UserShow, routes.UserSlugParam, "johndoe")  // "/users/johndoe"
 
 // Special characters are encoded
-url := RouteURL(UserShow, "users", "user@example.com")  // "/users/user%40example.com"
+url := RouteURL(UserShow, routes.UserSlugParam, "user@example.com")  // "/users/user%40example.com"
 ```
 
 ## Typed Helper Functions
@@ -276,11 +290,11 @@ Domain files provide type-safe helper functions:
 
 ```go
 func UserShowURL(username string) string {
-    return RouteURL(UserShow, userSlug, username)
+    return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserEditURL(username string) string {
-    return RouteURL(UserEdit, userSlug, username)
+    return RouteURL(UserEdit, UserSlugParam, username)
 }
 ```
 
@@ -295,7 +309,7 @@ func UserEditURL(username string) string {
 
 ```go
 func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
-    username := chi.URLParam(r, "users")
+    username := chi.URLParam(r, routes.UserSlugParam)
     user, err := h.service.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, "Not found", http.StatusNotFound)
@@ -376,20 +390,20 @@ import (
 func TestUserRoutes(t *testing.T) {
     t.Run("route constants have correct values", func(t *testing.T) {
         assert.Equal(t, "/users", UserIndex)
-        assert.Equal(t, "/users/:users", UserShow)
+        assert.Equal(t, "/users/:username", UserShow)
         assert.Equal(t, "/users/new", UserNew)
         assert.Equal(t, "/users", UserCreate)
-        assert.Equal(t, "/users/:users/edit", UserEdit)
-        assert.Equal(t, "/users/:users", UserUpdate)
-        assert.Equal(t, "/users/:users", UserDelete)
+        assert.Equal(t, "/users/:username/edit", UserEdit)
+        assert.Equal(t, "/users/:username", UserUpdate)
+        assert.Equal(t, "/users/:username", UserDelete)
     })
 
     t.Run("routes follow HYPERMEDIA pattern", func(t *testing.T) {
-        // HYPERMEDIA routes use readable slugs like :users (not :id)
-        assert.Contains(t, UserShow, ":users")
-        assert.Contains(t, UserEdit, ":users")
-        assert.Contains(t, UserUpdate, ":users")
-        assert.Contains(t, UserDelete, ":users")
+        // HYPERMEDIA routes use readable slugs like :username (not :id)
+        assert.Contains(t, UserShow, ":username")
+        assert.Contains(t, UserEdit, ":username")
+        assert.Contains(t, UserUpdate, ":username")
+        assert.Contains(t, UserDelete, ":username")
     })
 
     t.Run("routes do not contain /api/ prefix", func(t *testing.T) {
@@ -409,8 +423,9 @@ func TestUserRoutes(t *testing.T) {
         assert.Contains(t, UserEdit, "/edit")
     })
 
-    t.Run("userSlug constant has correct value", func(t *testing.T) {
-        assert.Equal(t, "users", userSlug)
+    t.Run("parameter constants have correct values", func(t *testing.T) {
+        assert.Equal(t, "users", usersPath)
+        assert.Equal(t, "username", UserSlugParam)
     })
 }
 
@@ -429,26 +444,26 @@ func TestRouteURL(t *testing.T) {
         },
         {
             name:     "single parameter",
-            route:    "/users/:users",
-            params:   []string{"users", "john"},
+            route:    "/users/:username",
+            params:   []string{"username", "john"},
             expected: "/users/john",
         },
         {
             name:     "multiple parameters",
-            route:    "/users/:users/posts/:posts",
-            params:   []string{"users", "john", "posts", "hello-world"},
+            route:    "/users/:username/posts/:posts",
+            params:   []string{"username", "john", "posts", "hello-world"},
             expected: "/users/john/posts/hello-world",
         },
         {
             name:     "URL encodes spaces",
-            route:    "/users/:users",
-            params:   []string{"users", "john doe"},
+            route:    "/users/:username",
+            params:   []string{"username", "john doe"},
             expected: "/users/john%20doe",
         },
         {
             name:     "URL encodes special characters",
-            route:    "/users/:users",
-            params:   []string{"users", "user@example.com"},
+            route:    "/users/:username",
+            params:   []string{"username", "user@example.com"},
             expected: "/users/user%40example.com",
         },
     }
@@ -530,15 +545,18 @@ routes/
 └── health.go     # Health checks
 ```
 
-### 3. Use Slug Constants
+### 3. Use Path and Parameter Constants
 
-Keep parameter names consistent with slug constants:
+Keep paths and parameter names consistent with separate constants:
 
 ```go
-const postSlug = "posts"
+const (
+    postsPath     = "posts"
+    postSlugParam = "post_slug"
+)
 
 const (
-    PostShow = "/" + postSlug + "/:" + postSlug
+    PostShow = "/" + postsPath + "/:" + postSlugParam
 )
 ```
 
@@ -566,8 +584,8 @@ HYPERMEDIA applications need form routes:
 const (
     UserNew    = "/users/new"        // GET: Show form
     UserCreate = "/users"            // POST: Process form
-    UserEdit   = "/users/:users/edit"  // GET: Show edit form
-    UserUpdate = "/users/:users"     // POST: Process update
+    UserEdit   = "/users/:username/edit"  // GET: Show edit form
+    UserUpdate = "/users/:username"     // POST: Process update
 )
 ```
 

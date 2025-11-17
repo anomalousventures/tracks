@@ -9,20 +9,20 @@ import (
 func TestUserRoutes(t *testing.T) {
 	t.Run("route constants have correct values", func(t *testing.T) {
 		assert.Equal(t, "/users", UserIndex)
-		assert.Equal(t, "/users/:users", UserShow)
+		assert.Equal(t, "/users/:username", UserShow)
 		assert.Equal(t, "/users/new", UserNew)
 		assert.Equal(t, "/users", UserCreate)
-		assert.Equal(t, "/users/:users/edit", UserEdit)
-		assert.Equal(t, "/users/:users", UserUpdate)
-		assert.Equal(t, "/users/:users", UserDelete)
+		assert.Equal(t, "/users/:username/edit", UserEdit)
+		assert.Equal(t, "/users/:username", UserUpdate)
+		assert.Equal(t, "/users/:username", UserDelete)
 	})
 
 	t.Run("routes follow HYPERMEDIA pattern", func(t *testing.T) {
-		// HYPERMEDIA routes use readable slugs like :users (not :id)
-		assert.Contains(t, UserShow, ":users")
-		assert.Contains(t, UserEdit, ":users")
-		assert.Contains(t, UserUpdate, ":users")
-		assert.Contains(t, UserDelete, ":users")
+		// HYPERMEDIA routes use readable slugs like :username (not :id)
+		assert.Contains(t, UserShow, ":username")
+		assert.Contains(t, UserEdit, ":username")
+		assert.Contains(t, UserUpdate, ":username")
+		assert.Contains(t, UserDelete, ":username")
 	})
 
 	t.Run("routes do not contain /api/ prefix", func(t *testing.T) {
@@ -42,8 +42,9 @@ func TestUserRoutes(t *testing.T) {
 		assert.Contains(t, UserEdit, "/edit")
 	})
 
-	t.Run("userSlug constant has correct value", func(t *testing.T) {
-		assert.Equal(t, "users", userSlug)
+	t.Run("parameter constants have correct values", func(t *testing.T) {
+		assert.Equal(t, "users", usersPath)
+		assert.Equal(t, "username", UserSlugParam)
 	})
 }
 
@@ -62,26 +63,26 @@ func TestRouteURL(t *testing.T) {
 		},
 		{
 			name:     "single parameter",
-			route:    "/users/:users",
-			params:   []string{"users", "john"},
+			route:    "/users/:username",
+			params:   []string{"username", "john"},
 			expected: "/users/john",
 		},
 		{
 			name:     "multiple parameters",
-			route:    "/users/:users/posts/:posts",
-			params:   []string{"users", "john", "posts", "hello-world"},
+			route:    "/users/:username/posts/:posts",
+			params:   []string{"username", "john", "posts", "hello-world"},
 			expected: "/users/john/posts/hello-world",
 		},
 		{
 			name:     "URL encodes spaces",
-			route:    "/users/:users",
-			params:   []string{"users", "john doe"},
+			route:    "/users/:username",
+			params:   []string{"username", "john doe"},
 			expected: "/users/john%20doe",
 		},
 		{
 			name:     "URL encodes special characters",
-			route:    "/users/:users",
-			params:   []string{"users", "user@example.com"},
+			route:    "/users/:username",
+			params:   []string{"username", "user@example.com"},
 			expected: "/users/user%40example.com",
 		},
 	}

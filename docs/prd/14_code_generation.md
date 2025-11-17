@@ -402,7 +402,7 @@ func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
-    slug := chi.URLParam(r, "slug")
+    slug := chi.URLParam(r, routes.PostSlugParam)  // Use exported constant, no magic strings
 
     post, err := h.postService.GetBySlug(r.Context(), slug)
     if err != nil {

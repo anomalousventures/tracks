@@ -113,18 +113,22 @@ package routes
 
 import "net/url"
 
-// Private slug constant for DRY parameter naming
-const userSlug = "users"
+// UserSlugParam is exported so handlers can extract parameters without magic strings.
+// usersPath remains unexported as it's an internal routing detail.
+const (
+    usersPath     = "users"
+    UserSlugParam = "username"
+)
 
 // HYPERMEDIA route constants (serve HTML via templ)
 const (
-    UserIndex  = "/" + userSlug                           // GET  /users
-    UserShow   = "/" + userSlug + "/:" + userSlug         // GET  /users/:users
-    UserNew    = "/" + userSlug + "/new"                  // GET  /users/new
-    UserCreate = "/" + userSlug                           // POST /users
-    UserEdit   = "/" + userSlug + "/:" + userSlug + "/edit" // GET  /users/:users/edit
-    UserUpdate = "/" + userSlug + "/:" + userSlug         // POST /users/:users
-    UserDelete = "/" + userSlug + "/:" + userSlug         // POST /users/:users
+    UserIndex  = "/" + usersPath                                 // GET  /users
+    UserShow   = "/" + usersPath + "/:" + UserSlugParam          // GET  /users/:username
+    UserNew    = "/" + usersPath + "/new"                        // GET  /users/new
+    UserCreate = "/" + usersPath                                 // POST /users
+    UserEdit   = "/" + usersPath + "/:" + UserSlugParam + "/edit" // GET  /users/:username/edit
+    UserUpdate = "/" + usersPath + "/:" + UserSlugParam          // POST /users/:username
+    UserDelete = "/" + usersPath + "/:" + UserSlugParam          // POST /users/:username
 )
 
 // RouteURL substitutes parameters and URL-encodes values
@@ -134,11 +138,11 @@ func RouteURL(route string, params ...string) string {
 
 // Typed helper functions for type safety
 func UserShowURL(username string) string {
-    return RouteURL(UserShow, userSlug, username)
+    return RouteURL(UserShow, UserSlugParam, username)
 }
 
 func UserEditURL(username string) string {
-    return RouteURL(UserEdit, userSlug, username)
+    return RouteURL(UserEdit, UserSlugParam, username)
 }
 // ... other helpers
 ```
@@ -167,15 +171,15 @@ func NewUserHandler(userService interfaces.UserService) *UserHandler {
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-    // 1. Extract parameters
-    id := chi.URLParam(r, "id")
-    if id == "" {
-        http.Error(w, "id required", http.StatusBadRequest)
+    // 1. Extract parameters - use exported constant to avoid magic strings
+    username := chi.URLParam(r, routes.UserSlugParam)
+    if username == "" {
+        http.Error(w, "username required", http.StatusBadRequest)
         return
     }
 
     // 2. Call service
-    user, err := h.userService.GetByID(r.Context(), id)
+    user, err := h.userService.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return

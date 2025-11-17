@@ -280,9 +280,9 @@ const (
     WebUserProfile  = "/u/{username}"
 )
 
-// Usage in handler
+// Usage in handler - use exported constant to avoid magic strings
 func (h *UserHandler) ShowProfile(w http.ResponseWriter, r *http.Request) {
-    username := chi.URLParam(r, "username")  // Extract parameter
+    username := chi.URLParam(r, routes.UserSlugParam)  // Extract parameter using constant
     // ...
 }
 
