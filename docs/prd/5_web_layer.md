@@ -409,7 +409,7 @@ func (h *AuthHandler) ProcessLogin(w http.ResponseWriter, r *http.Request) {
 
 // Content handlers work with slugs, not IDs
 func (h *PostHandler) Show(w http.ResponseWriter, r *http.Request) {
-    slug := chi.URLParam(r, "slug")
+    slug := chi.URLParam(r, routes.PostSlugParam)  // Use exported constant, no magic strings
 
     post, err := h.postService.GetBySlug(r.Context(), slug)
     if err != nil {
@@ -428,7 +428,7 @@ func (h *PostHandler) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) ShowEditForm(w http.ResponseWriter, r *http.Request) {
-    slug := chi.URLParam(r, "slug")
+    slug := chi.URLParam(r, routes.PostSlugParam)  // Use exported constant, no magic strings
     userID := r.Context().Value("user_id").(string)
 
     post, err := h.postService.GetBySlug(r.Context(), slug)
@@ -547,7 +547,7 @@ func TestPostHandler_Show(t *testing.T) {
     // Create request
     req := httptest.NewRequest("GET", "/p/my-first-post", nil)
     req = req.WithContext(chi.NewRouteContext())
-    chi.URLParam(req, "slug", "my-first-post")
+    chi.URLParam(req, routes.PostSlugParam, "my-first-post")  // Use constant in test setup too
 
     // Record response
     rr := httptest.NewRecorder()

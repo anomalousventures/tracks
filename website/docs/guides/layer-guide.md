@@ -167,15 +167,15 @@ func NewUserHandler(userService interfaces.UserService) *UserHandler {
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-    // 1. Extract parameters
-    id := chi.URLParam(r, "id")
-    if id == "" {
-        http.Error(w, "id required", http.StatusBadRequest)
+    // 1. Extract parameters - use exported constant to avoid magic strings
+    username := chi.URLParam(r, routes.UsernameParam)
+    if username == "" {
+        http.Error(w, "username required", http.StatusBadRequest)
         return
     }
 
     // 2. Call service
-    user, err := h.userService.GetByID(r.Context(), id)
+    user, err := h.userService.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return

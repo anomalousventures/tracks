@@ -519,7 +519,7 @@ func NewServer(cfg config.Config, services *app.Services) *Server {
 ```go
 // internal/http/handlers/post_handler.go
 func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) {
-    slug := chi.URLParam(r, "slug")
+    slug := chi.URLParam(r, routes.PostSlugParam)  // Use exported constant, no magic strings
     userID := r.Context().Value("user_id").(string)
 
     post, err := h.postService.GetBySlug(r.Context(), slug)

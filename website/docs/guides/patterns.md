@@ -526,7 +526,7 @@ GET /u/johndoe HTTP/1.1
 ```go
 // Route is registered using domain route constant: routes.UserShow
 func (h *UserHandler) HandleShow(w http.ResponseWriter, r *http.Request) {
-    username := chi.URLParam(r, "users")  // Matches slug constant
+    username := chi.URLParam(r, routes.UsernameParam)  // No magic strings - use exported constant
     user, err := h.userService.GetByUsername(r.Context(), username)
     if err != nil {
         http.Error(w, err.Error(), 500)
