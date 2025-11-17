@@ -31,7 +31,13 @@ func NewRenderer(fs embed.FS) interfaces.TemplateRenderer {
 }
 
 func (r *templateRenderer) Render(name string, data any) (string, error) {
-	embedPath := path.Join("project", name)
+	// If the path already starts with a known directory (project/ or examples/), use it as-is.
+	// Otherwise, prepend "project/" for backward compatibility.
+	embedPath := name
+	if !strings.HasPrefix(name, "project/") && !strings.HasPrefix(name, "examples/") {
+		embedPath = path.Join("project", name)
+	}
+
 	content, err := fs.ReadFile(r.fs, embedPath)
 	if err != nil {
 		return "", &TemplateError{Template: name, Err: err}
@@ -70,7 +76,13 @@ func (r *templateRenderer) RenderToFile(templateName string, data any, outputPat
 }
 
 func (r *templateRenderer) Validate(name string) error {
-	embedPath := path.Join("project", name)
+	// If the path already starts with a known directory (project/ or examples/), use it as-is.
+	// Otherwise, prepend "project/" for backward compatibility.
+	embedPath := name
+	if !strings.HasPrefix(name, "project/") && !strings.HasPrefix(name, "examples/") {
+		embedPath = path.Join("project", name)
+	}
+
 	content, err := fs.ReadFile(r.fs, embedPath)
 	if err != nil {
 		return &TemplateError{Template: name, Err: err}
