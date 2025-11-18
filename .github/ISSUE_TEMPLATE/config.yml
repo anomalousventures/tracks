@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/anomalousventures/tracks/discussions
+    about: Ask questions, share ideas, and discuss with the community
+  - name: Documentation
+    url: https://code.tracks.run
+    about: Read the official documentation and guides
