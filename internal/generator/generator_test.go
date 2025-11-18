@@ -271,7 +271,7 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 		SecretKey:   "test-secret-key",
 	}
 
-	err := renderer.RenderToFile("internal/http/routes/users.go.tmpl", data, outputPath)
+	err := renderer.RenderToFile("examples/routes/users.go.tmpl", data, outputPath)
 	require.NoError(t, err, "template should render without errors")
 
 	content, err := os.ReadFile(outputPath)
@@ -291,7 +291,7 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 	assert.Contains(t, contentStr, "UserUpdate")
 	assert.Contains(t, contentStr, "UserDelete")
 
-	assert.Contains(t, contentStr, "func RouteURL(route string, params ...string) string")
+	// Helper functions are in the template, but RouteURL is now in routes.go (shared)
 	assert.Contains(t, contentStr, "func UserIndexURL() string")
 	assert.Contains(t, contentStr, "func UserShowURL(username string) string")
 	assert.Contains(t, contentStr, "func UserNewURL() string")
@@ -299,8 +299,6 @@ func TestUsersRouteTemplate_Renders(t *testing.T) {
 	assert.Contains(t, contentStr, "func UserEditURL(username string) string")
 	assert.Contains(t, contentStr, "func UserUpdateURL(username string) string")
 	assert.Contains(t, contentStr, "func UserDeleteURL(username string) string")
-
-	assert.Contains(t, contentStr, "url.PathEscape")
 
 	fset := token.NewFileSet()
 	_, err = parser.ParseFile(fset, outputPath, content, parser.AllErrors)
@@ -323,7 +321,7 @@ func TestUsersRouteTemplate_URLEncoding(t *testing.T) {
 		SecretKey:   "test-secret-key",
 	}
 
-	err := renderer.RenderToFile("internal/http/routes/users.go.tmpl", data, outputPath)
+	err := renderer.RenderToFile("examples/routes/users.go.tmpl", data, outputPath)
 	require.NoError(t, err)
 
 	content, err := os.ReadFile(outputPath)
@@ -377,4 +375,42 @@ func TestUserEditURL_SpecialCharacters(t *testing.T) {
 	require.NoError(t, err, "test code should be valid Go")
 
 	assert.NotNil(t, f, "parsed file should not be nil")
+}
+
+func TestProjectGenerator_ExampleTemplatesNotGenerated(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg := ProjectConfig{
+		ProjectName:    "testapp",
+		ModulePath:     "github.com/test/testapp",
+		DatabaseDriver: "sqlite3",
+		EnvPrefix:      "APP",
+		InitGit:        false,
+		OutputPath:     tmpDir,
+	}
+
+	gen := NewProjectGenerator()
+	ctx := context.Background()
+
+	err := gen.Generate(ctx, cfg)
+	require.NoError(t, err)
+
+	projectRoot := filepath.Join(tmpDir, "testapp")
+
+	// Verify health.go IS generated
+	healthPath := filepath.Join(projectRoot, "internal/http/routes/health.go")
+	_, err = os.Stat(healthPath)
+	assert.NoError(t, err, "health.go should be generated")
+
+	// Verify users.go is NOT generated (it's an example template)
+	usersPath := filepath.Join(projectRoot, "internal/http/routes/users.go")
+	_, err = os.Stat(usersPath)
+	assert.Error(t, err, "users.go should NOT be generated (example template only)")
+	assert.True(t, os.IsNotExist(err), "users.go should not exist")
+
+	// Verify users_test.go is NOT generated (it's an example template)
+	usersTestPath := filepath.Join(projectRoot, "internal/http/routes/users_test.go")
+	_, err = os.Stat(usersTestPath)
+	assert.Error(t, err, "users_test.go should NOT be generated (example template only)")
+	assert.True(t, os.IsNotExist(err), "users_test.go should not exist")
 }

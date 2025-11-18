@@ -92,7 +92,7 @@ func TestRoutesHealthTemplate(t *testing.T) {
 
 	assert.Contains(t, result, "package routes")
 	assert.Contains(t, result, "const (")
-	assert.Contains(t, result, `APIHealth = "/api/health"`)
+	assert.Contains(t, result, `APIHealth = APIPrefix + "/health"`)
 }
 
 func TestRoutesHealthValidGoCode(t *testing.T) {
@@ -117,5 +117,5 @@ func TestRoutesHealthAPIHealthConstant(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, result, "APIHealth", "should define APIHealth constant")
-	assert.Contains(t, result, `"/api/health"`, "APIHealth should have value /api/health")
+	assert.Contains(t, result, `APIPrefix + "/health"`, "APIHealth should use APIPrefix constant")
 }
