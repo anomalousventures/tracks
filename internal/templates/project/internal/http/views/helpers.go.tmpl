@@ -5,12 +5,6 @@ import (
 	"strings"
 )
 
-// ClassNames conditionally joins CSS class names.
-// Filters out empty strings and returns a space-separated string.
-//
-// Example:
-//
-//	ClassNames("btn", isActive && "btn-active", "btn-primary")
 func ClassNames(classes ...string) string {
 	var filtered []string
 	for _, class := range classes {
@@ -21,12 +15,18 @@ func ClassNames(classes ...string) string {
 	return strings.Join(filtered, " ")
 }
 
+func ToggleClass(condition bool, activeClass, inactiveClass string) string {
+	if condition {
+		return activeClass
+	}
+	return inactiveClass
+}
+
 // SafeHTML marks a string as safe HTML that should not be escaped by templ.
-// Use with caution - only for trusted HTML content.
 //
-// Example:
-//
-//	SafeHTML("<strong>Bold text</strong>")
+// ⚠️ SECURITY WARNING: This function disables HTML escaping. Only use with
+// trusted, sanitized HTML. Using this with user input creates XSS vulnerabilities.
+// In most cases, you should NOT use this function - templ's default escaping is safer.
 func SafeHTML(s string) template.HTML {
 	return template.HTML(s)
 }
