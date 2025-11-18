@@ -1,0 +1,17 @@
+package pages
+
+import "{{ .ModuleName }}/internal/http/views/layouts"
+
+templ HomePage() {
+	@layouts.Base("Home", "Welcome to your new Tracks application") {
+		<main class="container">
+			<header>
+				<h1>Welcome to Tracks</h1>
+			</header>
+			<section>
+				<p>Your application is up and running!</p>
+				<p>Edit this template at <code>internal/http/views/pages/home.templ</code> to customize your homepage.</p>
+			</section>
+		</main>
+	}
+}
