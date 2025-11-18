@@ -1,0 +1,32 @@
+package views
+
+import (
+	"html/template"
+	"strings"
+)
+
+// ClassNames conditionally joins CSS class names.
+// Filters out empty strings and returns a space-separated string.
+//
+// Example:
+//
+//	ClassNames("btn", isActive && "btn-active", "btn-primary")
+func ClassNames(classes ...string) string {
+	var filtered []string
+	for _, class := range classes {
+		if class != "" {
+			filtered = append(filtered, class)
+		}
+	}
+	return strings.Join(filtered, " ")
+}
+
+// SafeHTML marks a string as safe HTML that should not be escaped by templ.
+// Use with caution - only for trusted HTML content.
+//
+// Example:
+//
+//	SafeHTML("<strong>Bold text</strong>")
+func SafeHTML(s string) template.HTML {
+	return template.HTML(s)
+}
