@@ -144,7 +144,7 @@ const config = {
               },
               {
                 label: 'Issues',
-                href: 'https://github.com/anomalousventures/tracks/issues',
+                href: 'https://github.com/anomalousventures/tracks/issues/new/choose',
               },
             ],
           },
