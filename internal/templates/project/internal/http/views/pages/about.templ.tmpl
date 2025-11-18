@@ -1,0 +1,17 @@
+package pages
+
+import "{{ .ModuleName }}/internal/http/views/layouts"
+
+templ AboutPage() {
+	@layouts.Base("About", "Learn more about this application") {
+		<main>
+			<header>
+				<h1>About This Application</h1>
+			</header>
+			<section>
+				<p>This application was generated using Tracks.</p>
+				<p>Edit this template at <code>internal/http/views/pages/about.templ</code> to customize your about page.</p>
+			</section>
+		</main>
+	}
+}
