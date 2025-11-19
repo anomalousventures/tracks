@@ -107,6 +107,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/views/layouts/base.templ.tmpl":  "internal/http/views/layouts/base.templ",
 		"internal/http/views/pages/home.templ.tmpl":    "internal/http/views/pages/home.templ",
 		"internal/http/views/pages/about.templ.tmpl":   "internal/http/views/pages/about.templ",
+		"internal/http/views/pages/error.templ.tmpl":   "internal/http/views/pages/error.templ",
 		"internal/http/middleware/logging.go.tmpl":     "internal/http/middleware/logging.go",
 		"internal/db/db.go.tmpl":                   "internal/db/db.go",
 		"internal/db/queries/.gitkeep.tmpl":        "internal/db/queries/.gitkeep",
