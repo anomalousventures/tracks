@@ -12,14 +12,10 @@ const (
 	flashKey contextKey = "flash"
 )
 
-// SetFlash stores a flash message in the session manager for one-time display.
-// Flash messages are automatically cleared after being retrieved.
 func SetFlash(sm *scs.SessionManager, r context.Context, message string) {
 	sm.Put(r, string(flashKey), message)
 }
 
-// GetFlash retrieves and clears a flash message from the session manager.
-// Returns empty string if no flash message exists.
 func GetFlash(sm *scs.SessionManager, r context.Context) string {
 	return sm.PopString(r, string(flashKey))
 }

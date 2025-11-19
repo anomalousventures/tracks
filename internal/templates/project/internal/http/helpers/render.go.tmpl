@@ -8,14 +8,10 @@ import (
 	"{{.ModuleName}}/internal/interfaces"
 )
 
-// IsHTMXRequest checks if the request is an HTMX request by checking the HX-Request header.
 func IsHTMXRequest(r *http.Request) bool {
 	return r.Header.Get("HX-Request") == "true"
 }
 
-// RenderPage renders a templ component to the http.ResponseWriter.
-// If partial is provided and the request is an HTMX request, renders the partial.
-// Otherwise, renders the full page.
 func RenderPage(w http.ResponseWriter, r *http.Request, full templ.Component, partial templ.Component, logger interfaces.Logger) {
 	ctx := r.Context()
 
@@ -33,7 +29,6 @@ func RenderPage(w http.ResponseWriter, r *http.Request, full templ.Component, pa
 	}
 }
 
-// RenderError renders an error page using the error template.
 func RenderError(w http.ResponseWriter, r *http.Request, statusCode int, message string, logger interfaces.Logger) {
 	ctx := r.Context()
 

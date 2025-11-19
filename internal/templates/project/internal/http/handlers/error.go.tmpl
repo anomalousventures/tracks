@@ -17,8 +17,7 @@ func NewErrorHandler(logger interfaces.Logger) *ErrorHandler {
 	}
 }
 
-// ServeHTTP renders a 404 Not Found error page.
-// This handler is typically used as a catch-all route for unmatched paths.
+// ServeHTTP handles catch-all routing for unmatched paths.
 func (h *ErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	helpers.RenderError(w, r, http.StatusNotFound, "Page not found", h.logger)
 }
