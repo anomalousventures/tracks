@@ -1,0 +1,32 @@
+package components
+
+type NavLink struct {
+	URL   string
+	Label string
+}
+
+templ Nav(links []NavLink, currentPath string) {
+	<nav class="nav">
+		<div class="nav-container">
+			<ul class="nav-links">
+				for _, link := range links {
+					<li class="nav-item">
+						<a
+							href={ templ.URL(link.URL) }
+							class={ navLinkClass(link.URL, currentPath) }
+						>
+							{ link.Label }
+						</a>
+					</li>
+				}
+			</ul>
+		</div>
+	</nav>
+}
+
+func navLinkClass(linkURL, currentPath string) string {
+	if linkURL == currentPath {
+		return "nav-link active"
+	}
+	return "nav-link"
+}
