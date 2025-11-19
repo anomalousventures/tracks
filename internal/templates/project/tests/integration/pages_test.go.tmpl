@@ -1,0 +1,142 @@
+package integration
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"{{.ModuleName}}/internal/config"
+	httpserver "{{.ModuleName}}/internal/http"
+	"{{.ModuleName}}/internal/logging"
+	"{{.ModuleName}}/tests/mocks"
+)
+
+type contextKey string
+
+const testContextKey contextKey = "test_key"
+
+func TestPages_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	logger := logging.NewLogger("test")
+	cfg := &config.ServerConfig{
+		Port: ":8080",
+	}
+
+	mockHealthService := mocks.NewMockHealthService(t)
+	server := httpserver.NewServer(cfg, logger).
+		WithHealthService(mockHealthService).
+		RegisterRoutes()
+
+	tests := []struct {
+		name            string
+		path            string
+		method          string
+		headers         map[string]string
+		wantStatus      int
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			name:         "home page renders successfully",
+			path:         "/",
+			method:       http.MethodGet,
+			wantStatus:   http.StatusOK,
+			wantContains: []string{"<html", "</html>", "<title>"},
+		},
+		{
+			name:         "home page with HTMX request",
+			path:         "/",
+			method:       http.MethodGet,
+			headers:      map[string]string{"HX-Request": "true"},
+			wantStatus:   http.StatusOK,
+			wantContains: []string{"<title>"},
+		},
+		{
+			name:         "about page renders successfully",
+			path:         "/about",
+			method:       http.MethodGet,
+			wantStatus:   http.StatusOK,
+			wantContains: []string{"<html", "</html>", "<title>"},
+		},
+		{
+			name:         "about page with HTMX request",
+			path:         "/about",
+			method:       http.MethodGet,
+			headers:      map[string]string{"HX-Request": "true"},
+			wantStatus:   http.StatusOK,
+			wantContains: []string{"<title>"},
+		},
+		{
+			name:         "404 error page for nonexistent route",
+			path:         "/nonexistent",
+			method:       http.MethodGet,
+			wantStatus:   http.StatusNotFound,
+			wantContains: []string{"<html", "</html>", "<title>"},
+		},
+		{
+			name:         "404 error page with nested path",
+			path:         "/foo/bar/baz",
+			method:       http.MethodGet,
+			wantStatus:   http.StatusNotFound,
+			wantContains: []string{"<html", "</html>"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+
+			for key, value := range tt.headers {
+				req.Header.Set(key, value)
+			}
+
+			rec := httptest.NewRecorder()
+
+			server.ServeHTTP(rec, req)
+
+			assert.Equal(t, tt.wantStatus, rec.Code)
+			assert.Equal(t, "text/html; charset=utf-8", rec.Header().Get("Content-Type"))
+
+			body := rec.Body.String()
+			for _, contains := range tt.wantContains {
+				assert.Contains(t, body, contains, "response should contain %q", contains)
+			}
+
+			for _, notContains := range tt.wantNotContains {
+				assert.NotContains(t, body, notContains, "response should not contain %q", notContains)
+			}
+		})
+	}
+}
+
+func TestPages_ContextPropagation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	logger := logging.NewLogger("test")
+	cfg := &config.ServerConfig{
+		Port: ":8080",
+	}
+
+	mockHealthService := mocks.NewMockHealthService(t)
+	server := httpserver.NewServer(cfg, logger).
+		WithHealthService(mockHealthService).
+		RegisterRoutes()
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx := context.WithValue(req.Context(), testContextKey, "test_value")
+	req = req.WithContext(ctx)
+
+	rec := httptest.NewRecorder()
+	server.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+}

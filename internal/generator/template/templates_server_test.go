@@ -224,7 +224,8 @@ func TestServerTemplateRegistration(t *testing.T) {
 	require.NoError(t, err)
 
 	generatorCode := string(content)
-	assert.Contains(t, generatorCode, `"internal/http/server.go.tmpl":             "internal/http/server.go",`)
+	assert.Contains(t, generatorCode, `"internal/http/server.go.tmpl"`, "server.go.tmpl should be registered in generator")
+	assert.Contains(t, generatorCode, `"internal/http/server.go"`, "server.go output path should be registered")
 }
 
 // HTTP Routes Template Tests (internal/http/routes.go.tmpl)
@@ -320,8 +321,8 @@ func TestHTTPRoutesWebRoutesEmpty(t *testing.T) {
 	require.NotEqual(t, -1, webEnd, "should have web routes end marker")
 
 	section := output[webBegin:webEnd]
-	lines := strings.Split(section, "\n")
-	assert.Len(t, lines, 2, "web routes section should only contain begin marker and empty line")
+	assert.Contains(t, section, "s.router.Get(routes.Home, s.handleHome())", "should register home route")
+	assert.Contains(t, section, "s.router.Get(routes.About, s.handleAbout())", "should register about route")
 }
 
 func TestHTTPRoutesProtectedRoutesGroup(t *testing.T) {
