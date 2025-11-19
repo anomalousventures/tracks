@@ -1,0 +1,23 @@
+package handlers
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/http/helpers"
+	"{{.ModuleName}}/internal/interfaces"
+)
+
+type ErrorHandler struct {
+	logger interfaces.Logger
+}
+
+func NewErrorHandler(logger interfaces.Logger) *ErrorHandler {
+	return &ErrorHandler{
+		logger: logger,
+	}
+}
+
+// ServeHTTP handles catch-all routing for unmatched paths.
+func (h *ErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	helpers.RenderError(w, r, http.StatusNotFound, "Page not found", h.logger)
+}
