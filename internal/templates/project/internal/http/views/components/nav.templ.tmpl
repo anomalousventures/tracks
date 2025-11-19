@@ -1,0 +1,42 @@
+package components
+
+type NavLink struct {
+	Label  string
+	Href   string
+	Active bool
+}
+
+type NavProps struct {
+	Logo      string
+	Links     []NavLink
+	DarkMode  bool
+	MobileNav bool
+}
+
+templ Nav(props NavProps) {
+	<nav class="navbar" data-theme={ templ.KV("dark", props.DarkMode) }>
+		<div class="nav-container">
+			if props.Logo != "" {
+				<div class="nav-logo">
+					<a href="/">{ props.Logo }</a>
+				</div>
+			}
+			<div class={ templ.KV("nav-links", true), templ.KV("mobile-hidden", !props.MobileNav) }>
+				for _, link := range props.Links {
+					<a
+						href={ templ.SafeURL(link.Href) }
+						class={ templ.KV("nav-link", true), templ.KV("active", link.Active) }
+						aria-current={ templ.KV("page", link.Active) }
+					>
+						{ link.Label }
+					</a>
+				}
+			</div>
+			if props.MobileNav {
+				<button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+					<span class="menu-icon"></span>
+				</button>
+			}
+		</div>
+	</nav>
+}
