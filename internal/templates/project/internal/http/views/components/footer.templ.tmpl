@@ -1,32 +1,47 @@
 package components
 
+type FooterLink struct {
+	Text string
+	URL  string
+}
+
 type FooterProps struct {
-	Year         int
-	ProjectName  string
-	ProjectURL   string
+	Year             int
+	ProjectName      string
+	Links            []FooterLink
 	ShowTracksCredit bool
 }
 
 templ Footer(props FooterProps) {
-	<footer class="footer">
-		<div class="footer-content">
-			<div class="footer-section">
-				<p>&copy; { fmt.Sprintf("%d", props.Year) } { props.ProjectName }. All rights reserved.</p>
-			</div>
-			<nav class="footer-nav">
-				<ul class="footer-links">
-					<li><a href="/">Home</a></li>
-					<li><a href="/about">About</a></li>
-					if props.ProjectURL != "" {
-						<li><a href={ templ.URL(props.ProjectURL) } target="_blank" rel="noopener noreferrer">Project</a></li>
-					}
-				</ul>
-			</nav>
-			if props.ShowTracksCredit {
-				<div class="footer-credit">
-					<p>Built with <a href="https://go-tracks.io" target="_blank" rel="noopener noreferrer">Tracks</a></p>
+	<footer class="w-full border-t border-gray-200 bg-white">
+		<div class="container mx-auto px-4 py-6">
+			<div class="flex flex-col items-center justify-between gap-4 md:flex-row">
+				<div class="text-center md:text-left">
+					<small class="text-sm text-gray-600">
+						&copy; { fmt.Sprintf("%d", props.Year) } { props.ProjectName }. All rights reserved.
+					</small>
 				</div>
-			}
+				if len(props.Links) > 0 {
+					<nav aria-label="Footer navigation">
+						<ul class="flex flex-wrap items-center justify-center gap-4">
+							for _, link := range props.Links {
+								<li>
+									<a href={ templ.URL(link.URL) } class="text-sm text-gray-600 transition-colors hover:text-gray-900">
+										{ link.Text }
+									</a>
+								</li>
+							}
+						</ul>
+					</nav>
+				}
+				if props.ShowTracksCredit {
+					<div class="text-center md:text-right">
+						<small class="text-sm text-gray-600">
+							Built with <a href="https://go-tracks.io" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-600 transition-colors hover:text-blue-700">Tracks</a>
+						</small>
+					</div>
+				}
+			</div>
 		</div>
 	</footer>
 }
