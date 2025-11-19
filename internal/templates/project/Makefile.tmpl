@@ -1,25 +1,26 @@
-.PHONY: help test build dev dev-services dev-down generate mocks sqlc lint clean
+.PHONY: build clean dev dev-down dev-services generate help lint mocks sqlc templ test
 
 help: ## Show this help message
 	@echo "Available targets:"
-	@echo "  help         - Show this help message"
-	@echo "  test         - Run all tests"
 	@echo "  build        - Build the server binary"
+	@echo "  clean        - Remove build artifacts"
 	@echo "  dev          - Start development server (auto-starts services if needed)"
-	@echo "  dev-services - Start docker-compose services"
 	@echo "  dev-down     - Stop docker-compose services"
-	@echo "  generate     - Generate mocks and SQL code"
+	@echo "  dev-services - Start docker-compose services"
+	@echo "  generate     - Generate all code (templ, mocks, SQL)"
+	@echo "  help         - Show this help message"
+	@echo "  lint         - Run linters"
 	@echo "  mocks        - Generate mocks from interfaces"
 	@echo "  sqlc         - Generate type-safe SQL code"
-	@echo "  lint         - Run linters"
-	@echo "  clean        - Remove build artifacts"
-
-test: ## Run tests
-	go test ./...
+	@echo "  templ        - Generate templ templates"
+	@echo "  test         - Run all tests"
 
 build: ## Build server binary
 	@mkdir -p bin
 	go build -o bin/server ./cmd/server
+
+clean: ## Remove build artifacts
+	rm -rf bin/
 
 dev: ## Start development server (auto-starts services if needed)
 	@trap 'echo "Stopping services..."; docker-compose down' EXIT INT TERM; \
@@ -31,13 +32,16 @@ dev: ## Start development server (auto-starts services if needed)
 	echo "Starting dev server..."; \
 	go tool air -c .air.toml
 
-dev-services: ## Start docker-compose services
-	docker-compose up -d
-
 dev-down: ## Stop docker-compose services
 	docker-compose down
 
-generate: mocks sqlc ## Generate mocks and SQL code
+dev-services: ## Start docker-compose services
+	docker-compose up -d
+
+generate: templ mocks sqlc ## Generate all code (templ, mocks, SQL)
+
+lint: ## Run linters
+	go tool golangci-lint run
 
 mocks: ## Generate mocks from interfaces
 	go tool mockery
@@ -45,8 +49,8 @@ mocks: ## Generate mocks from interfaces
 sqlc: ## Generate type-safe SQL code
 	go tool sqlc generate
 
-lint: ## Run linters
-	go tool golangci-lint run
+templ: ## Generate templ templates
+	go tool templ generate
 
-clean: ## Remove build artifacts
-	rm -rf bin/
+test: ## Run tests
+	go test ./...

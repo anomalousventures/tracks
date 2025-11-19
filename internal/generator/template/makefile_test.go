@@ -31,26 +31,30 @@ func TestMakefileTargets(t *testing.T) {
 		items []string
 	}{
 		{"phony declarations", []string{
-			".PHONY: help test build dev dev-services dev-down generate mocks sqlc lint clean",
+			".PHONY: build clean dev dev-down dev-services generate help lint mocks sqlc templ test",
 		}},
 		{"help target", []string{
 			"help: ## Show this help message",
 			"Available targets:",
-		}},
-		{"test target", []string{
-			"test: ## Run tests",
-			"go test ./...",
 		}},
 		{"build target", []string{
 			"build: ## Build server binary",
 			"@mkdir -p bin",
 			"go build -o bin/server ./cmd/server",
 		}},
+		{"clean target", []string{
+			"clean: ## Remove build artifacts",
+			"rm -rf bin/",
+		}},
 		{"dev target", []string{
 			"dev: ## Start development server (auto-starts services if needed)",
 			"grep -q '^  [a-z]' docker-compose.yml",
 			"docker-compose up -d",
 			"go tool air -c .air.toml",
+		}},
+		{"lint target", []string{
+			"lint: ## Run linters",
+			"go tool golangci-lint run",
 		}},
 		{"mocks target", []string{
 			"mocks: ## Generate mocks from interfaces",
@@ -60,13 +64,13 @@ func TestMakefileTargets(t *testing.T) {
 			"sqlc: ## Generate type-safe SQL code",
 			"go tool sqlc generate",
 		}},
-		{"lint target", []string{
-			"lint: ## Run linters",
-			"go tool golangci-lint run",
+		{"templ target", []string{
+			"templ: ## Generate templ templates",
+			"go tool templ generate",
 		}},
-		{"clean target", []string{
-			"clean: ## Remove build artifacts",
-			"rm -rf bin/",
+		{"test target", []string{
+			"test: ## Run tests",
+			"go test ./...",
 		}},
 	}
 
@@ -81,17 +85,18 @@ func TestMakefileHelpText(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
 	testutil.AssertContainsAll(t, result, []string{
-		"help         - Show this help message",
-		"test         - Run all tests",
 		"build        - Build the server binary",
+		"clean        - Remove build artifacts",
 		"dev          - Start development server (auto-starts services if needed)",
-		"dev-services - Start docker-compose services",
 		"dev-down     - Stop docker-compose services",
-		"generate     - Generate mocks and SQL code",
+		"dev-services - Start docker-compose services",
+		"generate     - Generate all code (templ, mocks, SQL)",
+		"help         - Show this help message",
+		"lint         - Run linters",
 		"mocks        - Generate mocks from interfaces",
 		"sqlc         - Generate type-safe SQL code",
-		"lint         - Run linters",
-		"clean        - Remove build artifacts",
+		"templ        - Generate templ templates",
+		"test         - Run all tests",
 	})
 }
 
@@ -100,6 +105,7 @@ func TestMakefileUsesGoTool(t *testing.T) {
 
 	testutil.AssertContainsAll(t, result, []string{
 		"go tool air",
+		"go tool templ",
 		"go tool mockery",
 		"go tool sqlc",
 		"go tool golangci-lint",
