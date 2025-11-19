@@ -1,0 +1,210 @@
+package views
+
+import (
+	"github.com/a-h/templ"
+)
+
+// HTMX Attribute Helpers
+//
+// These helpers provide type-safe, ergonomic ways to add HTMX attributes to templ components.
+// They generate templ.Attributes that can be spread into any HTML element.
+//
+// Usage examples:
+//
+//	// Simple GET request
+//	<button { HxGet("/api/data")... }>Load Data</button>
+//
+//	// POST with target
+//	<form { HxPost("/api/submit")... } { HxTarget("#result")... }>...</form>
+//
+//	// Multiple attributes can be combined
+//	<div
+//		{ HxGet("/api/users")... }
+//		{ HxTrigger("click")... }
+//		{ HxSwap("innerHTML")... }
+//		{ HxTarget("#users-list")... }
+//	>Click to load users</div>
+//
+//	// Using route helpers for type safety
+//	<button { HxGet(routes.UserShowURL(userID))... }>View User</button>
+
+// HxGet sets the hx-get attribute for HTMX GET requests.
+// The url parameter should be a valid route path, ideally using route helper functions.
+func HxGet(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-get": url,
+	}
+}
+
+// HxPost sets the hx-post attribute for HTMX POST requests.
+// The url parameter should be a valid route path, ideally using route helper functions.
+func HxPost(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-post": url,
+	}
+}
+
+// HxPut sets the hx-put attribute for HTMX PUT requests.
+// The url parameter should be a valid route path, ideally using route helper functions.
+func HxPut(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-put": url,
+	}
+}
+
+// HxDelete sets the hx-delete attribute for HTMX DELETE requests.
+// The url parameter should be a valid route path, ideally using route helper functions.
+func HxDelete(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-delete": url,
+	}
+}
+
+// HxPatch sets the hx-patch attribute for HTMX PATCH requests.
+// The url parameter should be a valid route path, ideally using route helper functions.
+func HxPatch(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-patch": url,
+	}
+}
+
+// HxTarget sets the hx-target attribute to specify which element to update.
+// Common values: "#element-id", ".class-name", "this", "closest .parent", "next .sibling"
+func HxTarget(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-target": selector,
+	}
+}
+
+// HxSwap sets the hx-swap attribute to control how content is swapped.
+// Common values: "innerHTML" (default), "outerHTML", "beforebegin", "afterbegin", "beforeend", "afterend", "delete", "none"
+// Modifiers can be added with spaces: "innerHTML swap:1s" or "outerHTML show:top"
+func HxSwap(strategy string) templ.Attributes {
+	return templ.Attributes{
+		"hx-swap": strategy,
+	}
+}
+
+// HxTrigger sets the hx-trigger attribute to specify what triggers the request.
+// Common values: "click", "change", "submit", "load", "revealed", "intersect"
+// Can include modifiers: "click once", "change delay:500ms", "keyup[ctrlKey&&key=='Enter']"
+func HxTrigger(event string) templ.Attributes {
+	return templ.Attributes{
+		"hx-trigger": event,
+	}
+}
+
+// HxPushURL sets the hx-push-url attribute to update the browser URL.
+// Pass "true" to use the request URL, "false" to prevent URL updates, or a custom URL path.
+func HxPushURL(value string) templ.Attributes {
+	return templ.Attributes{
+		"hx-push-url": value,
+	}
+}
+
+// HxSelect sets the hx-select attribute to choose a subset of the response.
+// The selector parameter should be a CSS selector for the content to extract from the response.
+func HxSelect(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-select": selector,
+	}
+}
+
+// HxSelectOOB sets the hx-select-oob attribute for out-of-band swaps.
+// The selector parameter should be a CSS selector, optionally with swap strategy: "#alerts" or "#alerts:afterbegin"
+func HxSelectOOB(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-select-oob": selector,
+	}
+}
+
+// HxIndicator sets the hx-indicator attribute to show a loading indicator.
+// The selector parameter should be a CSS selector for the element to show during the request.
+func HxIndicator(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-indicator": selector,
+	}
+}
+
+// HxConfirm sets the hx-confirm attribute to show a confirmation dialog before the request.
+// The message parameter is the text to display in the confirmation dialog.
+func HxConfirm(message string) templ.Attributes {
+	return templ.Attributes{
+		"hx-confirm": message,
+	}
+}
+
+// HxVals sets the hx-vals attribute to add extra values to the request.
+// The json parameter should be a JSON string of key-value pairs.
+// Example: HxVals(`{"key": "value", "foo": "bar"}`)
+func HxVals(json string) templ.Attributes {
+	return templ.Attributes{
+		"hx-vals": json,
+	}
+}
+
+// HxHeaders sets the hx-headers attribute to add extra headers to the request.
+// The json parameter should be a JSON string of header key-value pairs.
+// Example: HxHeaders(`{"X-Custom-Header": "value"}`)
+func HxHeaders(json string) templ.Attributes {
+	return templ.Attributes{
+		"hx-headers": json,
+	}
+}
+
+// HxBoost sets the hx-boost attribute to progressively enhance anchor and form tags.
+// Pass "true" to enable boosting, "false" to disable it for a specific element.
+func HxBoost(value string) templ.Attributes {
+	return templ.Attributes{
+		"hx-boost": value,
+	}
+}
+
+// HxDisable sets the hx-disable attribute to disable HTMX processing for an element.
+// This is useful for excluding specific elements when HTMX is enabled on a parent.
+func HxDisable() templ.Attributes {
+	return templ.Attributes{
+		"hx-disable": "true",
+	}
+}
+
+// HxPreserve sets the hx-preserve attribute to keep an element unchanged during swaps.
+// This is useful for maintaining state of elements like scripts or iframes.
+func HxPreserve() templ.Attributes {
+	return templ.Attributes{
+		"hx-preserve": "true",
+	}
+}
+
+// HxInclude sets the hx-include attribute to include additional form values in the request.
+// The selector parameter should be a CSS selector for elements whose values to include.
+func HxInclude(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-include": selector,
+	}
+}
+
+// HxExt sets the hx-ext attribute to enable HTMX extensions.
+// The extensions parameter should be a comma-separated list of extension names.
+// Example: HxExt("json-enc") or HxExt("morph,debug")
+func HxExt(extensions string) templ.Attributes {
+	return templ.Attributes{
+		"hx-ext": extensions,
+	}
+}
+
+// HxSync sets the hx-sync attribute to control request synchronization.
+// Common values: "this:drop", "this:abort", "this:replace", "closest form:abort"
+func HxSync(strategy string) templ.Attributes {
+	return templ.Attributes{
+		"hx-sync": strategy,
+	}
+}
+
+// HxEncoding sets the hx-encoding attribute to change the request encoding.
+// Pass "multipart/form-data" for file uploads.
+func HxEncoding(contentType string) templ.Attributes {
+	return templ.Attributes{
+		"hx-encoding": contentType,
+	}
+}
