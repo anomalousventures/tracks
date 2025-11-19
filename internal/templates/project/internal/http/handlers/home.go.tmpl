@@ -1,0 +1,23 @@
+package handlers
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/http/helpers"
+	"{{.ModuleName}}/internal/http/views/pages"
+	"{{.ModuleName}}/internal/interfaces"
+)
+
+type HomeHandler struct {
+	logger interfaces.Logger
+}
+
+func NewHomeHandler(logger interfaces.Logger) *HomeHandler {
+	return &HomeHandler{
+		logger: logger,
+	}
+}
+
+func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	helpers.RenderPage(w, r, pages.HomePage(), nil, h.logger)
+}
