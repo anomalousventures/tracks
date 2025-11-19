@@ -1,0 +1,113 @@
+package handlers
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/http/helpers"
+	"{{.ModuleName}}/internal/http/views/components"
+	"{{.ModuleName}}/internal/http/views/layouts"
+	"{{.ModuleName}}/internal/interfaces"
+	"github.com/alexedwards/scs/v2"
+)
+
+// CounterHandler demonstrates HTMX partial rendering pattern
+// Shows how to return full pages vs fragments based on request type
+type CounterHandler struct {
+	logger         interfaces.Logger
+	sessionManager *scs.SessionManager
+}
+
+func NewCounterHandler(logger interfaces.Logger, sm *scs.SessionManager) *CounterHandler {
+	return &CounterHandler{
+		logger:         logger,
+		sessionManager: sm,
+	}
+}
+
+// ServeHTTP renders the counter page
+// Returns full page for initial load, partial for HTMX requests
+func (h *CounterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	count := h.sessionManager.GetInt(r.Context(), "counter")
+
+	// Define full page and partial components
+	fullPage := layouts.Base("Counter Example", "HTMX partial rendering demonstration") {
+		@components.CounterPage(count)
+	}
+	partial := components.CounterPartial(count)
+
+	// RenderPage automatically chooses full vs partial based on HX-Request header
+	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+}
+
+// Increment handles counter increment requests
+// Demonstrates fragment-only response pattern
+func (h *CounterHandler) Increment(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	count := h.sessionManager.GetInt(ctx, "counter")
+	count++
+	h.sessionManager.Put(ctx, "counter", count)
+
+	// For HTMX requests, only return the partial
+	// The fullPage parameter is only used if someone accesses this endpoint directly
+	fullPage := layouts.Base("Counter", "Counter incremented") {
+		@components.CounterPage(count)
+	}
+	partial := components.CounterPartial(count)
+
+	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+}
+
+// Decrement handles counter decrement requests
+func (h *CounterHandler) Decrement(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	count := h.sessionManager.GetInt(ctx, "counter")
+	count--
+	h.sessionManager.Put(ctx, "counter", count)
+
+	fullPage := layouts.Base("Counter", "Counter decremented") {
+		@components.CounterPage(count)
+	}
+	partial := components.CounterPartial(count)
+
+	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+}
+
+// Reset handles counter reset with OOB swap notification
+// Demonstrates out-of-band swap pattern for server-side notifications
+func (h *CounterHandler) Reset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	h.sessionManager.Put(ctx, "counter", 0)
+
+	// When using OOB swaps, we need to manually compose the response
+	// to include both the primary target and OOB elements
+	if helpers.IsHTMXRequest(r) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		// Render the main partial (counter display)
+		if err := components.CounterPartial(0).Render(ctx, w); err != nil {
+			h.logger.Error(ctx).Err(err).Msg("failed to render counter partial")
+			helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to render counter", h.logger)
+			return
+		}
+
+		// Render OOB notification (will update #notification-area automatically)
+		if err := components.NotificationOOB("Counter reset to 0", "success").Render(ctx, w); err != nil {
+			h.logger.Error(ctx).Err(err).Msg("failed to render notification")
+			// Don't fail the whole response if notification fails
+			return
+		}
+		return
+	}
+
+	// Non-HTMX requests get full page
+	fullPage := layouts.Base("Counter", "Counter reset") {
+		@components.CounterPage(0)
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := fullPage.Render(ctx, w); err != nil {
+		h.logger.Error(ctx).Err(err).Msg("failed to render template")
+		helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to render page", h.logger)
+		return
+	}
+}

@@ -1,0 +1,79 @@
+package components
+
+import "fmt"
+
+// CounterPartial renders just the counter value and controls
+// Used for HTMX partial updates when count changes
+templ CounterPartial(count int) {
+	<div id="counter-display" class="counter-partial">
+		<p>Current count: <strong>{ fmt.Sprintf("%d", count) }</strong></p>
+		<div class="counter-controls">
+			<button
+				hx-post="/examples/counter/increment"
+				hx-target="#counter-display"
+				hx-swap="outerHTML"
+			>
+				Increment
+			</button>
+			<button
+				hx-post="/examples/counter/decrement"
+				hx-target="#counter-display"
+				hx-swap="outerHTML"
+			>
+				Decrement
+			</button>
+			<button
+				hx-post="/examples/counter/reset"
+				hx-target="#counter-display"
+				hx-swap="outerHTML"
+			>
+				Reset
+			</button>
+		</div>
+	</div>
+}
+
+// CounterPage renders the full page with layout
+// Used for initial page load or non-HTMX requests
+templ CounterPage(count int) {
+	<div>
+		<h1>HTMX Partial Rendering Example</h1>
+		<p>This page demonstrates HTMX partial rendering patterns:</p>
+		<ul>
+			<li><strong>hx-post:</strong> Triggers HTTP POST on button click</li>
+			<li><strong>hx-target:</strong> Specifies which element to update</li>
+			<li><strong>hx-swap:</strong> Controls how content is swapped (outerHTML replaces entire element)</li>
+		</ul>
+
+		@CounterPartial(count)
+
+		<section id="notification-area">
+			<!-- OOB swap target for server notifications -->
+		</section>
+
+		<h2>How This Works</h2>
+		<ol>
+			<li>Click a button → HTMX sends request with <code>HX-Request: true</code> header</li>
+			<li>Handler detects HTMX request using <code>helpers.IsHTMXRequest(r)</code></li>
+			<li>Handler calls <code>helpers.RenderPage(w, r, fullPage, partial, logger)</code></li>
+			<li>Helper renders <strong>only the partial</strong> (CounterPartial) for HTMX requests</li>
+			<li>HTMX replaces <code>#counter-display</code> with new content</li>
+			<li><strong>No full page reload</strong> - faster and more responsive</li>
+		</ol>
+
+		<h2>When to Use Partials vs Full Pages</h2>
+		<ul>
+			<li><strong>Use Full Page:</strong> Initial page loads, navigation, SEO-critical content</li>
+			<li><strong>Use Partials:</strong> Dynamic updates, form submissions, live search, infinite scroll</li>
+			<li><strong>Benefits:</strong> Reduced bandwidth, faster updates, better UX, progressive enhancement</li>
+		</ul>
+	</div>
+}
+
+// NotificationOOB demonstrates out-of-band (OOB) swaps
+// Server can update this element even if it wasn't the target
+templ NotificationOOB(message string, messageType string) {
+	<div id="notification-area" hx-swap-oob="true" class={ "notification", messageType }>
+		<p>{ message }</p>
+	</div>
+}
