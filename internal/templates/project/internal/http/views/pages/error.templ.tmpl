@@ -1,6 +1,10 @@
 package pages
 
-import "{{ .ModuleName }}/internal/http/views/layouts"
+import (
+	"fmt"
+
+	"{{ .ModuleName }}/internal/http/views/layouts"
+)
 
 templ ErrorPage(statusCode int, message string) {
 	@layouts.Base("Error", "An error occurred") {
