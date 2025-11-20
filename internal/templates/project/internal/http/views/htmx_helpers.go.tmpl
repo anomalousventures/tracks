@@ -1,0 +1,207 @@
+package views
+
+import (
+	"github.com/a-h/templ"
+)
+
+// HTMX swap strategies
+const (
+	SwapInnerHTML   = "innerHTML"
+	SwapOuterHTML   = "outerHTML"
+	SwapBeforeBegin = "beforebegin"
+	SwapAfterBegin  = "afterbegin"
+	SwapBeforeEnd   = "beforeend"
+	SwapAfterEnd    = "afterend"
+	SwapDelete      = "delete"
+	SwapNone        = "none"
+)
+
+// HTMX trigger events
+const (
+	TriggerClick     = "click"
+	TriggerChange    = "change"
+	TriggerSubmit    = "submit"
+	TriggerLoad      = "load"
+	TriggerRevealed  = "revealed"
+	TriggerIntersect = "intersect"
+	TriggerKeyUp     = "keyup"
+	TriggerKeyDown   = "keydown"
+	TriggerMouseOver = "mouseover"
+	TriggerMouseOut  = "mouseout"
+)
+
+// HTMX target selectors
+const (
+	TargetThis    = "this"
+	TargetClosest = "closest"
+	TargetNext    = "next"
+	TargetPrev    = "previous"
+	TargetFind    = "find"
+)
+
+// HTMX sync strategies
+const (
+	SyncDrop    = "drop"
+	SyncAbort   = "abort"
+	SyncReplace = "replace"
+	SyncQueue   = "queue"
+)
+
+// HTMX Attribute Helpers
+//
+// These helpers provide type-safe, ergonomic ways to add HTMX attributes to templ components.
+// They generate templ.Attributes that can be spread into any HTML element.
+//
+// Constants are provided for common HTMX values (swap strategies, trigger events, sync modes, etc.)
+// to improve discoverability and prevent typos.
+//
+// Usage examples:
+//
+//	// Simple GET request
+//	<button { HxGet("/api/data")... }>Load Data</button>
+//
+//	// POST with target
+//	<form { HxPost("/api/submit")... } { HxTarget("#result")... }>...</form>
+//
+//	// Multiple attributes can be combined
+//	<div
+//		{ HxGet("/api/users")... }
+//		{ HxTrigger(TriggerClick)... }
+//		{ HxSwap(SwapInnerHTML)... }
+//		{ HxTarget("#users-list")... }
+//	>Click to load users</div>
+//
+//	// Using route helpers and constants for type safety
+//	<button { HxGet(routes.UserShowURL(userID))... } { HxSwap(SwapOuterHTML)... }>View User</button>
+
+func HxGet(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-get": url,
+	}
+}
+
+func HxPost(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-post": url,
+	}
+}
+
+func HxPut(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-put": url,
+	}
+}
+
+func HxDelete(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-delete": url,
+	}
+}
+
+func HxPatch(url string) templ.Attributes {
+	return templ.Attributes{
+		"hx-patch": url,
+	}
+}
+
+func HxTarget(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-target": selector,
+	}
+}
+
+func HxSwap(strategy string) templ.Attributes {
+	return templ.Attributes{
+		"hx-swap": strategy,
+	}
+}
+
+func HxTrigger(event string) templ.Attributes {
+	return templ.Attributes{
+		"hx-trigger": event,
+	}
+}
+
+func HxPushURL(value string) templ.Attributes {
+	return templ.Attributes{
+		"hx-push-url": value,
+	}
+}
+
+func HxSelect(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-select": selector,
+	}
+}
+
+func HxSelectOOB(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-select-oob": selector,
+	}
+}
+
+func HxIndicator(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-indicator": selector,
+	}
+}
+
+func HxConfirm(message string) templ.Attributes {
+	return templ.Attributes{
+		"hx-confirm": message,
+	}
+}
+
+func HxVals(json string) templ.Attributes {
+	return templ.Attributes{
+		"hx-vals": json,
+	}
+}
+
+func HxHeaders(json string) templ.Attributes {
+	return templ.Attributes{
+		"hx-headers": json,
+	}
+}
+
+func HxBoost(value string) templ.Attributes {
+	return templ.Attributes{
+		"hx-boost": value,
+	}
+}
+
+func HxDisable() templ.Attributes {
+	return templ.Attributes{
+		"hx-disable": "true",
+	}
+}
+
+func HxPreserve() templ.Attributes {
+	return templ.Attributes{
+		"hx-preserve": "true",
+	}
+}
+
+func HxInclude(selector string) templ.Attributes {
+	return templ.Attributes{
+		"hx-include": selector,
+	}
+}
+
+func HxExt(extensions string) templ.Attributes {
+	return templ.Attributes{
+		"hx-ext": extensions,
+	}
+}
+
+func HxSync(strategy string) templ.Attributes {
+	return templ.Attributes{
+		"hx-sync": strategy,
+	}
+}
+
+func HxEncoding(contentType string) templ.Attributes {
+	return templ.Attributes{
+		"hx-encoding": contentType,
+	}
+}
