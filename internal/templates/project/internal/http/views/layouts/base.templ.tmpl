@@ -18,8 +18,8 @@ templ Base(title, description string) {
 			@components.Nav(components.NavProps{
 				Logo: "{{.ProjectName}}",
 				Links: []components.NavLink{
-					{Label: "Home", Href: routes.WebHome, Active: false},
-					{Label: "About", Href: routes.WebAbout, Active: false},
+					{Label: "Home", Href: routes.Home, Active: false},
+					{Label: "About", Href: routes.About, Active: false},
 				},
 				DarkMode: false,
 				MobileNav: false,
