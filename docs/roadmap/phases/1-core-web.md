@@ -189,7 +189,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 5. Middleware chain works correctly
 6. Templ-UI components render correctly
 7. Build pipeline produces optimized CSS/JS
-8. Dark mode theme switching works
+8. Dark mode theme switching works (via Templ-UI components and CSS classes)
 9. Users can add/customize UI components
 
 ## Risks & Mitigations

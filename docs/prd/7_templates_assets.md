@@ -244,6 +244,8 @@ templ Base(title, description string, nonce string) {
             @components.CSS("app.css")
             @components.HTMXConfig(nonce)
             @components.JS("htmx.min.js", nonce)
+            // Note: HTMX extensions (head-support, idiomorph, response-targets) are
+            // bundled into htmx.min.js via esbuild and activated automatically
         </head>
         <body hx-boost="true">
             <div id="toast-container" aria-live="polite"></div>
@@ -679,11 +681,9 @@ HTMX v2 is bundled via esbuild and loaded in the base layout. Extensions are inc
 
 ```javascript
 // web/scripts/app.js
-// HTMX v2 and extensions bundled via esbuild
-// Extensions: head-support, idiomorph, response-targets
-
-// HTMX is automatically initialized when loaded
-// Extensions are configured via attributes in base.templ
+// HTMX v2 and extensions are bundled via esbuild (configured in package.json)
+// Extensions are activated via HTML attributes in base.templ
+// This file contains custom HTMX event handlers and app-specific logic
 
 // Example: Using response-targets extension for notifications
 document.body.addEventListener('htmx:afterSwap', function(evt) {
