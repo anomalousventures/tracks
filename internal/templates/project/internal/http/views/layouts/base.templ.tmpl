@@ -1,5 +1,10 @@
 package layouts
 
+import (
+	"{{.ModuleName}}/internal/http/views/components"
+	"{{.ModuleName}}/internal/http/routes"
+)
+
 templ Base(title, description string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -10,6 +15,15 @@ templ Base(title, description string) {
 			<meta name="description" content={ description }/>
 		</head>
 		<body>
+			@components.Nav(components.NavProps{
+				Logo: "{{.ProjectName}}",
+				Links: []components.NavLink{
+					{Label: "Home", Href: routes.Home, Active: false},
+					{Label: "About", Href: routes.About, Active: false},
+				},
+				DarkMode: false,
+				MobileNav: false,
+			})
 			{ children... }
 		</body>
 	</html>

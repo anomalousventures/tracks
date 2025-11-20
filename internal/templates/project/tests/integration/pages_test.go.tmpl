@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,60 +35,61 @@ func TestPages_Integration(t *testing.T) {
 		WithHealthService(mockHealthService).
 		RegisterRoutes()
 
+	// For more information on accessible query testing patterns with goquery:
+	// See: https://templ.guide/core-concepts/testing/
 	tests := []struct {
 		name            string
 		path            string
 		method          string
 		headers         map[string]string
 		wantStatus      int
+		isHTMXPartial   bool
 		wantContains    []string
 		wantNotContains []string
 	}{
 		{
-			name:         "home page renders successfully",
-			path:         "/",
-			method:       http.MethodGet,
-			wantStatus:   http.StatusOK,
-			wantContains: []string{"<html", "</html>", "<title>"},
+			name:       "should render home page",
+			path:       "/",
+			method:     http.MethodGet,
+			wantStatus: http.StatusOK,
 		},
 		{
-			name:            "home page with HTMX request",
+			name:            "should render home page as HTMX partial",
 			path:            "/",
 			method:          http.MethodGet,
 			headers:         map[string]string{"HX-Request": "true"},
 			wantStatus:      http.StatusOK,
+			isHTMXPartial:   true,
 			wantContains:    []string{"<h1>Welcome to Tracks</h1>"},
 			wantNotContains: []string{"<html", "</html>"},
 		},
 		{
-			name:         "about page renders successfully",
-			path:         "/about",
-			method:       http.MethodGet,
-			wantStatus:   http.StatusOK,
-			wantContains: []string{"<html", "</html>", "<title>"},
+			name:       "should render about page",
+			path:       "/about",
+			method:     http.MethodGet,
+			wantStatus: http.StatusOK,
 		},
 		{
-			name:            "about page with HTMX request",
+			name:            "should render about page as HTMX partial",
 			path:            "/about",
 			method:          http.MethodGet,
 			headers:         map[string]string{"HX-Request": "true"},
 			wantStatus:      http.StatusOK,
+			isHTMXPartial:   true,
 			wantContains:    []string{"<h1>About This Application</h1>"},
 			wantNotContains: []string{"<html", "</html>"},
 		},
 		{
-			name:         "404 error page for nonexistent route",
-			path:         "/nonexistent",
-			method:       http.MethodGet,
-			wantStatus:   http.StatusNotFound,
-			wantContains: []string{"<html", "</html>", "<title>"},
+			name:       "should return 404 for nonexistent route",
+			path:       "/nonexistent",
+			method:     http.MethodGet,
+			wantStatus: http.StatusNotFound,
 		},
 		{
-			name:         "404 error page with nested path",
-			path:         "/foo/bar/baz",
-			method:       http.MethodGet,
-			wantStatus:   http.StatusNotFound,
-			wantContains: []string{"<html", "</html>"},
+			name:       "should return 404 for nested nonexistent path",
+			path:       "/foo/bar/baz",
+			method:     http.MethodGet,
+			wantStatus: http.StatusNotFound,
 		},
 	}
 
@@ -106,14 +108,31 @@ func TestPages_Integration(t *testing.T) {
 			assert.Equal(t, tt.wantStatus, rec.Code)
 			assert.Equal(t, "text/html; charset=utf-8", rec.Header().Get("Content-Type"))
 
-			body := rec.Body.String()
-			for _, contains := range tt.wantContains {
-				assert.Contains(t, body, contains, "response should contain %q", contains)
+			// For HTMX partial responses, use string matching
+			if tt.isHTMXPartial {
+				body := rec.Body.String()
+				for _, contains := range tt.wantContains {
+					assert.Contains(t, body, contains, "response should contain %q", contains)
+				}
+				for _, notContains := range tt.wantNotContains {
+					assert.NotContains(t, body, notContains, "response should not contain %q", notContains)
+				}
+				return
 			}
 
-			for _, notContains := range tt.wantNotContains {
-				assert.NotContains(t, body, notContains, "response should not contain %q", notContains)
-			}
+			doc, err := goquery.NewDocumentFromReader(rec.Body)
+			require.NoError(t, err)
+
+			assert.GreaterOrEqual(t, doc.Find("a:contains('Home')").Length(), 1, "should have Home link")
+			assert.GreaterOrEqual(t, doc.Find("a:contains('About')").Length(), 1, "should have About link")
+			assert.Equal(t, 1, doc.Find("title").Length(), "should have title")
+
+			// Verify accessible navigation attributes
+			homeLink := doc.Find("a:contains('Home')").First()
+			assert.Equal(t, "/", homeLink.AttrOr("href", ""), "Home link should have correct href")
+
+			aboutLink := doc.Find("a:contains('About')").First()
+			assert.Equal(t, "/about", aboutLink.AttrOr("href", ""), "About link should have correct href")
 		})
 	}
 }
