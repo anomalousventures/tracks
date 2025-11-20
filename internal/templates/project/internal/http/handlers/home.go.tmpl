@@ -19,5 +19,5 @@ func NewHomeHandler(logger interfaces.Logger) *HomeHandler {
 }
 
 func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helpers.RenderPage(w, r, pages.HomePage(), nil, h.logger)
+	helpers.RenderPage(w, r, pages.HomePage(), pages.HomePagePartial(), h.logger)
 }

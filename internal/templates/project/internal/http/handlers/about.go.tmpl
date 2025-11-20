@@ -19,5 +19,5 @@ func NewAboutHandler(logger interfaces.Logger) *AboutHandler {
 }
 
 func (h *AboutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helpers.RenderPage(w, r, pages.AboutPage(), nil, h.logger)
+	helpers.RenderPage(w, r, pages.AboutPage(), pages.AboutPagePartial(), h.logger)
 }

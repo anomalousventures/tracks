@@ -26,8 +26,6 @@ func (s *Server) routes() {
 	// TRACKS:WEB_ROUTES:END
 
 	s.router.Group(func(r chi.Router) {
-		// r.Use(middleware.RequireAuth) // Add auth middleware when ready
-
 		// TRACKS:PROTECTED_ROUTES:BEGIN
 		// TRACKS:PROTECTED_ROUTES:END
 	})

@@ -51,12 +51,13 @@ func TestPages_Integration(t *testing.T) {
 			wantContains: []string{"<html", "</html>", "<title>"},
 		},
 		{
-			name:         "home page with HTMX request",
-			path:         "/",
-			method:       http.MethodGet,
-			headers:      map[string]string{"HX-Request": "true"},
-			wantStatus:   http.StatusOK,
-			wantContains: []string{"<title>"},
+			name:            "home page with HTMX request",
+			path:            "/",
+			method:          http.MethodGet,
+			headers:         map[string]string{"HX-Request": "true"},
+			wantStatus:      http.StatusOK,
+			wantContains:    []string{"<h1>Welcome to Tracks</h1>"},
+			wantNotContains: []string{"<html", "</html>"},
 		},
 		{
 			name:         "about page renders successfully",
@@ -66,12 +67,13 @@ func TestPages_Integration(t *testing.T) {
 			wantContains: []string{"<html", "</html>", "<title>"},
 		},
 		{
-			name:         "about page with HTMX request",
-			path:         "/about",
-			method:       http.MethodGet,
-			headers:      map[string]string{"HX-Request": "true"},
-			wantStatus:   http.StatusOK,
-			wantContains: []string{"<title>"},
+			name:            "about page with HTMX request",
+			path:            "/about",
+			method:          http.MethodGet,
+			headers:         map[string]string{"HX-Request": "true"},
+			wantStatus:      http.StatusOK,
+			wantContains:    []string{"<h1>About This Application</h1>"},
+			wantNotContains: []string{"<html", "</html>"},
 		},
 		{
 			name:         "404 error page for nonexistent route",
@@ -116,6 +118,8 @@ func TestPages_Integration(t *testing.T) {
 	}
 }
 
+// TestPages_ContextPropagation verifies that custom context values propagate through
+// the middleware and handler chain without being lost.
 func TestPages_ContextPropagation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
