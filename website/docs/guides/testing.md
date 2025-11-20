@@ -308,6 +308,421 @@ func TestUserHandler_Create(t *testing.T) {
 - Test request/response marshaling
 - Don't test business logic (that's in service tests)
 
+## Testing Templ Components
+
+Tracks uses [templ](https://templ.guide) for type-safe HTML templating. Testing templ components focuses on **accessible queries** that find elements by semantic meaning (roles, labels, text content) rather than brittle selectors (IDs, classes).
+
+For comprehensive templ testing guidance, see the [official templ testing guide](https://templ.guide/core-concepts/testing/).
+
+### Testing Philosophy
+
+- **Accessible queries** - Find elements by text, role, or semantic attributes
+- **Maintainable tests** - Tests survive styling changes (class names, IDs)
+- **User-centric** - Test what users see, not implementation details
+- **goquery for parsing** - jQuery-like API for Go
+
+### Testing Individual Components
+
+Test components in isolation by rendering to a buffer and parsing with goquery.
+
+**Example:** Testing a navigation component
+
+```go
+package components
+
+import (
+    "bytes"
+    "testing"
+
+    "github.com/PuerkitoBio/goquery"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+
+    "yourproject/internal/http/views/components"
+)
+
+func TestNav_Render(t *testing.T) {
+    // Render component to buffer
+    var buf bytes.Buffer
+    err := components.Nav().Render(context.Background(), &buf)
+    require.NoError(t, err)
+
+    // Parse HTML with goquery
+    doc, err := goquery.NewDocumentFromReader(&buf)
+    require.NoError(t, err)
+
+    // Use accessible queries - find by text content
+    homeLink := doc.Find("a:contains('Home')").First()
+    assert.Equal(t, 1, homeLink.Length(), "should have Home link")
+    assert.Equal(t, "/", homeLink.AttrOr("href", ""), "Home link should point to /")
+
+    aboutLink := doc.Find("a:contains('About')").First()
+    assert.Equal(t, 1, aboutLink.Length(), "should have About link")
+    assert.Equal(t, "/about", aboutLink.AttrOr("href", ""), "About link should point to /about")
+
+    // Verify semantic structure
+    nav := doc.Find("nav")
+    assert.Equal(t, 1, nav.Length(), "should have nav element")
+}
+```
+
+**Example:** Testing a meta component with table-driven tests
+
+```go
+func TestMeta_Render(t *testing.T) {
+    tests := []struct {
+        name        string
+        title       string
+        description string
+        wantTitle   string
+        wantDesc    string
+    }{
+        {
+            name:        "renders all metadata",
+            title:       "Test Page",
+            description: "A test page description",
+            wantTitle:   "Test Page",
+            wantDesc:    "A test page description",
+        },
+        {
+            name:        "handles empty description",
+            title:       "Test Page",
+            description: "",
+            wantTitle:   "Test Page",
+            wantDesc:    "",
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            var buf bytes.Buffer
+            err := components.Meta(tt.title, tt.description).Render(context.Background(), &buf)
+            require.NoError(t, err)
+
+            doc, err := goquery.NewDocumentFromReader(&buf)
+            require.NoError(t, err)
+
+            // Find title by element name
+            title := doc.Find("title").Text()
+            assert.Equal(t, tt.wantTitle, title)
+
+            // Find meta description by attribute
+            metaDesc := doc.Find("meta[name='description']").AttrOr("content", "")
+            assert.Equal(t, tt.wantDesc, metaDesc)
+        })
+    }
+}
+```
+
+### Testing Pages with Layout
+
+Test full pages including base layout to verify complete rendering.
+
+**Example:** Testing home page with layout
+
+```go
+func TestHomePage_Render(t *testing.T) {
+    var buf bytes.Buffer
+    err := pages.Home().Render(context.Background(), &buf)
+    require.NoError(t, err)
+
+    doc, err := goquery.NewDocumentFromReader(&buf)
+    require.NoError(t, err)
+
+    // Verify page title
+    title := doc.Find("title").Text()
+    assert.Contains(t, title, "Home")
+
+    // Verify main heading by text content
+    h1 := doc.Find("h1:contains('Welcome')").First()
+    assert.Equal(t, 1, h1.Length(), "should have welcome heading")
+
+    // Verify navigation is present
+    homeLink := doc.Find("a:contains('Home')")
+    assert.GreaterOrEqual(t, homeLink.Length(), 1, "should have Home link in nav")
+
+    // Verify footer is present
+    footer := doc.Find("footer")
+    assert.Equal(t, 1, footer.Length(), "should have footer")
+}
+```
+
+### Testing Error Pages
+
+Use table-driven tests for multiple error scenarios.
+
+**Example:** Testing 404 and 500 error pages
+
+```go
+func TestErrorPages_Render(t *testing.T) {
+    tests := []struct {
+        name           string
+        statusCode     int
+        wantHeading    string
+        wantStatusText string
+    }{
+        {
+            name:           "404 Not Found",
+            statusCode:     404,
+            wantHeading:    "404",
+            wantStatusText: "Not Found",
+        },
+        {
+            name:           "500 Internal Server Error",
+            statusCode:     500,
+            wantHeading:    "500",
+            wantStatusText: "Internal Server Error",
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            var buf bytes.Buffer
+            err := pages.Error(tt.statusCode).Render(context.Background(), &buf)
+            require.NoError(t, err)
+
+            doc, err := goquery.NewDocumentFromReader(&buf)
+            require.NoError(t, err)
+
+            // Find heading by text content
+            heading := doc.Find(fmt.Sprintf("h1:contains('%s')", tt.wantHeading)).First()
+            assert.Equal(t, 1, heading.Length(), "should have error code heading")
+
+            // Find status text
+            assert.Contains(t, buf.String(), tt.wantStatusText, "should contain status text")
+        })
+    }
+}
+```
+
+### Testing HTMX Partial Rendering
+
+Test both full page and HTMX partial responses.
+
+**Example:** Integration test with HTMX header detection
+
+```go
+func TestPages_HTMXPartials(t *testing.T) {
+    tests := []struct {
+        name            string
+        path            string
+        headers         map[string]string
+        isHTMXPartial   bool
+        wantContains    []string
+        wantNotContains []string
+    }{
+        {
+            name:         "full page render without HTMX header",
+            path:         "/",
+            wantContains: []string{"<html", "</html>", "<h1>Welcome"},
+        },
+        {
+            name:            "partial render with HTMX header",
+            path:            "/",
+            headers:         map[string]string{"HX-Request": "true"},
+            isHTMXPartial:   true,
+            wantContains:    []string{"<h1>Welcome"},
+            wantNotContains: []string{"<html", "</html>"},
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+
+            // Add HTMX header if testing partial
+            for key, value := range tt.headers {
+                req.Header.Set(key, value)
+            }
+
+            rec := httptest.NewRecorder()
+            handler.ServeHTTP(rec, req)
+
+            body := rec.Body.String()
+
+            // For partials, use string matching
+            if tt.isHTMXPartial {
+                for _, contains := range tt.wantContains {
+                    assert.Contains(t, body, contains)
+                }
+                for _, notContains := range tt.wantNotContains {
+                    assert.NotContains(t, body, notContains)
+                }
+                return
+            }
+
+            // For full pages, use goquery
+            doc, err := goquery.NewDocumentFromReader(rec.Body)
+            require.NoError(t, err)
+
+            for _, contains := range tt.wantContains {
+                assert.Contains(t, body, contains)
+            }
+        })
+    }
+}
+```
+
+### Accessible Query Patterns with goquery
+
+**Good patterns (accessible, maintainable):**
+
+```go
+// Find by text content
+doc.Find("a:contains('Home')")
+doc.Find("h1:contains('Welcome')")
+doc.Find("button:contains('Submit')")
+
+// Find by semantic element
+doc.Find("nav")
+doc.Find("footer")
+doc.Find("main")
+
+// Find by attribute value
+doc.Find("meta[name='description']")
+doc.Find("a[href='/about']")
+doc.Find("input[type='email']")
+
+// Find by ARIA attributes (accessibility)
+doc.Find("[aria-label='Main navigation']")
+doc.Find("[role='alert']")
+
+// Combining selectors
+doc.Find("nav a:contains('Home')")  // Home link inside nav
+```
+
+**Bad patterns (brittle, implementation-dependent):**
+
+```go
+// ❌ Avoid - CSS class names change
+doc.Find(".btn-primary")
+doc.Find(".nav-link")
+
+// ❌ Avoid - IDs are implementation details
+doc.Find("#submit-button")
+doc.Find("#main-nav")
+
+// ❌ Avoid - Position-dependent selectors
+doc.Find("div > div > a")  // Fragile to markup changes
+```
+
+### goquery API Reference
+
+Common goquery methods for testing:
+
+```go
+// Selection
+doc.Find("selector")              // Find by CSS selector
+selection.First()                 // First matching element
+selection.Last()                  // Last matching element
+selection.Eq(index)               // Element at index
+
+// Content
+selection.Text()                  // Text content
+selection.Html()                  // HTML content
+selection.AttrOr("name", "default") // Attribute value with default
+
+// Traversal
+selection.Children()              // Direct children
+selection.Parent()                // Parent element
+selection.Siblings()              // Sibling elements
+
+// Filtering
+selection.Length()                // Number of elements
+selection.Has("selector")         // Filter by descendant
+selection.Filter("selector")      // Filter selection
+
+// Assertions
+assert.Equal(t, 1, selection.Length())
+assert.Contains(t, selection.Text(), "expected")
+assert.Equal(t, "value", selection.AttrOr("href", ""))
+```
+
+### Best Practices for Templ Testing
+
+**DO:**
+
+- ✅ Use accessible queries (text, semantic elements, ARIA)
+- ✅ Test what users see, not implementation
+- ✅ Use table-driven tests for multiple scenarios
+- ✅ Test both full pages and HTMX partials
+- ✅ Keep component tests focused and fast
+- ✅ Verify semantic HTML structure
+
+**DON'T:**
+
+- ❌ Query by CSS class names (they change with styling)
+- ❌ Query by element IDs (implementation details)
+- ❌ Use position-dependent selectors (fragile)
+- ❌ Test inline styles or exact HTML structure
+- ❌ Test third-party component internals
+- ❌ Skip error page testing
+
+### Integration Tests for Pages
+
+Full integration tests verify pages render correctly via HTTP.
+
+**Example:** From `tests/integration/pages_test.go`
+
+```go
+func TestPages_Integration(t *testing.T) {
+    if testing.Short() {
+        t.Skip("skipping integration test in short mode")
+    }
+
+    logger := logging.NewLogger("test")
+    cfg := &config.ServerConfig{Port: ":8080"}
+
+    mockHealthService := mocks.NewMockHealthService(t)
+    server := httpserver.NewServer(cfg, logger).
+        WithHealthService(mockHealthService).
+        RegisterRoutes()
+
+    tests := []struct {
+        name       string
+        path       string
+        wantStatus int
+    }{
+        {
+            name:       "should render home page",
+            path:       "/",
+            wantStatus: http.StatusOK,
+        },
+        {
+            name:       "should render about page",
+            path:       "/about",
+            wantStatus: http.StatusOK,
+        },
+        {
+            name:       "should return 404 for nonexistent route",
+            path:       "/nonexistent",
+            wantStatus: http.StatusNotFound,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+            rec := httptest.NewRecorder()
+
+            server.ServeHTTP(rec, req)
+
+            assert.Equal(t, tt.wantStatus, rec.Code)
+
+            if rec.Code == http.StatusOK {
+                doc, err := goquery.NewDocumentFromReader(rec.Body)
+                require.NoError(t, err)
+
+                // Verify common elements with accessible queries
+                assert.GreaterOrEqual(t, doc.Find("a:contains('Home')").Length(), 1)
+                assert.GreaterOrEqual(t, doc.Find("a:contains('About')").Length(), 1)
+                assert.Equal(t, 1, doc.Find("title").Length())
+            }
+        })
+    }
+}
+```
+
 ## Testing Cross-Domain Handlers
 
 Handlers using multiple services need multiple mocks.
@@ -564,3 +979,5 @@ func TestValidateEmail(t *testing.T) {
 - [CLI: tracks new](../cli/new.mdx) - Creating projects
 - [testify Documentation](https://github.com/stretchr/testify) - Assertion library
 - [mockery Documentation](https://github.com/vektra/mockery) - Mock generation
+- [templ Testing Guide](https://templ.guide/core-concepts/testing/) - Official templ testing docs
+- [goquery Documentation](https://github.com/PuerkitoBio/goquery) - jQuery-like DOM parsing
