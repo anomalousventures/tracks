@@ -1,0 +1,54 @@
+package components
+
+import "fmt"
+
+templ CounterPartial(count int) {
+	<div id="counter-display" class="counter-partial">
+		<p>Current count: <strong>{ fmt.Sprintf("%d", count) }</strong></p>
+		<div class="counter-controls">
+			<button
+				hx-post="/examples/counter/increment"
+				hx-target="#counter-display"
+				hx-swap="outerHTML"
+			>
+				Increment
+			</button>
+			<button
+				hx-post="/examples/counter/decrement"
+				hx-target="#counter-display"
+				hx-swap="outerHTML"
+			>
+				Decrement
+			</button>
+			<button
+				hx-post="/examples/counter/reset"
+				hx-target="#counter-display"
+				hx-swap="outerHTML"
+			>
+				Reset
+			</button>
+		</div>
+	</div>
+}
+
+templ CounterPage(count int) {
+	<div>
+		<h1>HTMX Partial Rendering Example</h1>
+		<p>
+			This counter demonstrates HTMX partial rendering patterns.
+			See the <a href="https://go-tracks.io/docs/htmx-patterns">HTMX Patterns Guide</a> for comprehensive documentation.
+		</p>
+
+		@CounterPartial(count)
+
+		<section id="notification-area">
+			<!-- OOB swap target for server notifications -->
+		</section>
+	</div>
+}
+
+templ NotificationOOB(message string, messageType string) {
+	<div id="notification-area" hx-swap-oob="true" class={ "notification", messageType }>
+		<p>{ message }</p>
+	</div>
+}

@@ -1,0 +1,96 @@
+package handlers
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/http/helpers"
+	"{{.ModuleName}}/internal/http/views/components"
+	"{{.ModuleName}}/internal/http/views/layouts"
+	"{{.ModuleName}}/internal/interfaces"
+	"github.com/alexedwards/scs/v2"
+)
+
+type CounterHandler struct {
+	logger         interfaces.Logger
+	sessionManager *scs.SessionManager
+}
+
+func NewCounterHandler(logger interfaces.Logger, sm *scs.SessionManager) *CounterHandler {
+	return &CounterHandler{
+		logger:         logger,
+		sessionManager: sm,
+	}
+}
+
+func (h *CounterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	count := h.sessionManager.GetInt(r.Context(), "counter")
+
+	fullPage := layouts.Base("Counter Example", "HTMX partial rendering demonstration") {
+		@components.CounterPage(count)
+	}
+	partial := components.CounterPartial(count)
+
+	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+}
+
+func (h *CounterHandler) Increment(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	count := h.sessionManager.GetInt(ctx, "counter")
+	count++
+	h.sessionManager.Put(ctx, "counter", count)
+
+	fullPage := layouts.Base("Counter", "Counter incremented") {
+		@components.CounterPage(count)
+	}
+	partial := components.CounterPartial(count)
+
+	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+}
+
+func (h *CounterHandler) Decrement(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	count := h.sessionManager.GetInt(ctx, "counter")
+	count--
+	h.sessionManager.Put(ctx, "counter", count)
+
+	fullPage := layouts.Base("Counter", "Counter decremented") {
+		@components.CounterPage(count)
+	}
+	partial := components.CounterPartial(count)
+
+	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+}
+
+func (h *CounterHandler) Reset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	h.sessionManager.Put(ctx, "counter", 0)
+
+	// OOB swaps require manual composition to include multiple elements in response
+	if helpers.IsHTMXRequest(r) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		if err := components.CounterPartial(0).Render(ctx, w); err != nil {
+			h.logger.Error(ctx).Err(err).Msg("failed to render counter partial")
+			helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to render counter", h.logger)
+			return
+		}
+
+		if err := components.NotificationOOB("Counter reset to 0", "success").Render(ctx, w); err != nil {
+			h.logger.Error(ctx).Err(err).Msg("failed to render notification")
+			// Notification is non-critical, don't fail the whole response
+			return
+		}
+		return
+	}
+
+	fullPage := layouts.Base("Counter", "Counter reset") {
+		@components.CounterPage(0)
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := fullPage.Render(ctx, w); err != nil {
+		h.logger.Error(ctx).Err(err).Msg("failed to render template")
+		helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to render page", h.logger)
+		return
+	}
+}
