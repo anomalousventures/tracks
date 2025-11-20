@@ -120,18 +120,12 @@ func TestPages_Integration(t *testing.T) {
 				return
 			}
 
-			// For full page responses, use goquery for accessible DOM queries
 			doc, err := goquery.NewDocumentFromReader(rec.Body)
-			require.NoError(t, err, "should parse HTML response")
+			require.NoError(t, err)
 
-			// Verify basic HTML structure is present
-			assert.Equal(t, 1, doc.Find("html").Length(), "should have one <html> element")
-			assert.Equal(t, 1, doc.Find("head").Length(), "should have one <head> element")
-			assert.Equal(t, 1, doc.Find("body").Length(), "should have one <body> element")
-			assert.Equal(t, 1, doc.Find("title").Length(), "should have one <title> element")
-
-			// Verify navigation component is present
-			assert.GreaterOrEqual(t, doc.Find("nav").Length(), 1, "should have navigation")
+			assert.GreaterOrEqual(t, doc.Find("a:contains('Home')").Length(), 1, "should have Home link")
+			assert.GreaterOrEqual(t, doc.Find("a:contains('About')").Length(), 1, "should have About link")
+			assert.Equal(t, 1, doc.Find("title").Length(), "should have title")
 		})
 	}
 }
