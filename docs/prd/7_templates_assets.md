@@ -173,7 +173,7 @@ All templ-ui components include dark mode support via Tailwind's `dark:` classes
 }
 ```
 
-Theme switching handled by Alpine.js component (see CSS & JavaScript section).
+Theme switching handled via CSS classes and Templ-UI components (Alpine.js deferred to post-MVP).
 
 ### Asset Helper Components
 
@@ -244,7 +244,6 @@ templ Base(title, description string, nonce string) {
             @components.CSS("app.css")
             @components.HTMXConfig(nonce)
             @components.JS("htmx.min.js", nonce)
-            @components.JS("alpine.min.js", nonce)
         </head>
         <body hx-boost="true">
             <div id="toast-container" aria-live="polite"></div>
@@ -674,48 +673,28 @@ templ PostCount(ctx context.Context, count int) {
 }
 ```
 
-### Alpine.js Components
+### HTMX Integration
+
+HTMX v2 is bundled via esbuild and loaded in the base layout. Extensions are included for enhanced functionality:
 
 ```javascript
 // web/scripts/app.js
-import Alpine from 'alpinejs'
-import morph from '@alpinejs/morph'
-import persist from '@alpinejs/persist'
+// HTMX v2 and extensions bundled via esbuild
+// Extensions: head-support, idiomorph, response-targets
 
-// Register plugins
-Alpine.plugin(morph)
-Alpine.plugin(persist)
+// HTMX is automatically initialized when loaded
+// Extensions are configured via attributes in base.templ
 
-// Theme switcher component
-Alpine.data('theme', () => ({
-    current: Alpine.$persist('auto').as('theme'),
-
-    toggle() {
-        const themes = ['light', 'dark', 'auto']
-        const index = themes.indexOf(this.current)
-        this.current = themes[(index + 1) % themes.length]
-        this.apply()
-    },
-
-    apply() {
-        if (this.current === 'auto') {
-            const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
-            document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-        } else {
-            document.documentElement.dataset.theme = this.current
-        }
-    },
-
-    init() {
-        this.apply()
-        window.matchMedia('(prefers-color-scheme: dark)')
-              .addEventListener('change', () => this.apply())
+// Example: Using response-targets extension for notifications
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'toast-container') {
+        // Auto-dismiss toasts after 3 seconds
+        setTimeout(() => evt.detail.target.innerHTML = '', 3000);
     }
-}))
-
-// Start Alpine
-Alpine.start()
+});
 ```
+
+**Note:** Alpine.js is deferred to post-MVP. Templ-UI components provide rich interactivity through component structure, and HTMX handles partial page updates.
 
 ## Build Process
 
@@ -811,7 +790,7 @@ The server restart triggers browser LiveReload, giving instant feedback.
 6. **Use content-addressed URLs** - Enables aggressive caching
 7. **Keep translations organized** - Use nested keys for clarity
 8. **Test template rendering** - Templates can have runtime errors
-9. **Use Alpine for interactivity** - Keep JavaScript minimal
+9. **Use HTMX for partial updates** - Leverage hypermedia-driven patterns, keep JavaScript minimal
 10. **Update components intentionally** - Run `tracks ui add <component>` to update from upstream
 
 ## Testing
