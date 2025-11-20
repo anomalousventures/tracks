@@ -21,17 +21,34 @@ func (s *Server) routes() {
 	// TRACKS:API_ROUTES:END
 
 	// TRACKS:WEB_ROUTES:BEGIN
+	s.router.Get(routes.Home, s.handleHome())
+	s.router.Get(routes.About, s.handleAbout())
 	// TRACKS:WEB_ROUTES:END
 
 	s.router.Group(func(r chi.Router) {
-		// r.Use(middleware.RequireAuth) // Add auth middleware when ready
-
 		// TRACKS:PROTECTED_ROUTES:BEGIN
 		// TRACKS:PROTECTED_ROUTES:END
 	})
+
+	s.router.NotFound(s.handleError())
 }
 
 func (s *Server) handleHealthCheck() http.HandlerFunc {
 	handler := handlers.NewHealthHandler(s.healthService, s.logger)
 	return handler.Check
+}
+
+func (s *Server) handleHome() http.HandlerFunc {
+	handler := handlers.NewHomeHandler(s.logger)
+	return handler.ServeHTTP
+}
+
+func (s *Server) handleAbout() http.HandlerFunc {
+	handler := handlers.NewAboutHandler(s.logger)
+	return handler.ServeHTTP
+}
+
+func (s *Server) handleError() http.HandlerFunc {
+	handler := handlers.NewErrorHandler(s.logger)
+	return handler.ServeHTTP
 }

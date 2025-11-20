@@ -38,10 +38,14 @@ func (s *Server) RegisterRoutes() *Server {
 	return s
 }
 
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
+}
+
 func (s *Server) ListenAndServe() error {
 	srv := &http.Server{
 		Addr:         s.config.Port,
-		Handler:      s.router,
+		Handler:      s,
 		ReadTimeout:  s.config.ReadTimeout,
 		WriteTimeout: s.config.WriteTimeout,
 		IdleTimeout:  s.config.IdleTimeout,
