@@ -1,0 +1,47 @@
+package components
+
+type FooterLink struct {
+	Text string
+	URL  string
+}
+
+type FooterProps struct {
+	Year             int
+	ProjectName      string
+	Links            []FooterLink
+	ShowTracksCredit bool
+}
+
+templ Footer(props FooterProps) {
+	<footer class="mt-auto w-full border-t border-gray-200 bg-white">
+		<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+			<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+				<div class="order-2 text-center md:order-1 md:text-left">
+					<small class="text-sm text-gray-600">
+						&copy; { fmt.Sprintf("%d", props.Year) } { props.ProjectName }. All rights reserved.
+					</small>
+				</div>
+				if len(props.Links) > 0 {
+					<nav class="order-1 md:order-2" aria-label="Footer navigation">
+						<ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+							for _, link := range props.Links {
+								<li>
+									<a href={ templ.URL(link.URL) } class="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
+										{ link.Text }
+									</a>
+								</li>
+							}
+						</ul>
+					</nav>
+				}
+				if props.ShowTracksCredit {
+					<div class="order-3 text-center md:text-right">
+						<small class="text-sm text-gray-600">
+							Built with <a href="https://go-tracks.io" target="_blank" rel="noopener noreferrer" class="font-semibold text-blue-600 transition-colors hover:text-blue-800">Tracks</a>
+						</small>
+					</div>
+				}
+			</div>
+		</div>
+	</footer>
+}
