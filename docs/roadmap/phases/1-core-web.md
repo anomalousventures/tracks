@@ -15,7 +15,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 - Chi router with middleware
 - templ template system integration
 - hashfs for asset management
-- Web build pipeline (TailwindCSS, Alpine.js)
+- Web build pipeline (TailwindCSS, HTMX v2)
 - Templ-UI component library integration
 - Basic middleware stack
 - Hypermedia-driven routing patterns
@@ -81,14 +81,14 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 
 ### 1.4 Web Build Pipeline
 
-**Description:** Set up TailwindCSS and Alpine.js build process
+**Description:** Set up TailwindCSS and HTMX v2 build process with extensions
 
 **Acceptance Criteria:**
 
 - [ ] TailwindCSS configuration and compilation
-- [ ] Alpine.js integration
+- [ ] HTMX v2 bundling with extensions (head-support, idiomorph, response-targets)
+- [ ] Counter component integrated into homepage
 - [ ] Asset build targets in Makefile
-- [ ] Dark mode support
 - [ ] Development vs production builds
 - [ ] Air configuration watches .templ, .css, .js files and rebuilds assets
 
@@ -171,9 +171,9 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 - github.com/a-h/templ
 - github.com/benbjohnson/hashfs
 - github.com/templui/templui (tool dependency)
-- TailwindCSS (npx)
-- esbuild (npx)
-- Alpine.js
+- TailwindCSS (npm)
+- esbuild (npm)
+- HTMX v2 with extensions (npm: htmx.org, @htmx-org/htmx-head-support, @htmx-org/idiomorph, @htmx-org/htmx-response-targets)
 - Standard middleware packages
 
 ### Internal Dependencies
@@ -189,7 +189,7 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 5. Middleware chain works correctly
 6. Templ-UI components render correctly
 7. Build pipeline produces optimized CSS/JS
-8. Dark mode theme switching works
+8. Dark mode theme switching works (via Templ-UI components and CSS classes)
 9. Users can add/customize UI components
 
 ## Risks & Mitigations
@@ -232,8 +232,10 @@ This section tracks changes made to the original plan.
 |------|--------|--------|
 | 2025-11-13 | Split 1.4 into separate epics for Build Pipeline (1.4) and Middleware/Docs (1.6) | Better separation of concerns |
 | 2025-11-13 | Added Epic 1.5 for Templ-UI Integration | [ADR-009](../../adr/009-templui-for-ui-components.md) - Adopting templ-ui as core UI library |
-| 2025-11-13 | Updated dependencies to include templui, TailwindCSS, esbuild, Alpine.js | Required for Epic 1.4 and 1.5 |
+| 2025-11-13 | Updated dependencies to include templui, TailwindCSS, esbuild | Required for Epic 1.4 and 1.5 |
 | 2025-11-13 | Enhanced success criteria with UI components and build pipeline | Reflects expanded scope with templ-ui |
+| 2025-11-19 | Replaced Alpine.js with HTMX v2 + extensions in Epic 1.4 | Templ-UI provides component interactivity; HTMX for partial rendering. Alpine.js deferred to post-MVP |
+| 2025-11-19 | Added counter example integration to homepage in Epic 1.4 | Demonstrates HTMX patterns after Epic 1.3 (assets) completes |
 
 ## Notes
 
