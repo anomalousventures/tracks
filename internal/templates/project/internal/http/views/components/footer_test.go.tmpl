@@ -1,0 +1,288 @@
+package components
+
+import (
+	"bytes"
+	"context"
+	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// For more information on accessible query testing patterns with goquery:
+// See: https://templ.guide/core-concepts/testing/
+
+func TestFooter(t *testing.T) {
+	tests := []struct {
+		name              string
+		props             FooterProps
+		wantCopyright     string
+		wantLinksCount    int
+		wantTracksCredit  bool
+		wantFooterNavAria bool
+		assertions        func(t *testing.T, doc *goquery.Document)
+	}{
+		{
+			name: "should render footer with copyright, links, and Tracks credit",
+			props: FooterProps{
+				Year:        2024,
+				ProjectName: "MyApp",
+				Links: []FooterLink{
+					{Text: "Privacy Policy", URL: "/privacy"},
+					{Text: "Terms of Service", URL: "/terms"},
+					{Text: "Contact", URL: "/contact"},
+				},
+				ShowTracksCredit: true,
+			},
+			wantCopyright:     "© 2024 MyApp. All rights reserved.",
+			wantLinksCount:    3,
+			wantTracksCredit:  true,
+			wantFooterNavAria: true,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert footer element exists
+				footer := doc.Find("footer")
+				assert.Equal(t, 1, footer.Length(), "should have exactly one footer element")
+
+				// Assert copyright text
+				copyright := doc.Find("footer small").First()
+				assert.Contains(t, copyright.Text(), "© 2024 MyApp. All rights reserved.", "should contain copyright text")
+
+				// Assert footer navigation with aria-label
+				footerNav := doc.Find("footer nav[aria-label='Footer navigation']")
+				assert.Equal(t, 1, footerNav.Length(), "should have footer navigation with aria-label")
+
+				// Assert footer links
+				footerLinks := doc.Find("footer nav a")
+				assert.Equal(t, 3, footerLinks.Length(), "should have 3 footer links")
+
+				// Assert Privacy Policy link
+				privacyLink := doc.Find("footer nav a:contains('Privacy Policy')")
+				assert.Equal(t, 1, privacyLink.Length(), "should have Privacy Policy link")
+				href, exists := privacyLink.Attr("href")
+				assert.True(t, exists, "Privacy Policy link should have href")
+				assert.Equal(t, "/privacy", href, "Privacy Policy link should point to /privacy")
+
+				// Assert Terms of Service link
+				termsLink := doc.Find("footer nav a:contains('Terms of Service')")
+				assert.Equal(t, 1, termsLink.Length(), "should have Terms of Service link")
+				href, exists = termsLink.Attr("href")
+				assert.True(t, exists, "Terms of Service link should have href")
+				assert.Equal(t, "/terms", href, "Terms of Service link should point to /terms")
+
+				// Assert Contact link
+				contactLink := doc.Find("footer nav a:contains('Contact')")
+				assert.Equal(t, 1, contactLink.Length(), "should have Contact link")
+				href, exists = contactLink.Attr("href")
+				assert.True(t, exists, "Contact link should have href")
+				assert.Equal(t, "/contact", href, "Contact link should point to /contact")
+
+				// Assert Tracks credit
+				tracksCredit := doc.Find("footer a[href='https://go-tracks.io']")
+				assert.Equal(t, 1, tracksCredit.Length(), "should have Tracks credit link")
+				assert.Contains(t, tracksCredit.Text(), "Tracks", "Tracks credit should contain 'Tracks' text")
+
+				// Assert Tracks link has security attributes
+				target, exists := tracksCredit.Attr("target")
+				assert.True(t, exists, "Tracks link should have target attribute")
+				assert.Equal(t, "_blank", target, "Tracks link should open in new tab")
+
+				rel, exists := tracksCredit.Attr("rel")
+				assert.True(t, exists, "Tracks link should have rel attribute")
+				assert.Contains(t, rel, "noopener", "Tracks link should have noopener")
+				assert.Contains(t, rel, "noreferrer", "Tracks link should have noreferrer")
+			},
+		},
+		{
+			name: "should render footer without links",
+			props: FooterProps{
+				Year:             2024,
+				ProjectName:      "MyApp",
+				Links:            []FooterLink{},
+				ShowTracksCredit: false,
+			},
+			wantCopyright:     "© 2024 MyApp. All rights reserved.",
+			wantLinksCount:    0,
+			wantTracksCredit:  false,
+			wantFooterNavAria: false,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert copyright exists
+				copyright := doc.Find("footer small").First()
+				assert.Contains(t, copyright.Text(), "© 2024 MyApp. All rights reserved.", "should contain copyright text")
+
+				// Assert no footer navigation
+				footerNav := doc.Find("footer nav")
+				assert.Equal(t, 0, footerNav.Length(), "should not have footer navigation when no links")
+
+				// Assert no Tracks credit
+				tracksCredit := doc.Find("footer a[href='https://go-tracks.io']")
+				assert.Equal(t, 0, tracksCredit.Length(), "should not have Tracks credit when ShowTracksCredit is false")
+			},
+		},
+		{
+			name: "should render footer with only Tracks credit",
+			props: FooterProps{
+				Year:             2024,
+				ProjectName:      "MyApp",
+				Links:            []FooterLink{},
+				ShowTracksCredit: true,
+			},
+			wantCopyright:    "© 2024 MyApp. All rights reserved.",
+			wantLinksCount:   0,
+			wantTracksCredit: true,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert copyright exists
+				copyright := doc.Find("footer small").First()
+				assert.Contains(t, copyright.Text(), "© 2024 MyApp. All rights reserved.", "should contain copyright text")
+
+				// Assert Tracks credit exists
+				tracksCredit := doc.Find("footer a[href='https://go-tracks.io']")
+				assert.Equal(t, 1, tracksCredit.Length(), "should have Tracks credit")
+			},
+		},
+		{
+			name: "should render footer with single link",
+			props: FooterProps{
+				Year:        2024,
+				ProjectName: "MyApp",
+				Links: []FooterLink{
+					{Text: "Privacy Policy", URL: "/privacy"},
+				},
+				ShowTracksCredit: false,
+			},
+			wantCopyright:     "© 2024 MyApp. All rights reserved.",
+			wantLinksCount:    1,
+			wantTracksCredit:  false,
+			wantFooterNavAria: true,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert footer navigation exists even with single link
+				footerNav := doc.Find("footer nav[aria-label='Footer navigation']")
+				assert.Equal(t, 1, footerNav.Length(), "should have footer navigation with single link")
+
+				// Assert single link
+				footerLinks := doc.Find("footer nav a")
+				assert.Equal(t, 1, footerLinks.Length(), "should have 1 footer link")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Render component to buffer
+			var buf bytes.Buffer
+			err := Footer(tt.props).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			// Parse with goquery
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			// Run custom assertions
+			if tt.assertions != nil {
+				tt.assertions(t, doc)
+			}
+		})
+	}
+}
+
+func TestFooter_YearFormatting(t *testing.T) {
+	tests := []struct {
+		name     string
+		year     int
+		wantText string
+	}{
+		{
+			name:     "should format current year",
+			year:     2024,
+			wantText: "© 2024",
+		},
+		{
+			name:     "should format past year",
+			year:     2020,
+			wantText: "© 2020",
+		},
+		{
+			name:     "should format future year",
+			year:     2030,
+			wantText: "© 2030",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			props := FooterProps{
+				Year:             tt.year,
+				ProjectName:      "MyApp",
+				Links:            []FooterLink{},
+				ShowTracksCredit: false,
+			}
+
+			var buf bytes.Buffer
+			err := Footer(props).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			copyright := doc.Find("footer small").First()
+			assert.Contains(t, copyright.Text(), tt.wantText, "should contain formatted year")
+		})
+	}
+}
+
+func TestFooter_LinkSafety(t *testing.T) {
+	tests := []struct {
+		name         string
+		url          string
+		wantRendered bool
+	}{
+		{
+			name:         "should render safe internal URLs",
+			url:          "/privacy",
+			wantRendered: true,
+		},
+		{
+			name:         "should render safe external URLs",
+			url:          "https://example.com",
+			wantRendered: true,
+		},
+		{
+			name: "should sanitize javascript: URLs",
+			url:  "javascript:alert('xss')",
+			// templ.URL should strip unsafe URLs
+			wantRendered: true, // Will render but sanitized
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			props := FooterProps{
+				Year:        2024,
+				ProjectName: "MyApp",
+				Links: []FooterLink{
+					{Text: "Test Link", URL: tt.url},
+				},
+				ShowTracksCredit: false,
+			}
+
+			var buf bytes.Buffer
+			err := Footer(props).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			testLink := doc.Find("footer nav a:contains('Test Link')")
+			if tt.wantRendered {
+				assert.Equal(t, 1, testLink.Length(), "link should be rendered")
+				href, exists := testLink.Attr("href")
+				assert.True(t, exists, "link should have href attribute")
+
+				// For javascript: URLs, templ.URL should sanitize them
+				if tt.url == "javascript:alert('xss')" {
+					assert.NotContains(t, href, "javascript:", "javascript: URLs should be sanitized")
+				}
+			}
+		})
+	}
+}

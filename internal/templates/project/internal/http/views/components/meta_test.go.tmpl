@@ -1,0 +1,232 @@
+package components
+
+import (
+	"bytes"
+	"context"
+	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// For more information on accessible query testing patterns with goquery:
+// See: https://templ.guide/core-concepts/testing/
+
+func TestMeta(t *testing.T) {
+	tests := []struct {
+		name            string
+		title           string
+		description     string
+		wantTitle       string
+		wantDescription string
+		wantOGTitle     string
+		wantOGDesc      string
+		assertions      func(t *testing.T, doc *goquery.Document)
+	}{
+		{
+			name:            "should render meta tags with title and description",
+			title:           "Home",
+			description:     "Welcome to our application",
+			wantTitle:       "Home - Tracks",
+			wantDescription: "Welcome to our application",
+			wantOGTitle:     "Home",
+			wantOGDesc:      "Welcome to our application",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert title tag
+				title := doc.Find("title")
+				assert.Equal(t, 1, title.Length(), "should have exactly one title tag")
+				assert.Equal(t, "Home - Tracks", title.Text(), "title should match")
+
+				// Assert description meta tag
+				descMeta := doc.Find("meta[name='description']")
+				assert.Equal(t, 1, descMeta.Length(), "should have description meta tag")
+				content, exists := descMeta.Attr("content")
+				assert.True(t, exists, "description meta should have content attribute")
+				assert.Equal(t, "Welcome to our application", content, "description content should match")
+
+				// Assert Open Graph title
+				ogTitle := doc.Find("meta[property='og:title']")
+				assert.Equal(t, 1, ogTitle.Length(), "should have og:title meta tag")
+				content, exists = ogTitle.Attr("content")
+				assert.True(t, exists, "og:title should have content attribute")
+				assert.Equal(t, "Home", content, "og:title content should match")
+
+				// Assert Open Graph description
+				ogDesc := doc.Find("meta[property='og:description']")
+				assert.Equal(t, 1, ogDesc.Length(), "should have og:description meta tag")
+				content, exists = ogDesc.Attr("content")
+				assert.True(t, exists, "og:description should have content attribute")
+				assert.Equal(t, "Welcome to our application", content, "og:description content should match")
+			},
+		},
+		{
+			name:            "should render meta tags with empty title",
+			title:           "",
+			description:     "Default description",
+			wantTitle:       " - Tracks",
+			wantDescription: "Default description",
+			wantOGTitle:     "",
+			wantOGDesc:      "Default description",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert title tag with empty title still renders suffix
+				title := doc.Find("title")
+				assert.Equal(t, 1, title.Length(), "should have title tag")
+				assert.Equal(t, " - Tracks", title.Text(), "title should render with suffix only")
+
+				// Assert description still renders
+				descMeta := doc.Find("meta[name='description']")
+				assert.Equal(t, 1, descMeta.Length(), "should have description meta tag")
+				content, exists := descMeta.Attr("content")
+				assert.True(t, exists, "description should have content")
+				assert.Equal(t, "Default description", content, "description should match")
+			},
+		},
+		{
+			name:            "should render meta tags with empty description",
+			title:           "Home",
+			description:     "",
+			wantTitle:       "Home - Tracks",
+			wantDescription: "",
+			wantOGTitle:     "Home",
+			wantOGDesc:      "",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert title renders correctly
+				title := doc.Find("title")
+				assert.Equal(t, 1, title.Length(), "should have title tag")
+				assert.Equal(t, "Home - Tracks", title.Text(), "title should render correctly")
+
+				// Assert description meta tag exists with empty content
+				descMeta := doc.Find("meta[name='description']")
+				assert.Equal(t, 1, descMeta.Length(), "should have description meta tag")
+				content, exists := descMeta.Attr("content")
+				assert.True(t, exists, "description should have content attribute")
+				assert.Equal(t, "", content, "description content should be empty")
+			},
+		},
+		{
+			name:            "should handle special characters in title",
+			title:           "Home & About",
+			description:     "Learn about <our> application",
+			wantTitle:       "Home & About - Tracks",
+			wantDescription: "Learn about <our> application",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert title properly escapes special characters
+				title := doc.Find("title")
+				assert.Equal(t, "Home & About - Tracks", title.Text(), "title should properly handle special characters")
+
+				// Assert description properly escapes special characters
+				descMeta := doc.Find("meta[name='description']")
+				content, exists := descMeta.Attr("content")
+				assert.True(t, exists, "description should have content")
+				assert.Equal(t, "Learn about <our> application", content, "description should properly handle special characters")
+			},
+		},
+		{
+			name:        "should render long title and description",
+			title:       "This is a very long title that might be used for SEO purposes and should still render correctly",
+			description: "This is a very long description that provides detailed information about the page content and might be used for search engine optimization and social media sharing purposes",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert long title renders
+				title := doc.Find("title")
+				assert.Equal(t, 1, title.Length(), "should have title tag")
+				assert.Contains(t, title.Text(), "This is a very long title", "should contain full title")
+
+				// Assert long description renders
+				descMeta := doc.Find("meta[name='description']")
+				content, exists := descMeta.Attr("content")
+				assert.True(t, exists, "description should have content")
+				assert.Contains(t, content, "very long description", "should contain full description")
+			},
+		},
+		{
+			name:        "should render meta tags with unicode characters",
+			title:       "Welcome 欢迎 🎉",
+			description: "International support: English, 中文, Español, العربية",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert title with unicode
+				title := doc.Find("title")
+				assert.Contains(t, title.Text(), "欢迎", "should render unicode characters in title")
+				assert.Contains(t, title.Text(), "🎉", "should render emoji in title")
+
+				// Assert description with unicode
+				descMeta := doc.Find("meta[name='description']")
+				content, exists := descMeta.Attr("content")
+				assert.True(t, exists, "description should have content")
+				assert.Contains(t, content, "中文", "should render unicode characters in description")
+				assert.Contains(t, content, "العربية", "should render RTL unicode in description")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Render component to buffer
+			var buf bytes.Buffer
+			err := Meta(tt.title, tt.description).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			// Wrap in html/head for goquery parsing
+			htmlDoc := "<html><head>" + buf.String() + "</head></html>"
+			doc, err := goquery.NewDocumentFromReader(bytes.NewBufferString(htmlDoc))
+			require.NoError(t, err, "should parse rendered HTML")
+
+			// Run custom assertions
+			if tt.assertions != nil {
+				tt.assertions(t, doc)
+			}
+		})
+	}
+}
+
+func TestMeta_AllTagsPresent(t *testing.T) {
+	title := "Test Page"
+	description := "Test description"
+
+	var buf bytes.Buffer
+	err := Meta(title, description).Render(context.Background(), &buf)
+	require.NoError(t, err, "component should render without error")
+
+	// Wrap in html/head for goquery parsing
+	htmlDoc := "<html><head>" + buf.String() + "</head></html>"
+	doc, err := goquery.NewDocumentFromReader(bytes.NewBufferString(htmlDoc))
+	require.NoError(t, err, "should parse rendered HTML")
+
+	// Assert all expected meta tags are present
+	requiredTags := []struct {
+		selector string
+		tagType  string
+	}{
+		{"title", "title element"},
+		{"meta[name='description']", "description meta tag"},
+		{"meta[property='og:title']", "Open Graph title"},
+		{"meta[property='og:description']", "Open Graph description"},
+	}
+
+	for _, tag := range requiredTags {
+		elements := doc.Find(tag.selector)
+		assert.Equal(t, 1, elements.Length(), "should have exactly one %s", tag.tagType)
+	}
+}
+
+func TestMeta_NoExtraMetaTags(t *testing.T) {
+	title := "Test Page"
+	description := "Test description"
+
+	var buf bytes.Buffer
+	err := Meta(title, description).Render(context.Background(), &buf)
+	require.NoError(t, err, "component should render without error")
+
+	// Wrap in html/head for goquery parsing
+	htmlDoc := "<html><head>" + buf.String() + "</head></html>"
+	doc, err := goquery.NewDocumentFromReader(bytes.NewBufferString(htmlDoc))
+	require.NoError(t, err, "should parse rendered HTML")
+
+	// Assert only expected meta tags are present (2 OG tags + 1 description)
+	metaTags := doc.Find("meta")
+	assert.Equal(t, 3, metaTags.Length(), "should have exactly 3 meta tags")
+
+	// Assert title tag
+	titleTags := doc.Find("title")
+	assert.Equal(t, 1, titleTags.Length(), "should have exactly 1 title tag")
+}
