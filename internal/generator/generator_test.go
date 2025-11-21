@@ -63,7 +63,12 @@ func TestProjectGenerator_Generate_Success(t *testing.T) {
 		"internal/http/routes/health.go",
 		"internal/http/handlers/health.go",
 		"internal/http/middleware/logging.go",
+		"internal/http/views/components/nav_test.go",
+		"internal/http/views/components/footer_test.go",
+		"internal/http/views/components/meta_test.go",
+		"internal/http/views/components/counter_test.go",
 		"internal/db/db.go",
+		"tests/integration/error_test.go",
 	}
 
 	for _, file := range expectedFiles {

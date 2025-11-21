@@ -15,11 +15,6 @@ import (
 	"{{.ModuleName}}/tests/mocks"
 )
 
-// TestErrorPages verifies that error pages render correctly with appropriate
-// status codes, titles, and messages.
-//
-// For more information on accessible query testing patterns with goquery:
-// See: https://templ.guide/core-concepts/testing/
 func TestErrorPages(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -36,27 +31,27 @@ func TestErrorPages(t *testing.T) {
 		RegisterRoutes()
 
 	tests := []struct {
-		name           string
-		path           string
-		method         string
-		wantStatus     int
-		wantTitleText  string
+		name            string
+		path            string
+		method          string
+		wantStatus      int
+		wantTitleText   string
 		wantMessageText string
 	}{
 		{
-			name:           "404 Not Found",
-			path:           "/nonexistent",
-			method:         http.MethodGet,
-			wantStatus:     http.StatusNotFound,
-			wantTitleText:  "Error 404",
+			name:            "404 Not Found",
+			path:            "/nonexistent",
+			method:          http.MethodGet,
+			wantStatus:      http.StatusNotFound,
+			wantTitleText:   "Error 404",
 			wantMessageText: "The page you're looking for doesn't exist.",
 		},
 		{
-			name:           "404 for nested nonexistent path",
-			path:           "/foo/bar/baz",
-			method:         http.MethodGet,
-			wantStatus:     http.StatusNotFound,
-			wantTitleText:  "Error 404",
+			name:            "404 for nested nonexistent path",
+			path:            "/foo/bar/baz",
+			method:          http.MethodGet,
+			wantStatus:      http.StatusNotFound,
+			wantTitleText:   "Error 404",
 			wantMessageText: "The page you're looking for doesn't exist.",
 		},
 	}
@@ -74,10 +69,10 @@ func TestErrorPages(t *testing.T) {
 			doc, err := goquery.NewDocumentFromReader(rec.Body)
 			require.NoError(t, err)
 
-			errorTitle := doc.Find("h1:contains('" + tt.wantTitleText + "')")
+			errorTitle := doc.Find("h1:contains(\"" + tt.wantTitleText + "\")")
 			assert.Equal(t, 1, errorTitle.Length(), "should have error title with text %q", tt.wantTitleText)
 
-			errorMessage := doc.Find("p:contains('" + tt.wantMessageText + "')")
+			errorMessage := doc.Find("p:contains(\"" + tt.wantMessageText + "\")")
 			assert.GreaterOrEqual(t, errorMessage.Length(), 1, "should have error message containing %q", tt.wantMessageText)
 
 			assert.GreaterOrEqual(t, doc.Find("a:contains('Home')").Length(), 1, "should have Home link")
