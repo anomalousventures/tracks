@@ -1,0 +1,218 @@
+package components
+
+import (
+	"bytes"
+	"context"
+	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"{{.ModuleName}}/internal/http/routes"
+)
+
+// For more information on accessible query testing patterns with goquery:
+// See: https://templ.guide/core-concepts/testing/
+
+func TestNav(t *testing.T) {
+	tests := []struct {
+		name           string
+		props          NavProps
+		wantLogo       bool
+		wantLogoText   string
+		wantLogoHref   string
+		wantLinksCount int
+		wantMobileNav  bool
+		assertions     func(t *testing.T, doc *goquery.Document)
+	}{
+		{
+			name: "should render navigation with logo and links",
+			props: NavProps{
+				Logo: "MyApp",
+				Links: []NavLink{
+					{Label: "Home", Href: routes.Home, Active: true},
+					{Label: "About", Href: routes.About, Active: false},
+				},
+				MobileNav: true,
+			},
+			wantLogo:       true,
+			wantLogoText:   "MyApp",
+			wantLogoHref:   routes.Home,
+			wantLinksCount: 2,
+			wantMobileNav:  true,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert navigation wrapper exists
+				nav := doc.Find("nav")
+				assert.Equal(t, 1, nav.Length(), "should have exactly one nav element")
+
+				// Assert logo exists and has correct properties
+				logo := doc.Find("nav a").First()
+				assert.Equal(t, "MyApp", logo.Text(), "logo text should match")
+				href, exists := logo.Attr("href")
+				assert.True(t, exists, "logo should have href attribute")
+				assert.Equal(t, routes.Home, href, "logo href should point to home")
+
+				// Assert navigation links
+				navLinks := doc.Find("nav a").Slice(1, 100) // All links except logo
+				assert.Equal(t, 2, navLinks.Length(), "should have 2 navigation links")
+
+				// Assert active link has aria-current
+				homeLink := doc.Find("nav a:contains('Home')").Last()
+				ariaCurrent, exists := homeLink.Attr("aria-current")
+				assert.True(t, exists, "active link should have aria-current attribute")
+				assert.Equal(t, "page", ariaCurrent, "active link should have aria-current='page'")
+
+				// Assert inactive link does not have aria-current
+				aboutLink := doc.Find("nav a:contains('About')")
+				_, exists = aboutLink.Attr("aria-current")
+				assert.False(t, exists, "inactive link should not have aria-current attribute")
+
+				// Assert mobile nav button
+				mobileButton := doc.Find("button[aria-label='Toggle navigation menu']")
+				assert.Equal(t, 1, mobileButton.Length(), "should have mobile nav button")
+				ariaExpanded, exists := mobileButton.Attr("aria-expanded")
+				assert.True(t, exists, "mobile button should have aria-expanded attribute")
+				assert.Equal(t, "false", ariaExpanded, "mobile button aria-expanded should be false")
+			},
+		},
+		{
+			name: "should render navigation without logo",
+			props: NavProps{
+				Logo: "",
+				Links: []NavLink{
+					{Label: "Home", Href: routes.Home, Active: false},
+				},
+				MobileNav: false,
+			},
+			wantLogo:       false,
+			wantLinksCount: 1,
+			wantMobileNav:  false,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert no logo link with brand text
+				logoLinks := doc.Find("nav div.flex-shrink-0 a")
+				assert.Equal(t, 0, logoLinks.Length(), "should not render logo when empty")
+
+				// Assert navigation links still render
+				navLinks := doc.Find("nav a")
+				assert.Equal(t, 1, navLinks.Length(), "should have 1 navigation link")
+
+				// Assert no mobile nav button
+				mobileButton := doc.Find("button[aria-label='Toggle navigation menu']")
+				assert.Equal(t, 0, mobileButton.Length(), "should not have mobile nav button")
+			},
+		},
+		{
+			name: "should render navigation with no links",
+			props: NavProps{
+				Logo:      "MyApp",
+				Links:     []NavLink{},
+				MobileNav: false,
+			},
+			wantLogo:       true,
+			wantLogoText:   "MyApp",
+			wantLinksCount: 0,
+			wantMobileNav:  false,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert logo exists
+				logo := doc.Find("nav a").First()
+				assert.Equal(t, "MyApp", logo.Text(), "logo should still render")
+
+				// Assert no navigation links (only logo link)
+				allLinks := doc.Find("nav a")
+				assert.Equal(t, 1, allLinks.Length(), "should only have logo link")
+			},
+		},
+		{
+			name: "should handle multiple active links",
+			props: NavProps{
+				Logo: "MyApp",
+				Links: []NavLink{
+					{Label: "Home", Href: routes.Home, Active: true},
+					{Label: "About", Href: routes.About, Active: true},
+				},
+				MobileNav: false,
+			},
+			wantLogo:       true,
+			wantLinksCount: 2,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert both links have aria-current (even though typically only one should be active)
+				activeLinks := doc.Find("nav a[aria-current='page']")
+				assert.Equal(t, 2, activeLinks.Length(), "both links should have aria-current when marked active")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Render component to buffer
+			var buf bytes.Buffer
+			err := Nav(tt.props).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			// Parse with goquery
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			// Run custom assertions
+			if tt.assertions != nil {
+				tt.assertions(t, doc)
+			}
+		})
+	}
+}
+
+func TestNav_HrefSafety(t *testing.T) {
+	tests := []struct {
+		name         string
+		href         string
+		wantRendered bool
+	}{
+		{
+			name:         "should render safe internal URLs",
+			href:         "/about",
+			wantRendered: true,
+		},
+		{
+			name:         "should render safe external URLs",
+			href:         "https://example.com",
+			wantRendered: true,
+		},
+		{
+			name: "should sanitize javascript: URLs",
+			href: "javascript:alert('xss')",
+			// templ.SafeURL should strip unsafe URLs
+			wantRendered: true, // Will render but sanitized
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			props := NavProps{
+				Logo: "MyApp",
+				Links: []NavLink{
+					{Label: "Test", Href: tt.href, Active: false},
+				},
+			}
+
+			var buf bytes.Buffer
+			err := Nav(props).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			testLink := doc.Find("nav a:contains('Test')")
+			if tt.wantRendered {
+				assert.Equal(t, 1, testLink.Length(), "link should be rendered")
+				href, exists := testLink.Attr("href")
+				assert.True(t, exists, "link should have href attribute")
+
+				// For javascript: URLs, templ.SafeURL should sanitize them
+				if tt.href == "javascript:alert('xss')" {
+					assert.NotContains(t, href, "javascript:", "javascript: URLs should be sanitized")
+				}
+			}
+		})
+	}
+}

@@ -1,0 +1,353 @@
+package components
+
+import (
+	"bytes"
+	"context"
+	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// For more information on accessible query testing patterns with goquery:
+// See: https://templ.guide/core-concepts/testing/
+
+func TestCounterPartial(t *testing.T) {
+	tests := []struct {
+		name       string
+		count      int
+		wantCount  string
+		assertions func(t *testing.T, doc *goquery.Document)
+	}{
+		{
+			name:      "should render counter with zero count",
+			count:     0,
+			wantCount: "0",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert counter display container
+				container := doc.Find("#counter-display")
+				assert.Equal(t, 1, container.Length(), "should have counter-display container")
+				assert.True(t, container.HasClass("counter-partial"), "container should have counter-partial class")
+
+				// Assert count display
+				countText := doc.Find("#counter-display p strong").Text()
+				assert.Equal(t, "0", countText, "should display count of 0")
+
+				// Assert increment button with HTMX attributes
+				incrementBtn := doc.Find("button").FilterFunction(func(i int, s *goquery.Selection) bool {
+					return s.Text() == "Increment"
+				})
+				assert.Equal(t, 1, incrementBtn.Length(), "should have increment button")
+
+				hxPost, exists := incrementBtn.Attr("hx-post")
+				assert.True(t, exists, "increment button should have hx-post attribute")
+				assert.Equal(t, "/examples/counter/increment", hxPost, "increment button should post to correct endpoint")
+
+				hxTarget, exists := incrementBtn.Attr("hx-target")
+				assert.True(t, exists, "increment button should have hx-target attribute")
+				assert.Equal(t, "#counter-display", hxTarget, "increment button should target counter-display")
+
+				hxSwap, exists := incrementBtn.Attr("hx-swap")
+				assert.True(t, exists, "increment button should have hx-swap attribute")
+				assert.Equal(t, "outerHTML", hxSwap, "increment button should use outerHTML swap")
+
+				// Assert decrement button with HTMX attributes
+				decrementBtn := doc.Find("button").FilterFunction(func(i int, s *goquery.Selection) bool {
+					return s.Text() == "Decrement"
+				})
+				assert.Equal(t, 1, decrementBtn.Length(), "should have decrement button")
+
+				hxPost, exists = decrementBtn.Attr("hx-post")
+				assert.True(t, exists, "decrement button should have hx-post attribute")
+				assert.Equal(t, "/examples/counter/decrement", hxPost, "decrement button should post to correct endpoint")
+
+				hxTarget, exists = decrementBtn.Attr("hx-target")
+				assert.True(t, exists, "decrement button should have hx-target attribute")
+				assert.Equal(t, "#counter-display", hxTarget, "decrement button should target counter-display")
+
+				hxSwap, exists = decrementBtn.Attr("hx-swap")
+				assert.True(t, exists, "decrement button should have hx-swap attribute")
+				assert.Equal(t, "outerHTML", hxSwap, "decrement button should use outerHTML swap")
+
+				// Assert reset button with HTMX attributes
+				resetBtn := doc.Find("button").FilterFunction(func(i int, s *goquery.Selection) bool {
+					return s.Text() == "Reset"
+				})
+				assert.Equal(t, 1, resetBtn.Length(), "should have reset button")
+
+				hxPost, exists = resetBtn.Attr("hx-post")
+				assert.True(t, exists, "reset button should have hx-post attribute")
+				assert.Equal(t, "/examples/counter/reset", hxPost, "reset button should post to correct endpoint")
+
+				hxTarget, exists = resetBtn.Attr("hx-target")
+				assert.True(t, exists, "reset button should have hx-target attribute")
+				assert.Equal(t, "#counter-display", hxTarget, "reset button should target counter-display")
+
+				hxSwap, exists = resetBtn.Attr("hx-swap")
+				assert.True(t, exists, "reset button should have hx-swap attribute")
+				assert.Equal(t, "outerHTML", hxSwap, "reset button should use outerHTML swap")
+			},
+		},
+		{
+			name:      "should render counter with positive count",
+			count:     42,
+			wantCount: "42",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert count display
+				countText := doc.Find("#counter-display p strong").Text()
+				assert.Equal(t, "42", countText, "should display count of 42")
+
+				// Assert all three buttons exist
+				buttons := doc.Find("button")
+				assert.Equal(t, 3, buttons.Length(), "should have 3 buttons (increment, decrement, reset)")
+			},
+		},
+		{
+			name:      "should render counter with negative count",
+			count:     -10,
+			wantCount: "-10",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert count display
+				countText := doc.Find("#counter-display p strong").Text()
+				assert.Equal(t, "-10", countText, "should display count of -10")
+			},
+		},
+		{
+			name:      "should render counter with large count",
+			count:     999999,
+			wantCount: "999999",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert count display
+				countText := doc.Find("#counter-display p strong").Text()
+				assert.Equal(t, "999999", countText, "should display large count")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Render component to buffer
+			var buf bytes.Buffer
+			err := CounterPartial(tt.count).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			// Parse with goquery
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			// Run custom assertions
+			if tt.assertions != nil {
+				tt.assertions(t, doc)
+			}
+		})
+	}
+}
+
+func TestCounterPage(t *testing.T) {
+	tests := []struct {
+		name       string
+		count      int
+		assertions func(t *testing.T, doc *goquery.Document)
+	}{
+		{
+			name:  "should render full counter page",
+			count: 5,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert page heading
+				heading := doc.Find("h1")
+				assert.Equal(t, 1, heading.Length(), "should have h1 heading")
+				assert.Contains(t, heading.Text(), "HTMX Partial Rendering Example", "heading should contain correct text")
+
+				// Assert description paragraph with link
+				descPara := doc.Find("p").First()
+				assert.Contains(t, descPara.Text(), "This counter demonstrates HTMX partial rendering patterns", "should have description")
+
+				docLink := doc.Find("a[href='https://go-tracks.io/docs/htmx-patterns']")
+				assert.Equal(t, 1, docLink.Length(), "should have link to HTMX patterns guide")
+
+				// Assert counter partial is embedded
+				counterDisplay := doc.Find("#counter-display")
+				assert.Equal(t, 1, counterDisplay.Length(), "should have embedded counter display")
+
+				countText := doc.Find("#counter-display p strong").Text()
+				assert.Equal(t, "5", countText, "should display count of 5")
+
+				// Assert notification area for OOB swaps
+				notificationArea := doc.Find("#notification-area")
+				assert.Equal(t, 1, notificationArea.Length(), "should have notification area")
+
+				// Assert buttons with HTMX attributes exist
+				buttons := doc.Find("button")
+				assert.Equal(t, 3, buttons.Length(), "should have 3 buttons")
+			},
+		},
+		{
+			name:  "should render page with zero count",
+			count: 0,
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert counter displays zero
+				countText := doc.Find("#counter-display p strong").Text()
+				assert.Equal(t, "0", countText, "should display count of 0")
+
+				// Assert all HTMX interactive elements are present
+				buttons := doc.Find("button[hx-post]")
+				assert.Equal(t, 3, buttons.Length(), "should have 3 HTMX-enabled buttons")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Render component to buffer
+			var buf bytes.Buffer
+			err := CounterPage(tt.count).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			// Parse with goquery
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			// Run custom assertions
+			if tt.assertions != nil {
+				tt.assertions(t, doc)
+			}
+		})
+	}
+}
+
+func TestNotificationOOB(t *testing.T) {
+	tests := []struct {
+		name        string
+		message     string
+		messageType string
+		assertions  func(t *testing.T, doc *goquery.Document)
+	}{
+		{
+			name:        "should render success notification with OOB swap",
+			message:     "Counter incremented!",
+			messageType: "success",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert notification container
+				notification := doc.Find("#notification-area")
+				assert.Equal(t, 1, notification.Length(), "should have notification area")
+
+				// Assert HTMX OOB swap attribute
+				hxSwapOob, exists := notification.Attr("hx-swap-oob")
+				assert.True(t, exists, "notification should have hx-swap-oob attribute")
+				assert.Equal(t, "true", hxSwapOob, "hx-swap-oob should be true")
+
+				// Assert notification classes
+				assert.True(t, notification.HasClass("notification"), "should have notification class")
+				assert.True(t, notification.HasClass("success"), "should have success class")
+
+				// Assert message content
+				message := notification.Find("p").Text()
+				assert.Equal(t, "Counter incremented!", message, "should display correct message")
+			},
+		},
+		{
+			name:        "should render error notification with OOB swap",
+			message:     "An error occurred",
+			messageType: "error",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert notification container
+				notification := doc.Find("#notification-area")
+				assert.Equal(t, 1, notification.Length(), "should have notification area")
+
+				// Assert HTMX OOB swap attribute
+				hxSwapOob, exists := notification.Attr("hx-swap-oob")
+				assert.True(t, exists, "notification should have hx-swap-oob attribute")
+				assert.Equal(t, "true", hxSwapOob, "hx-swap-oob should be true")
+
+				// Assert notification classes
+				assert.True(t, notification.HasClass("notification"), "should have notification class")
+				assert.True(t, notification.HasClass("error"), "should have error class")
+
+				// Assert message content
+				message := notification.Find("p").Text()
+				assert.Equal(t, "An error occurred", message, "should display correct message")
+			},
+		},
+		{
+			name:        "should render info notification with OOB swap",
+			message:     "Counter reset to zero",
+			messageType: "info",
+			assertions: func(t *testing.T, doc *goquery.Document) {
+				// Assert notification container
+				notification := doc.Find("#notification-area")
+				assert.True(t, notification.HasClass("info"), "should have info class")
+
+				// Assert message content
+				message := notification.Find("p").Text()
+				assert.Equal(t, "Counter reset to zero", message, "should display correct message")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Render component to buffer
+			var buf bytes.Buffer
+			err := NotificationOOB(tt.message, tt.messageType).Render(context.Background(), &buf)
+			require.NoError(t, err, "component should render without error")
+
+			// Parse with goquery
+			doc, err := goquery.NewDocumentFromReader(&buf)
+			require.NoError(t, err, "should parse rendered HTML")
+
+			// Run custom assertions
+			if tt.assertions != nil {
+				tt.assertions(t, doc)
+			}
+		})
+	}
+}
+
+func TestCounter_HTMXAttributeValidation(t *testing.T) {
+	// This test validates that all HTMX attributes are correctly set
+	// This is crucial for HTMX components to work properly
+
+	count := 0
+	var buf bytes.Buffer
+	err := CounterPartial(count).Render(context.Background(), &buf)
+	require.NoError(t, err, "component should render without error")
+
+	doc, err := goquery.NewDocumentFromReader(&buf)
+	require.NoError(t, err, "should parse rendered HTML")
+
+	// Define expected HTMX attributes for each button
+	expectedButtons := []struct {
+		text     string
+		hxPost   string
+		hxTarget string
+		hxSwap   string
+	}{
+		{"Increment", "/examples/counter/increment", "#counter-display", "outerHTML"},
+		{"Decrement", "/examples/counter/decrement", "#counter-display", "outerHTML"},
+		{"Reset", "/examples/counter/reset", "#counter-display", "outerHTML"},
+	}
+
+	for _, expected := range expectedButtons {
+		t.Run("validate HTMX attributes for "+expected.text+" button", func(t *testing.T) {
+			button := doc.Find("button").FilterFunction(func(i int, s *goquery.Selection) bool {
+				return s.Text() == expected.text
+			})
+
+			require.Equal(t, 1, button.Length(), "should find %s button", expected.text)
+
+			// Validate all HTMX attributes
+			hxPost, exists := button.Attr("hx-post")
+			assert.True(t, exists, "%s button must have hx-post attribute", expected.text)
+			assert.Equal(t, expected.hxPost, hxPost, "%s button hx-post should match", expected.text)
+
+			hxTarget, exists := button.Attr("hx-target")
+			assert.True(t, exists, "%s button must have hx-target attribute", expected.text)
+			assert.Equal(t, expected.hxTarget, hxTarget, "%s button hx-target should match", expected.text)
+
+			hxSwap, exists := button.Attr("hx-swap")
+			assert.True(t, exists, "%s button must have hx-swap attribute", expected.text)
+			assert.Equal(t, expected.hxSwap, hxSwap, "%s button hx-swap should match", expected.text)
+		})
+	}
+}
