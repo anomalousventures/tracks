@@ -15,11 +15,6 @@ import (
 	"{{.ModuleName}}/tests/mocks"
 )
 
-// TestErrorPages verifies that error pages render correctly with appropriate
-// status codes, titles, and messages.
-//
-// For more information on accessible query testing patterns with goquery:
-// See: https://templ.guide/core-concepts/testing/
 func TestErrorPages(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
