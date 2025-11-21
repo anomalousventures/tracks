@@ -19,5 +19,5 @@ func NewErrorHandler(logger interfaces.Logger) *ErrorHandler {
 
 // ServeHTTP handles catch-all routing for unmatched paths.
 func (h *ErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helpers.RenderError(w, r, http.StatusNotFound, "Page not found", h.logger)
+	helpers.RenderError(w, r, http.StatusNotFound, "The page you're looking for doesn't exist.", h.logger)
 }
