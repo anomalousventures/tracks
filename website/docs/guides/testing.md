@@ -209,7 +209,8 @@ func setupTestDB(t *testing.T) *sql.DB {
     db, err := sql.Open("sqlite3", ":memory:")
     require.NoError(t, err)
 
-    migrationFiles := filepath.Glob("../../internal/db/migrations/*.sql")
+    migrationFiles, err := filepath.Glob("../../internal/db/migrations/*.sql")
+    require.NoError(t, err)
     for _, file := range migrationFiles {
         sql, err := os.ReadFile(file)
         require.NoError(t, err)
@@ -332,6 +333,7 @@ package components
 
 import (
     "bytes"
+    "context"
     "testing"
 
     "github.com/PuerkitoBio/goquery"
@@ -612,7 +614,7 @@ Common goquery methods for testing:
 
 ```go
 // Selection
-doc.Find("selector")              // Find by CSS selector
+doc.Find("selector")              // Find by CSS selector (supports CSS3 selectors via cascadia)
 selection.First()                 // First matching element
 selection.Last()                  // Last matching element
 selection.Eq(index)               // Element at index
@@ -648,6 +650,8 @@ assert.Equal(t, "value", selection.AttrOr("href", ""))
 - ✅ Test both full pages and HTMX partials
 - ✅ Keep component tests focused and fast
 - ✅ Verify semantic HTML structure
+- ✅ Use `require` for setup/parsing failures (stops test on failure)
+- ✅ Use `assert` for test assertions (continues on failure, shows all failures)
 
 **DON'T:**
 
@@ -657,6 +661,10 @@ assert.Equal(t, "value", selection.AttrOr("href", ""))
 - ❌ Test inline styles or exact HTML structure
 - ❌ Test third-party component internals
 - ❌ Skip error page testing
+
+**Performance Tip:**
+
+For simple string presence checks (especially in HTMX partials), use `strings.Contains()` for better performance. Use goquery when you need to traverse the DOM or query by complex selectors. The HTMX partial test example above (lines 543-551) demonstrates this pattern.
 
 ### Integration Tests for Pages
 
@@ -980,4 +988,5 @@ func TestValidateEmail(t *testing.T) {
 - [testify Documentation](https://github.com/stretchr/testify) - Assertion library
 - [mockery Documentation](https://github.com/vektra/mockery) - Mock generation
 - [templ Testing Guide](https://templ.guide/core-concepts/testing/) - Official templ testing docs
-- [goquery Documentation](https://github.com/PuerkitoBio/goquery) - jQuery-like DOM parsing
+- [goquery Documentation](https://github.com/PuerkitoBio/goquery) - jQuery-like DOM parsing for Go
+- [CSS Selectors Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_selectors) - CSS selector syntax supported by goquery
