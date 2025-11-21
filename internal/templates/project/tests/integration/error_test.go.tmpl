@@ -71,19 +71,15 @@ func TestErrorPages(t *testing.T) {
 			assert.Equal(t, tt.wantStatus, rec.Code)
 			assert.Equal(t, "text/html; charset=utf-8", rec.Header().Get("Content-Type"))
 
-			// Parse HTML response with goquery for accessible DOM queries
 			doc, err := goquery.NewDocumentFromReader(rec.Body)
 			require.NoError(t, err)
 
-			// Verify error title using goquery :contains() selector
 			errorTitle := doc.Find("h1:contains('" + tt.wantTitleText + "')")
 			assert.Equal(t, 1, errorTitle.Length(), "should have error title with text %q", tt.wantTitleText)
 
-			// Verify error message using goquery :contains() selector
 			errorMessage := doc.Find("p:contains('" + tt.wantMessageText + "')")
 			assert.GreaterOrEqual(t, errorMessage.Length(), 1, "should have error message containing %q", tt.wantMessageText)
 
-			// Verify page has standard navigation
 			assert.GreaterOrEqual(t, doc.Find("a:contains('Home')").Length(), 1, "should have Home link")
 			assert.GreaterOrEqual(t, doc.Find("a:contains('About')").Length(), 1, "should have About link")
 		})
