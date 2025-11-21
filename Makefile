@@ -67,7 +67,7 @@ format-check: ## Check code formatting with Prettier
 lint: lint-md lint-go lint-mocks lint-js ## Run all linters
 
 # Go-related targets
-.PHONY: test test-coverage test-integration test-all test-e2e-local test-docker-local build build-all
+.PHONY: test test-coverage test-integration test-all test-e2e-local test-docker-local test-gen-app test-gen-app-clean test-gen-app-verify build build-all
 
 test: ## Run Go unit tests
 	@echo "Running unit tests..."
@@ -122,6 +122,23 @@ test-docker-local: ## Test Docker workflow locally (mimics CI docker-workflow jo
 	@docker rm testapp-docker || true
 	@docker rmi testapp-docker:test || true
 	@rm -rf testapp-docker
+
+test-gen-app: ## Generate a test application in /tmp/testapp
+	@echo "Generating test application..."
+	@$(MAKE) build
+	@rm -rf /tmp/testapp
+	@./bin/tracks new testapp --module example.com/testapp --db sqlite3 --no-git
+	@echo "✅ Test app generated at /tmp/testapp"
+
+test-gen-app-clean: ## Clean up test application
+	@echo "Cleaning test application..."
+	@rm -rf /tmp/testapp
+	@echo "✅ Test app cleaned"
+
+test-gen-app-verify: ## Generate test app and run its tests
+	@$(MAKE) test-gen-app
+	@cd /tmp/testapp && $(MAKE) test
+	@echo "✅ Test app verified"
 
 build: ## Build tracks CLI
 	@echo "Building tracks..."
