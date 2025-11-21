@@ -67,7 +67,7 @@ format-check: ## Check code formatting with Prettier
 lint: lint-md lint-go lint-mocks lint-js ## Run all linters
 
 # Go-related targets
-.PHONY: test test-coverage test-integration test-all test-e2e-local test-docker-local test-gen-app test-gen-app-clean test-gen-app-verify build build-all
+.PHONY: test test-coverage test-integration test-all test-e2e-local test-docker-local test-gen-app test-gen-app-clean test-gen-app-verify test-gen-app-lint test-gen-app-mocks test-gen-app-test test-gen-app-validate test-gen-app-full build build-all
 
 test: ## Run Go unit tests
 	@echo "Running unit tests..."
@@ -139,6 +139,39 @@ test-gen-app-verify: ## Generate test app and run its tests
 	@$(MAKE) test-gen-app
 	@cd /tmp/testapp && $(MAKE) test
 	@echo "✅ Test app verified"
+
+test-gen-app-lint: ## Run lint in generated test project
+	@if [ ! -d /tmp/testapp ]; then \
+		echo "❌ Error: Test app not found. Run 'make test-gen-app' first."; \
+		exit 1; \
+	fi
+	@echo "Running lint in test app..."
+	@cd /tmp/testapp && $(MAKE) lint
+
+test-gen-app-mocks: ## Generate mocks in test project
+	@if [ ! -d /tmp/testapp ]; then \
+		echo "❌ Error: Test app not found. Run 'make test-gen-app' first."; \
+		exit 1; \
+	fi
+	@echo "Generating mocks in test app..."
+	@cd /tmp/testapp && $(MAKE) generate-mocks
+
+test-gen-app-test: ## Run tests in generated test project
+	@if [ ! -d /tmp/testapp ]; then \
+		echo "❌ Error: Test app not found. Run 'make test-gen-app' first."; \
+		exit 1; \
+	fi
+	@echo "Running tests in test app..."
+	@cd /tmp/testapp && $(MAKE) test
+
+test-gen-app-validate: ## Run full validation on test project (mocks, lint, test)
+	@$(MAKE) test-gen-app-mocks
+	@$(MAKE) test-gen-app-lint
+	@$(MAKE) test-gen-app-test
+	@echo "✅ Test app validation complete"
+
+test-gen-app-full: test-gen-app test-gen-app-validate ## Full workflow: generate, validate, clean
+	@echo "✅ Full test app workflow complete"
 
 build: ## Build tracks CLI
 	@echo "Building tracks..."
