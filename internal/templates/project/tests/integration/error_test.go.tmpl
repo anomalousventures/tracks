@@ -1,0 +1,87 @@
+package integration
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"{{.ModuleName}}/internal/config"
+	httpserver "{{.ModuleName}}/internal/http"
+	"{{.ModuleName}}/internal/logging"
+	"{{.ModuleName}}/tests/mocks"
+)
+
+// TestErrorPages verifies that error pages render correctly with appropriate
+// status codes, titles, and messages.
+//
+// For more information on accessible query testing patterns with goquery:
+// See: https://templ.guide/core-concepts/testing/
+func TestErrorPages(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	logger := logging.NewLogger("test")
+	cfg := &config.ServerConfig{
+		Port: ":8080",
+	}
+
+	mockHealthService := mocks.NewMockHealthService(t)
+	server := httpserver.NewServer(cfg, logger).
+		WithHealthService(mockHealthService).
+		RegisterRoutes()
+
+	tests := []struct {
+		name           string
+		path           string
+		method         string
+		wantStatus     int
+		wantTitleText  string
+		wantMessageText string
+	}{
+		{
+			name:           "404 Not Found",
+			path:           "/nonexistent",
+			method:         http.MethodGet,
+			wantStatus:     http.StatusNotFound,
+			wantTitleText:  "Error 404",
+			wantMessageText: "The page you're looking for doesn't exist.",
+		},
+		{
+			name:           "404 for nested nonexistent path",
+			path:           "/foo/bar/baz",
+			method:         http.MethodGet,
+			wantStatus:     http.StatusNotFound,
+			wantTitleText:  "Error 404",
+			wantMessageText: "The page you're looking for doesn't exist.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			server.ServeHTTP(rec, req)
+
+			assert.Equal(t, tt.wantStatus, rec.Code)
+			assert.Equal(t, "text/html; charset=utf-8", rec.Header().Get("Content-Type"))
+
+			doc, err := goquery.NewDocumentFromReader(rec.Body)
+			require.NoError(t, err)
+
+			errorTitle := doc.Find("h1:contains('" + tt.wantTitleText + "')")
+			assert.Equal(t, 1, errorTitle.Length(), "should have error title with text %q", tt.wantTitleText)
+
+			errorMessage := doc.Find("p:contains('" + tt.wantMessageText + "')")
+			assert.GreaterOrEqual(t, errorMessage.Length(), 1, "should have error message containing %q", tt.wantMessageText)
+
+			assert.GreaterOrEqual(t, doc.Find("a:contains('Home')").Length(), 1, "should have Home link")
+			assert.GreaterOrEqual(t, doc.Find("a:contains('About')").Length(), 1, "should have About link")
+		})
+	}
+}
