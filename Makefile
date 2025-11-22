@@ -165,9 +165,9 @@ test-gen-app-test: ## Run tests in generated test project
 	@cd /tmp/testapp && $(MAKE) test
 
 test-gen-app-validate: ## Run full validation on test project (mocks, lint, test)
-	@$(MAKE) test-gen-app-mocks
-	@$(MAKE) test-gen-app-lint
-	@$(MAKE) test-gen-app-test
+	@$(MAKE) test-gen-app-mocks && \
+	$(MAKE) test-gen-app-lint && \
+	$(MAKE) test-gen-app-test
 	@echo "✅ Test app validation complete"
 
 test-gen-app-full: test-gen-app test-gen-app-validate ## Full workflow: generate, validate, clean
