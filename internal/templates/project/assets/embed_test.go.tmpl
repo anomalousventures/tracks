@@ -1,0 +1,39 @@
+package assets
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestFileSystem(t *testing.T) {
+	t.Run("should return valid http.FileSystem", func(t *testing.T) {
+		fsys := FileSystem()
+		require.NotNil(t, fsys)
+	})
+
+	t.Run("should read embedded files", func(t *testing.T) {
+		fsys := FileSystem()
+
+		f, err := fsys.Open("css/app.css")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			f.Close() //nolint:errcheck
+		})
+
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.False(t, stat.IsDir())
+	})
+
+	t.Run("should strip static prefix", func(t *testing.T) {
+		fsys := FileSystem()
+
+		_, err := fsys.Open("css/app.css")
+		assert.NoError(t, err)
+
+		_, err = fsys.Open("static/css/app.css")
+		assert.Error(t, err)
+	})
+}

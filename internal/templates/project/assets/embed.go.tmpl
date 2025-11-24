@@ -1,0 +1,21 @@
+package assets
+
+import (
+	"embed"
+	"io/fs"
+	"net/http"
+)
+
+//go:embed all:static
+var staticFS embed.FS
+
+// FileSystem returns an http.FileSystem for serving static assets.
+// Files are embedded at build time and served from memory.
+// The static/ directory prefix is stripped so files are accessible at /assets/* paths.
+func FileSystem() http.FileSystem {
+	stripped, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		panic("failed to create assets filesystem: " + err.Error())
+	}
+	return http.FS(stripped)
+}

@@ -96,6 +96,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/interfaces/health.go.tmpl":       "internal/interfaces/health.go",
 		"internal/interfaces/logger.go.tmpl":       "internal/interfaces/logger.go",
 		"internal/logging/logger.go.tmpl":          "internal/logging/logger.go",
+		"assets/embed.go.tmpl":                     "assets/embed.go",
 		"internal/domain/health/service.go.tmpl":   "internal/domain/health/service.go",
 		"internal/http/routes/routes.go.tmpl":      "internal/http/routes/routes.go",
 		"internal/http/routes/health.go.tmpl":      "internal/http/routes/health.go",
@@ -116,9 +117,9 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/db/db.go.tmpl":                   "internal/db/db.go",
 		"internal/db/queries/.gitkeep.tmpl":        "internal/db/queries/.gitkeep",
 		"internal/db/queries/health.sql.tmpl":      "internal/db/queries/health.sql",
-		"web/images/.gitkeep.tmpl":                 "web/images/.gitkeep",
-		"web/css/app.css.tmpl":                     "web/css/app.css",
-		"web/js/app.js.tmpl":                       "web/js/app.js",
+		"assets/static/images/.gitkeep.tmpl":       "assets/static/images/.gitkeep",
+		"assets/static/css/app.css.tmpl":           "assets/static/css/app.css",
+		"assets/static/js/app.js.tmpl":             "assets/static/js/app.js",
 	}
 
 	postGenerateTemplates := map[string]string{
@@ -135,6 +136,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 	testTemplates := map[string]string{
 		"internal/config/config_test.go.tmpl":                   "internal/config/config_test.go",
 		"internal/logging/logger_test.go.tmpl":                  "internal/logging/logger_test.go",
+		"assets/embed_test.go.tmpl":                             "assets/embed_test.go",
 		"internal/domain/health/service_test.go.tmpl":           "internal/domain/health/service_test.go",
 		"internal/http/server_test.go.tmpl":                     "internal/http/server_test.go",
 		"internal/http/handlers/health_test.go.tmpl":            "internal/http/handlers/health_test.go",
