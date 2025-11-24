@@ -11,9 +11,10 @@ Tracks is in **Phase 1 (Core Web Layer)** development. Phase 0 (Foundation) is c
 - ✅ Phase 0 Complete: CLI tool, project generation, template engine
 - ✅ `tracks new` command with multiple database drivers
 - ✅ Project scaffolding with clean architecture
+- ✅ Epic 1.3 Phase 1 Complete: Basic asset infrastructure (web/ directory, embed.FS, static file handler)
 - 🚧 Phase 1: Core web layer implementation (in progress)
 
-**Coming next:** Handler generation, middleware, routing helpers, view templates.
+**Coming next:** TailwindCSS, JavaScript bundling, HTMX v2, handler generation, middleware, routing helpers, view templates.
 
 See the [Roadmap](https://github.com/anomalousventures/tracks/blob/main/docs/roadmap/README.md) for details.
 

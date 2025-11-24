@@ -37,7 +37,7 @@ Track progress across all 7 phases below.
 |-----|---------|--------|---------|-----------|----------|-------|
 | 1.1 | Chi router setup | Not Started | - | - | [Web Layer](../prd/5_web_layer.md#router-setup) | - |
 | 1.2 | templ templates | Not Started | - | - | [Templates & Assets](../prd/7_templates_assets.md#template-system) | - |
-| 1.3 | hashfs assets | Not Started | - | - | [Templates & Assets](../prd/7_templates_assets.md#hashfs-integration) | - |
+| 1.3 | Asset Pipeline (merged 1.3+1.4) | Phase 1 Complete (5/62 tasks) | 2025-11-24 | - | [Asset Pipeline](./phases/1-core-web/epics/1.3-asset-pipeline.md) | Basic asset infrastructure working |
 | 1.4 | Middleware stack | Not Started | - | - | [Web Layer](../prd/5_web_layer.md#middleware-stack) | - |
 
 ### Phase 2: Data Layer - Not Started
