@@ -11,8 +11,8 @@ var staticFS embed.FS
 
 func FileSystem() http.FileSystem {
 	stripped, err := fs.Sub(staticFS, "static")
-	// Panic is acceptable at startup: error indicates corrupt binary
-	// which should be caught during testing, never occur in production
+	// Embedded files are baked into the binary at compile time.
+	// Failure here indicates build corruption, not a recoverable runtime error.
 	if err != nil {
 		panic("failed to create assets filesystem: " + err.Error())
 	}
