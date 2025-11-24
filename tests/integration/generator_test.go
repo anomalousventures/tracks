@@ -174,6 +174,13 @@ func TestGenerateFullProject(t *testing.T) {
 			assert.NotContains(t, string(makefileContent), "dev-full:", "Makefile should not contain dev-full target")
 			assert.NotContains(t, string(makefileContent), "dev-full     - Start docker services and dev server", "Makefile help should not mention dev-full")
 
+			gitignorePath := filepath.Join(projectRoot, ".gitignore")
+			gitignoreContent, err := os.ReadFile(gitignorePath)
+			require.NoError(t, err, "should be able to read .gitignore")
+			assert.Contains(t, string(gitignoreContent), "node_modules/", ".gitignore should exclude node_modules")
+			assert.Contains(t, string(gitignoreContent), "internal/assets/dist/", ".gitignore should exclude generated asset outputs")
+			assert.NotContains(t, string(gitignoreContent), "web/", ".gitignore should NOT exclude web/ source directory")
+
 			dockerignorePath := filepath.Join(projectRoot, ".dockerignore")
 			dockerignoreContent, err := os.ReadFile(dockerignorePath)
 			require.NoError(t, err, "should be able to read .dockerignore")
