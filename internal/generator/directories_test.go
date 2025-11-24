@@ -37,9 +37,11 @@ func TestCreateProjectDirectories(t *testing.T) {
 			filepath.Join(projectRoot, "internal", "db", "queries"),
 			filepath.Join(projectRoot, "internal", "db", "generated"),
 			filepath.Join(projectRoot, "tests", "mocks"),
-			filepath.Join(projectRoot, "web", "css"),
-			filepath.Join(projectRoot, "web", "js"),
-			filepath.Join(projectRoot, "web", "images"),
+			filepath.Join(projectRoot, "tests", "integration"),
+			filepath.Join(projectRoot, "assets"),
+			filepath.Join(projectRoot, "assets", "static", "css"),
+			filepath.Join(projectRoot, "assets", "static", "js"),
+			filepath.Join(projectRoot, "assets", "static", "images"),
 		}
 
 		for _, dir := range expectedDirs {

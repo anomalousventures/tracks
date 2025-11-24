@@ -9,11 +9,10 @@ import (
 //go:embed all:static
 var staticFS embed.FS
 
-// FileSystem returns an http.FileSystem for serving static assets.
-// Files are embedded at build time and served from memory.
-// The static/ directory prefix is stripped so files are accessible at /assets/* paths.
 func FileSystem() http.FileSystem {
 	stripped, err := fs.Sub(staticFS, "static")
+	// Panic is acceptable at startup: error indicates corrupt binary
+	// which should be caught during testing, never occur in production
 	if err != nil {
 		panic("failed to create assets filesystem: " + err.Error())
 	}

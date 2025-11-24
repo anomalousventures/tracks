@@ -27,7 +27,7 @@ func TestFileSystem(t *testing.T) {
 		assert.False(t, stat.IsDir())
 	})
 
-	t.Run("should strip static prefix", func(t *testing.T) {
+	t.Run("should serve files without static prefix in path", func(t *testing.T) {
 		fsys := FileSystem()
 
 		_, err := fsys.Open("css/app.css")
@@ -35,5 +35,24 @@ func TestFileSystem(t *testing.T) {
 
 		_, err = fsys.Open("static/css/app.css")
 		assert.Error(t, err)
+	})
+
+	t.Run("should return error for non-existent files", func(t *testing.T) {
+		fsys := FileSystem()
+		_, err := fsys.Open("does-not-exist.css")
+		assert.Error(t, err)
+	})
+
+	t.Run("should allow directory access", func(t *testing.T) {
+		fsys := FileSystem()
+		f, err := fsys.Open("css")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			f.Close() //nolint:errcheck
+		})
+
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.True(t, stat.IsDir())
 	})
 }
