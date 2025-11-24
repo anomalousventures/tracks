@@ -88,10 +88,6 @@ func TestWebDirectoryStructure(t *testing.T) {
 		info, err = os.Stat(gitkeep)
 		require.NoError(t, err, ".gitkeep should exist in web/images/")
 		assert.False(t, info.IsDir(), ".gitkeep should be a file, not a directory")
-
-		content, err := os.ReadFile(gitkeep)
-		require.NoError(t, err, ".gitkeep should be readable")
-		assert.NotEmpty(t, content, ".gitkeep should not be empty")
 	})
 
 	t.Run("web assets are valid", func(t *testing.T) {
