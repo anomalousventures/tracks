@@ -171,7 +171,7 @@ templui add "*"  # Install all components
 This decision affects the following Phase 1 epics:
 
 - **Epic 1.2 (Templ Template System)** - Update to include views directory structure
-- **Epic 1.4 (Web Build Pipeline)** - Include templui styles in Tailwind config
+- **Epic 1.3 (Asset Build & Serving Pipeline)** - Include templui styles in Tailwind config (Phase 2)
 - **Epic 1.5 (Templ-UI Integration)** - NEW epic for templui installation and configuration
 - **Epic 1.6 (Documentation)** - Add component usage guide and customization workflow
 

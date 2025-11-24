@@ -103,6 +103,8 @@ See the [CLI documentation](https://go-tracks.io/cli/new) and [Getting Started g
 **Coming next:**
 
 - Phase 1 (In Progress): Code generation (resources, handlers, services)
+  - ✅ **Epic 1.3 Phase 1 Complete:** Basic asset infrastructure (web/ directory, embed.FS, static file handler)
+  - 🚧 Next: TailwindCSS, JavaScript bundling, HTMX v2
 - Phase 2: Authentication and authorization
 - See [Roadmap](#roadmap) for details
 

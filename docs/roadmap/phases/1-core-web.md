@@ -60,48 +60,44 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 - Add templ generation to `make generate` target (alongside sqlc and mockery)
 - Create helper functions for common patterns
 
-### 1.3 hashfs Assets
+### 1.3 Asset Build & Serving Pipeline (merged 1.3+1.4)
 
-**Description:** Implement content-addressed asset serving
+**Status:** Phase 1 Complete (5/62 tasks) - Basic asset infrastructure working
 
-**Acceptance Criteria:**
+**Description:** Complete asset pipeline with TailwindCSS, JavaScript bundling, HTMX v2, and content-addressed serving
 
-- [ ] Asset embedding with go:embed
-- [ ] Content hashing for cache busting
-- [ ] Asset helper functions
-- [ ] Compression support
+**Phase 1 Complete:**
 
-**PRD Reference:** [Templates & Assets - hashfs Integration](../../prd/7_templates_assets.md#hashfs-integration)
+- [x] Web/ directory structure created
+- [x] Basic assets.go template with embed.FS
+- [x] Static file handler template
+- [x] MIME type handling
+- [x] .gitignore template for asset pipeline
 
-**Implementation Notes:**
+**Remaining Phases (2-9):**
 
-- Use benbjohnson/hashfs
-- Set up asset pipeline
-- Configure cache headers
+- [ ] TailwindCSS configuration and compilation (Phase 2)
+- [ ] JavaScript bundling with esbuild (Phase 2)
+- [ ] HTMX v2 with extensions (head-support, idiomorph, response-targets) (Phase 3)
+- [ ] Counter component example (Phase 3)
+- [ ] Content-addressed serving with hashfs (Phase 4)
+- [ ] Asset compression and caching (Phases 5-6)
+- [ ] Air live reload for assets (Phase 7)
+- [ ] ProjectGenerator integration (Phase 8)
+- [ ] Comprehensive testing (Phase 9)
 
-### 1.4 Web Build Pipeline
+**Epic Document:** [1.3 Asset Pipeline](./epics/1.3-asset-pipeline.md) (62 total tasks)
 
-**Description:** Set up TailwindCSS and HTMX v2 build process with extensions
+**Deprecated Epics:** Original Epic 1.3 (HashFS) and Epic 1.4 (Web Build Pipeline) were merged on 2025-11-19 to eliminate artificial boundaries. See [1.3-hashfs-assets.md](./epics/1.3-hashfs-assets.md) and [1.4-web-build-pipeline.md](./epics/1.4-web-build-pipeline.md) for historical reference.
 
-**Acceptance Criteria:**
-
-- [ ] TailwindCSS configuration and compilation
-- [ ] HTMX v2 bundling with extensions (head-support, idiomorph, response-targets)
-- [ ] Counter component integrated into homepage
-- [ ] Asset build targets in Makefile
-- [ ] Development vs production builds
-- [ ] Air configuration watches .templ, .css, .js files and rebuilds assets
-
-**PRD Reference:** [Templates & Assets - CSS & JavaScript](../../prd/7_templates_assets.md#css--javascript)
+**PRD Reference:** [Templates & Assets](../../prd/7_templates_assets.md)
 
 **Implementation Notes:**
 
-- Configure Tailwind to scan .templ files
-- Set up esbuild for JavaScript bundling
-- Include theme switcher component
-- Optimize for production builds
-- Update .air.toml to watch frontend assets and trigger asset rebuilds
-- Exclude generated outputs (`*_templ.go`, `internal/assets/dist`) from Air watch
+- Phase 1 provides basic static file serving (no hashfs yet)
+- Future phases add TailwindCSS, esbuild, HTMX v2, and hashfs
+- Air configuration will watch .templ, .css, .js files (Phase 7)
+- All builds use minification (no dev/prod mode split)
 
 ### 1.5 Templ-UI Integration
 
