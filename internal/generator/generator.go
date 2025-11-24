@@ -116,6 +116,9 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/db/db.go.tmpl":                   "internal/db/db.go",
 		"internal/db/queries/.gitkeep.tmpl":        "internal/db/queries/.gitkeep",
 		"internal/db/queries/health.sql.tmpl":      "internal/db/queries/health.sql",
+		"web/images/.gitkeep.tmpl":                 "web/images/.gitkeep",
+		"web/css/app.css.tmpl":                     "web/css/app.css",
+		"web/js/app.js.tmpl":                       "web/js/app.js",
 	}
 
 	postGenerateTemplates := map[string]string{

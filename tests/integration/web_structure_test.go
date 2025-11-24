@@ -1,0 +1,169 @@
+package integration
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/anomalousventures/tracks/internal/generator"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestWebDirectoryStructure(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tmpDir := t.TempDir()
+	projectName := "web-structure-test"
+
+	cfg := generator.ProjectConfig{
+		ProjectName:    projectName,
+		ModulePath:     "github.com/test/web-structure-test",
+		DatabaseDriver: "sqlite3",
+		EnvPrefix:      "APP",
+		InitGit:        false,
+		OutputPath:     tmpDir,
+	}
+
+	gen := generator.NewProjectGenerator()
+	ctx := context.Background()
+
+	err := gen.Validate(cfg)
+	require.NoError(t, err, "validation should succeed")
+
+	err = gen.Generate(ctx, cfg)
+	require.NoError(t, err, "generation should succeed")
+
+	projectRoot := filepath.Join(tmpDir, projectName)
+
+	t.Run("web directory exists", func(t *testing.T) {
+		webDir := filepath.Join(projectRoot, "web")
+		info, err := os.Stat(webDir)
+		require.NoError(t, err, "web/ directory should exist")
+		assert.True(t, info.IsDir(), "web/ should be a directory")
+	})
+
+	t.Run("web/css directory exists with app.css", func(t *testing.T) {
+		cssDir := filepath.Join(projectRoot, "web", "css")
+		info, err := os.Stat(cssDir)
+		require.NoError(t, err, "web/css/ directory should exist")
+		assert.True(t, info.IsDir(), "web/css/ should be a directory")
+
+		appCSS := filepath.Join(cssDir, "app.css")
+		content, err := os.ReadFile(appCSS)
+		require.NoError(t, err, "app.css should exist and be readable")
+
+		contentStr := string(content)
+		assert.Contains(t, contentStr, "Tailwind CSS entry point", "app.css should contain TailwindCSS comment")
+		assert.Contains(t, contentStr, "body {", "app.css should contain CSS body styles")
+		assert.Contains(t, contentStr, "font-family: system-ui", "app.css should contain font-family")
+	})
+
+	t.Run("web/js directory exists with app.js", func(t *testing.T) {
+		jsDir := filepath.Join(projectRoot, "web", "js")
+		info, err := os.Stat(jsDir)
+		require.NoError(t, err, "web/js/ directory should exist")
+		assert.True(t, info.IsDir(), "web/js/ should be a directory")
+
+		appJS := filepath.Join(jsDir, "app.js")
+		content, err := os.ReadFile(appJS)
+		require.NoError(t, err, "app.js should exist and be readable")
+
+		contentStr := string(content)
+		assert.Contains(t, contentStr, "JavaScript entry point", "app.js should contain entry point comment")
+		assert.Contains(t, contentStr, "web-structure-test loaded", "app.js should contain project name in console.log")
+		assert.Contains(t, contentStr, "console.log", "app.js should contain console.log statement")
+	})
+
+	t.Run("web/images directory exists with .gitkeep", func(t *testing.T) {
+		imagesDir := filepath.Join(projectRoot, "web", "images")
+		info, err := os.Stat(imagesDir)
+		require.NoError(t, err, "web/images/ directory should exist")
+		assert.True(t, info.IsDir(), "web/images/ should be a directory")
+
+		gitkeep := filepath.Join(imagesDir, ".gitkeep")
+		info, err = os.Stat(gitkeep)
+		require.NoError(t, err, ".gitkeep should exist in web/images/")
+		assert.False(t, info.IsDir(), ".gitkeep should be a file, not a directory")
+	})
+
+	t.Run("web assets are valid", func(t *testing.T) {
+		appCSS := filepath.Join(projectRoot, "web", "css", "app.css")
+		cssContent, err := os.ReadFile(appCSS)
+		require.NoError(t, err)
+
+		cssStr := string(cssContent)
+		assert.Contains(t, cssStr, "/*", "CSS should contain comment syntax")
+		assert.Contains(t, cssStr, "margin: 0;", "CSS should contain margin reset")
+		assert.Contains(t, cssStr, "padding: 0;", "CSS should contain padding reset")
+
+		appJS := filepath.Join(projectRoot, "web", "js", "app.js")
+		jsContent, err := os.ReadFile(appJS)
+		require.NoError(t, err)
+
+		jsStr := string(jsContent)
+		assert.Contains(t, jsStr, "//", "JavaScript should contain comment syntax")
+		assert.Contains(t, jsStr, "Phase 3", "JavaScript should mention future HTMX integration")
+	})
+}
+
+func TestWebDirectoryWithDifferentProjectNames(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	testCases := []struct {
+		name        string
+		projectName string
+	}{
+		{
+			name:        "project with hyphens",
+			projectName: "my-awesome-app",
+		},
+		{
+			name:        "project with underscores",
+			projectName: "my_awesome_app",
+		},
+		{
+			name:        "simple project name",
+			projectName: "simpleapp",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+
+			cfg := generator.ProjectConfig{
+				ProjectName:    tc.projectName,
+				ModulePath:     "github.com/test/" + tc.projectName,
+				DatabaseDriver: "sqlite3",
+				EnvPrefix:      "APP",
+				InitGit:        false,
+				OutputPath:     tmpDir,
+			}
+
+			gen := generator.NewProjectGenerator()
+			ctx := context.Background()
+
+			err := gen.Generate(ctx, cfg)
+			require.NoError(t, err, "generation should succeed for project name: %s", tc.projectName)
+
+			projectRoot := filepath.Join(tmpDir, tc.projectName)
+
+			webDir := filepath.Join(projectRoot, "web")
+			_, err = os.Stat(webDir)
+			require.NoError(t, err, "web/ directory should exist for project: %s", tc.projectName)
+
+			appJS := filepath.Join(projectRoot, "web", "js", "app.js")
+			content, err := os.ReadFile(appJS)
+			require.NoError(t, err, "app.js should exist for project: %s", tc.projectName)
+
+			assert.Contains(t, string(content), tc.projectName+" loaded",
+				"app.js should contain correct project name in console.log")
+		})
+	}
+}
