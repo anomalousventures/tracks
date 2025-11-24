@@ -1,0 +1,20 @@
+package assets
+
+import (
+	"embed"
+	"io/fs"
+	"net/http"
+)
+
+//go:embed all:static
+var staticFS embed.FS
+
+func FileSystem() http.FileSystem {
+	stripped, err := fs.Sub(staticFS, "static")
+	// Embedded files are baked into the binary at compile time.
+	// Failure here indicates build corruption, not a recoverable runtime error.
+	if err != nil {
+		panic("failed to create assets filesystem: " + err.Error())
+	}
+	return http.FS(stripped)
+}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"{{.ModuleName}}/assets"
 	"{{.ModuleName}}/internal/http/handlers"
 	httpmiddleware "{{.ModuleName}}/internal/http/middleware"
 	"{{.ModuleName}}/internal/http/routes"
@@ -31,6 +32,9 @@ func (s *Server) routes() {
 	})
 
 	s.router.NotFound(s.handleError())
+
+	fileServer := http.FileServer(assets.FileSystem())
+	s.router.Handle("/assets/*", http.StripPrefix("/assets/", fileServer))
 }
 
 func (s *Server) handleHealthCheck() http.HandlerFunc {
