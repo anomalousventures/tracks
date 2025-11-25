@@ -5,10 +5,7 @@
  * It will be bundled by esbuild and minified for production.
  */
 
-// Must import htmx setup FIRST - sets window.htmx before extensions load
 import './lib/htmx.js';
-
-// Extensions require window.htmx to exist
 import 'htmx-ext-head-support';
 import 'idiomorph';
 import 'htmx-ext-response-targets';
