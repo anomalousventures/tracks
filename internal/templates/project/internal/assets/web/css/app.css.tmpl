@@ -1,9 +1,66 @@
-/* Tailwind CSS entry point */
-/* Will be populated in Epic 1.3 Phase 2: TailwindCSS integration */
+/* Tailwind CSS v4 entry point */
+@import "tailwindcss";
 
-/* Temporary placeholder styles */
-body {
-    font-family: system-ui, -apple-system, sans-serif;
-    margin: 0;
-    padding: 0;
+/* Theme configuration using Tailwind v4 @theme directive */
+@theme {
+  /* Color palette - Primary blue scale */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Typography */
+  --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* Spacing customization */
+  --spacing-page: 1rem;
+}
+
+/* Custom component styles */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary-500: #60a5fa;
+    --color-primary-600: #3b82f6;
+  }
+
+  .card {
+    @apply bg-gray-800 text-gray-100;
+  }
+}
+
+/* Application-specific utility classes */
+@layer utilities {
+  .container-app {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-header {
+    @apply text-3xl font-bold text-gray-900 dark:text-gray-100;
+  }
 }
