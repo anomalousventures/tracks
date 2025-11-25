@@ -173,7 +173,7 @@ func TestAppJSDOMReady(t *testing.T) {
 	assert.Contains(t, result, "DOMContentLoaded", "should listen for DOMContentLoaded")
 }
 
-func TestAppJSNoHTMX(t *testing.T) {
+func TestAppJSHTMXImports(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	data := TemplateData{
@@ -183,6 +183,24 @@ func TestAppJSNoHTMX(t *testing.T) {
 	result, err := renderer.Render("internal/assets/web/js/app.js.tmpl", data)
 	require.NoError(t, err)
 
-	assert.NotContains(t, result, "htmx", "should not include HTMX in Phase 2")
-	assert.NotContains(t, result, "hx-", "should not reference hx- attributes in Phase 2")
+	assert.Contains(t, result, "import htmx from 'htmx.org'", "should import HTMX")
+	assert.Contains(t, result, "import 'htmx-ext-head-support'", "should import head-support extension")
+	assert.Contains(t, result, "import 'idiomorph'", "should import idiomorph")
+	assert.Contains(t, result, "import 'htmx-ext-response-targets'", "should import response-targets extension")
+	assert.Contains(t, result, "window.htmx = htmx", "should make HTMX globally available")
+}
+
+func TestAppJSHTMXEventListeners(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{
+		ProjectName: "myapp",
+	}
+
+	result, err := renderer.Render("internal/assets/web/js/app.js.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, result, "htmx:configRequest", "should listen for HTMX config requests")
+	assert.Contains(t, result, "htmx:afterSwap", "should listen for HTMX after swap")
+	assert.Contains(t, result, "htmx:responseError", "should listen for HTMX response errors")
 }

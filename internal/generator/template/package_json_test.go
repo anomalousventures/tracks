@@ -87,6 +87,25 @@ func TestPackageJSONDependencies(t *testing.T) {
 	esbuildVersion, ok := devDeps["esbuild"].(string)
 	require.True(t, ok, "should have esbuild dependency")
 	assert.Equal(t, "0.27.0", esbuildVersion, "should use exact esbuild version")
+
+	deps, ok := pkg["dependencies"].(map[string]interface{})
+	require.True(t, ok, "should have dependencies section")
+
+	htmxVersion, ok := deps["htmx.org"].(string)
+	require.True(t, ok, "should have htmx.org dependency")
+	assert.Equal(t, "2.0.8", htmxVersion, "should use exact HTMX v2 version")
+
+	headSupportVersion, ok := deps["htmx-ext-head-support"].(string)
+	require.True(t, ok, "should have htmx-ext-head-support dependency")
+	assert.Equal(t, "2.0.1", headSupportVersion, "should use exact head-support version")
+
+	idiomorphVersion, ok := deps["idiomorph"].(string)
+	require.True(t, ok, "should have idiomorph dependency")
+	assert.Equal(t, "0.3.0", idiomorphVersion, "should use exact idiomorph version")
+
+	responseTargetsVersion, ok := deps["htmx-ext-response-targets"].(string)
+	require.True(t, ok, "should have htmx-ext-response-targets dependency")
+	assert.Equal(t, "2.0.1", responseTargetsVersion, "should use exact response-targets version")
 }
 
 func TestPackageJSONExactVersions(t *testing.T) {

@@ -5,6 +5,15 @@
  * It will be bundled by esbuild and minified for production.
  */
 
+// Import HTMX and extensions
+import htmx from 'htmx.org';
+import 'htmx-ext-head-support';
+import 'idiomorph';
+import 'htmx-ext-response-targets';
+
+// Make HTMX globally available
+window.htmx = htmx;
+
 (function() {
   'use strict';
 
@@ -89,6 +98,19 @@
           link.setAttribute('target', '_blank');
           link.setAttribute('rel', 'noopener noreferrer');
         }
+      });
+
+      // HTMX event listeners
+      document.body.addEventListener('htmx:configRequest', (e) => {
+        this.log('HTMX request:', e.detail.path);
+      });
+
+      document.body.addEventListener('htmx:afterSwap', (e) => {
+        this.log('HTMX swap complete:', e.detail.target);
+      });
+
+      document.body.addEventListener('htmx:responseError', (e) => {
+        this.error('HTMX error:', e.detail);
       });
     }
   };
