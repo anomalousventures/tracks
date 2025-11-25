@@ -6,11 +6,11 @@ import (
 	"net/http"
 )
 
-//go:embed all:static
-var staticFS embed.FS
+//go:embed all:dist
+var distFS embed.FS
 
 func FileSystem() http.FileSystem {
-	stripped, err := fs.Sub(staticFS, "static")
+	stripped, err := fs.Sub(distFS, "dist")
 	// Embedded files are baked into the binary at compile time.
 	// Failure here indicates build corruption, not a recoverable runtime error.
 	if err != nil {

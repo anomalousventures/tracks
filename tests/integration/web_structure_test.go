@@ -39,18 +39,18 @@ func TestWebDirectoryStructure(t *testing.T) {
 
 	projectRoot := filepath.Join(tmpDir, projectName)
 
-	t.Run("assets directory exists", func(t *testing.T) {
-		assetsDir := filepath.Join(projectRoot, "assets")
+	t.Run("internal/assets directory exists", func(t *testing.T) {
+		assetsDir := filepath.Join(projectRoot, "internal", "assets")
 		info, err := os.Stat(assetsDir)
-		require.NoError(t, err, "assets/ directory should exist")
-		assert.True(t, info.IsDir(), "assets/ should be a directory")
+		require.NoError(t, err, "internal/assets/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/ should be a directory")
 	})
 
-	t.Run("assets/static/css directory exists with app.css", func(t *testing.T) {
-		cssDir := filepath.Join(projectRoot, "assets", "static", "css")
+	t.Run("internal/assets/web/css directory exists with app.css", func(t *testing.T) {
+		cssDir := filepath.Join(projectRoot, "internal", "assets", "web", "css")
 		info, err := os.Stat(cssDir)
-		require.NoError(t, err, "assets/static/css/ directory should exist")
-		assert.True(t, info.IsDir(), "assets/static/css/ should be a directory")
+		require.NoError(t, err, "internal/assets/web/css/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/web/css/ should be a directory")
 
 		appCSS := filepath.Join(cssDir, "app.css")
 		content, err := os.ReadFile(appCSS)
@@ -62,11 +62,11 @@ func TestWebDirectoryStructure(t *testing.T) {
 		assert.Contains(t, contentStr, "font-family: system-ui", "app.css should contain font-family")
 	})
 
-	t.Run("assets/static/js directory exists with app.js", func(t *testing.T) {
-		jsDir := filepath.Join(projectRoot, "assets", "static", "js")
+	t.Run("internal/assets/web/js directory exists with app.js", func(t *testing.T) {
+		jsDir := filepath.Join(projectRoot, "internal", "assets", "web", "js")
 		info, err := os.Stat(jsDir)
-		require.NoError(t, err, "assets/static/js/ directory should exist")
-		assert.True(t, info.IsDir(), "assets/static/js/ should be a directory")
+		require.NoError(t, err, "internal/assets/web/js/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/web/js/ should be a directory")
 
 		appJS := filepath.Join(jsDir, "app.js")
 		content, err := os.ReadFile(appJS)
@@ -78,20 +78,48 @@ func TestWebDirectoryStructure(t *testing.T) {
 		assert.Contains(t, contentStr, "console.log", "app.js should contain console.log statement")
 	})
 
-	t.Run("assets/static/images directory exists with .gitkeep", func(t *testing.T) {
-		imagesDir := filepath.Join(projectRoot, "assets", "static", "images")
+	t.Run("internal/assets/web/images directory exists with .gitkeep", func(t *testing.T) {
+		imagesDir := filepath.Join(projectRoot, "internal", "assets", "web", "images")
 		info, err := os.Stat(imagesDir)
-		require.NoError(t, err, "assets/static/images/ directory should exist")
-		assert.True(t, info.IsDir(), "assets/static/images/ should be a directory")
+		require.NoError(t, err, "internal/assets/web/images/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/web/images/ should be a directory")
 
 		gitkeep := filepath.Join(imagesDir, ".gitkeep")
 		info, err = os.Stat(gitkeep)
-		require.NoError(t, err, ".gitkeep should exist in assets/static/images/")
+		require.NoError(t, err, ".gitkeep should exist in internal/assets/web/images/")
 		assert.False(t, info.IsDir(), ".gitkeep should be a file, not a directory")
 	})
 
-	t.Run("static assets are valid", func(t *testing.T) {
-		appCSS := filepath.Join(projectRoot, "assets", "static", "css", "app.css")
+	t.Run("internal/assets/dist directory structure exists", func(t *testing.T) {
+		distDir := filepath.Join(projectRoot, "internal", "assets", "dist")
+		info, err := os.Stat(distDir)
+		require.NoError(t, err, "internal/assets/dist/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/ should be a directory")
+
+		// Check subdirectories
+		cssDir := filepath.Join(distDir, "css")
+		info, err = os.Stat(cssDir)
+		require.NoError(t, err, "internal/assets/dist/css/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/css/ should be a directory")
+
+		jsDir := filepath.Join(distDir, "js")
+		info, err = os.Stat(jsDir)
+		require.NoError(t, err, "internal/assets/dist/js/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/js/ should be a directory")
+
+		imagesDir := filepath.Join(distDir, "images")
+		info, err = os.Stat(imagesDir)
+		require.NoError(t, err, "internal/assets/dist/images/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/images/ should be a directory")
+
+		gitkeep := filepath.Join(distDir, ".gitkeep")
+		info, err = os.Stat(gitkeep)
+		require.NoError(t, err, ".gitkeep should exist in internal/assets/dist/")
+		assert.False(t, info.IsDir(), ".gitkeep should be a file, not a directory")
+	})
+
+	t.Run("web assets are valid", func(t *testing.T) {
+		appCSS := filepath.Join(projectRoot, "internal", "assets", "web", "css", "app.css")
 		cssContent, err := os.ReadFile(appCSS)
 		require.NoError(t, err)
 
@@ -100,7 +128,7 @@ func TestWebDirectoryStructure(t *testing.T) {
 		assert.Contains(t, cssStr, "margin: 0;", "CSS should contain margin reset")
 		assert.Contains(t, cssStr, "padding: 0;", "CSS should contain padding reset")
 
-		appJS := filepath.Join(projectRoot, "assets", "static", "js", "app.js")
+		appJS := filepath.Join(projectRoot, "internal", "assets", "web", "js", "app.js")
 		jsContent, err := os.ReadFile(appJS)
 		require.NoError(t, err)
 
@@ -154,11 +182,11 @@ func TestWebDirectoryWithDifferentProjectNames(t *testing.T) {
 
 			projectRoot := filepath.Join(tmpDir, tc.projectName)
 
-			assetsDir := filepath.Join(projectRoot, "assets")
+			assetsDir := filepath.Join(projectRoot, "internal", "assets")
 			_, err = os.Stat(assetsDir)
-			require.NoError(t, err, "assets/ directory should exist for project: %s", tc.projectName)
+			require.NoError(t, err, "internal/assets/ directory should exist for project: %s", tc.projectName)
 
-			appJS := filepath.Join(projectRoot, "assets", "static", "js", "app.js")
+			appJS := filepath.Join(projectRoot, "internal", "assets", "web", "js", "app.js")
 			content, err := os.ReadFile(appJS)
 			require.NoError(t, err, "app.js should exist for project: %s", tc.projectName)
 

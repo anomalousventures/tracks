@@ -1,26 +1,35 @@
-.PHONY: build clean dev dev-down dev-services generate help lint mocks sqlc templ test
+.PHONY: assets build clean css dev dev-down dev-services generate help js lint mocks sqlc templ test
 
 help: ## Show this help message
 	@echo "Available targets:"
-	@echo "  build        - Build the server binary"
+	@echo "  assets       - Build all assets (CSS and JS)"
+	@echo "  build        - Build the server binary (includes assets)"
 	@echo "  clean        - Remove build artifacts"
+	@echo "  css          - Compile TailwindCSS"
 	@echo "  dev          - Start development server (auto-starts services if needed)"
 	@echo "  dev-down     - Stop docker-compose services"
 	@echo "  dev-services - Start docker-compose services"
 	@echo "  generate     - Generate all code (templ, mocks, SQL)"
 	@echo "  help         - Show this help message"
+	@echo "  js           - Bundle JavaScript with esbuild"
 	@echo "  lint         - Run linters"
 	@echo "  mocks        - Generate mocks from interfaces"
 	@echo "  sqlc         - Generate type-safe SQL code"
 	@echo "  templ        - Generate templ templates"
 	@echo "  test         - Run all tests"
 
-build: ## Build server binary
+assets: css js ## Build all assets (CSS and JS)
+
+build: generate assets ## Build server binary (includes code generation and assets)
 	@mkdir -p bin
 	go build -o bin/server ./cmd/server
 
 clean: ## Remove build artifacts
-	rm -rf bin/
+	rm -rf bin/ internal/assets/dist/
+
+css: ## Compile TailwindCSS with minification
+	@mkdir -p internal/assets/dist/css
+	npx tailwindcss -i internal/assets/web/css/app.css -o internal/assets/dist/css/app.css --minify
 
 dev: ## Start development server (auto-starts services if needed)
 	@trap 'echo "Stopping services..."; docker-compose down' EXIT INT TERM; \
@@ -39,6 +48,10 @@ dev-services: ## Start docker-compose services
 	docker-compose up -d
 
 generate: templ mocks sqlc ## Generate all code (templ, mocks, SQL)
+
+js: ## Bundle JavaScript with esbuild and minification
+	@mkdir -p internal/assets/dist/js
+	npx esbuild internal/assets/web/js/*.js --bundle --minify --outdir=internal/assets/dist/js/
 
 lint: ## Run linters
 	go tool golangci-lint run
