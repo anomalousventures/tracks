@@ -29,7 +29,9 @@ func CreateProjectDirectories(config ProjectConfig) error {
 		filepath.Join(projectRoot, "internal", "assets", "web", "css"),
 		filepath.Join(projectRoot, "internal", "assets", "web", "js"),
 		filepath.Join(projectRoot, "internal", "assets", "web", "images"),
-		filepath.Join(projectRoot, "internal", "assets", "dist"),
+		filepath.Join(projectRoot, "internal", "assets", "dist", "css"),
+		filepath.Join(projectRoot, "internal", "assets", "dist", "js"),
+		filepath.Join(projectRoot, "internal", "assets", "dist", "images"),
 	}
 
 	for _, dir := range directories {

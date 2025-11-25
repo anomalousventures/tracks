@@ -31,16 +31,29 @@ func TestMakefileTargets(t *testing.T) {
 		items []string
 	}{
 		{"phony declarations", []string{
-			".PHONY: build clean dev dev-down dev-services generate help lint mocks sqlc templ test",
+			".PHONY: assets build clean css dev dev-down dev-services generate help js lint mocks sqlc templ test",
 		}},
 		{"help target", []string{
 			"help: ## Show this help message",
 			"Available targets:",
 		}},
 		{"build target", []string{
-			"build: ## Build server binary",
+			"build: generate assets ## Build server binary (includes code generation and assets)",
 			"@mkdir -p bin",
 			"go build -o bin/server ./cmd/server",
+		}},
+		{"assets target", []string{
+			"assets: css js ## Build all assets (CSS and JS)",
+		}},
+		{"css target", []string{
+			"css: ## Compile TailwindCSS with minification",
+			"@mkdir -p internal/assets/dist/css",
+			"npx tailwindcss -i internal/assets/web/css/app.css -o internal/assets/dist/css/app.css --minify",
+		}},
+		{"js target", []string{
+			"js: ## Bundle JavaScript with esbuild and minification",
+			"@mkdir -p internal/assets/dist/js",
+			"npx esbuild internal/assets/web/js/*.js --bundle --minify --outdir=internal/assets/dist/js/",
 		}},
 		{"clean target", []string{
 			"clean: ## Remove build artifacts",
@@ -85,13 +98,16 @@ func TestMakefileHelpText(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
 	testutil.AssertContainsAll(t, result, []string{
-		"build        - Build the server binary",
+		"assets       - Build all assets (CSS and JS)",
+		"build        - Build the server binary (includes assets)",
 		"clean        - Remove build artifacts",
+		"css          - Compile TailwindCSS",
 		"dev          - Start development server (auto-starts services if needed)",
 		"dev-down     - Stop docker-compose services",
 		"dev-services - Start docker-compose services",
 		"generate     - Generate all code (templ, mocks, SQL)",
 		"help         - Show this help message",
+		"js           - Bundle JavaScript with esbuild",
 		"lint         - Run linters",
 		"mocks        - Generate mocks from interfaces",
 		"sqlc         - Generate type-safe SQL code",

@@ -90,11 +90,27 @@ func TestWebDirectoryStructure(t *testing.T) {
 		assert.False(t, info.IsDir(), ".gitkeep should be a file, not a directory")
 	})
 
-	t.Run("internal/assets/dist directory exists", func(t *testing.T) {
+	t.Run("internal/assets/dist directory structure exists", func(t *testing.T) {
 		distDir := filepath.Join(projectRoot, "internal", "assets", "dist")
 		info, err := os.Stat(distDir)
 		require.NoError(t, err, "internal/assets/dist/ directory should exist")
 		assert.True(t, info.IsDir(), "internal/assets/dist/ should be a directory")
+
+		// Check subdirectories
+		cssDir := filepath.Join(distDir, "css")
+		info, err = os.Stat(cssDir)
+		require.NoError(t, err, "internal/assets/dist/css/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/css/ should be a directory")
+
+		jsDir := filepath.Join(distDir, "js")
+		info, err = os.Stat(jsDir)
+		require.NoError(t, err, "internal/assets/dist/js/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/js/ should be a directory")
+
+		imagesDir := filepath.Join(distDir, "images")
+		info, err = os.Stat(imagesDir)
+		require.NoError(t, err, "internal/assets/dist/images/ directory should exist")
+		assert.True(t, info.IsDir(), "internal/assets/dist/images/ should be a directory")
 
 		gitkeep := filepath.Join(distDir, ".gitkeep")
 		info, err = os.Stat(gitkeep)
