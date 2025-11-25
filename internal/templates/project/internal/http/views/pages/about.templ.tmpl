@@ -3,13 +3,13 @@ package pages
 import "{{ .ModuleName }}/internal/http/views/layouts"
 
 templ aboutContent() {
-	<main>
-		<header>
-			<h1>About This Application</h1>
+	<main class="container-app py-8">
+		<header class="mb-8">
+			<h1 class="page-header">About This Application</h1>
 		</header>
-		<section>
-			<p>This application was generated using Tracks.</p>
-			<p>Edit this template at <code>internal/http/views/pages/about.templ</code> to customize your about page.</p>
+		<section class="card">
+			<p class="text-muted mb-4">This application was generated using Tracks.</p>
+			<p class="text-muted">Edit this template at <code class="bg-[var(--muted)] px-2 py-1 rounded text-sm">internal/http/views/pages/about.templ</code> to customize your about page.</p>
 		</section>
 	</main>
 }

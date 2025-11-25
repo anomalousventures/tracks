@@ -1,0 +1,5 @@
+package components
+
+templ HTMXConfig() {
+	<meta name="htmx-config" content={ `{"selfRequestsOnly":true,"inlineScriptNonce":"` + templ.GetNonce(ctx) + `","useTemplateFragments":true,"scrollBehavior":"smooth"}` }/>
+}

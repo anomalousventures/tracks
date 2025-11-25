@@ -47,17 +47,44 @@ func TestAppCSSTailwindV4Theme(t *testing.T) {
 	assert.Contains(t, result, "@theme {", "should use Tailwind v4 @theme directive")
 
 	themeVars := []string{
-		"--color-primary-50",
-		"--color-primary-100",
-		"--color-primary-500",
-		"--color-primary-900",
 		"--font-family-sans",
 		"--font-family-mono",
-		"--spacing-page",
+		"--radius-sm",
+		"--radius-md",
+		"--radius-lg",
 	}
 
 	for _, themeVar := range themeVars {
 		assert.Contains(t, result, themeVar, "should define theme variable: %s", themeVar)
+	}
+}
+
+func TestAppCSSTemplUIVariables(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{
+		ProjectName: "myapp",
+	}
+
+	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
+	require.NoError(t, err)
+
+	templUIVars := []string{
+		"--primary",
+		"--primary-foreground",
+		"--background",
+		"--foreground",
+		"--card",
+		"--card-foreground",
+		"--muted",
+		"--muted-foreground",
+		"--border",
+		"--ring",
+		"--radius",
+	}
+
+	for _, cssVar := range templUIVars {
+		assert.Contains(t, result, cssVar, "should define templUI CSS variable: %s", cssVar)
 	}
 }
 
@@ -117,8 +144,8 @@ func TestAppCSSDarkModeSupport(t *testing.T) {
 	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "@media (prefers-color-scheme: dark)", "should have dark mode support")
-	assert.Contains(t, result, "Dark mode support", "should document dark mode")
+	assert.Contains(t, result, "@media (prefers-color-scheme: dark)", "should have system dark mode support")
+	assert.Contains(t, result, ".dark {", "should have manual dark mode class support")
 }
 
 func TestAppCSSNoConfigFile(t *testing.T) {
@@ -135,7 +162,7 @@ func TestAppCSSNoConfigFile(t *testing.T) {
 	assert.NotContains(t, result, "module.exports", "should not have JavaScript config")
 }
 
-func TestAppCSSTailwindUtilities(t *testing.T) {
+func TestAppCSSUsesCustomProperties(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 
 	data := TemplateData{
@@ -145,19 +172,15 @@ func TestAppCSSTailwindUtilities(t *testing.T) {
 	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
 	require.NoError(t, err)
 
-	tailwindUtilities := []string{
-		"@apply",
-		"px-4",
-		"py-2",
-		"rounded-md",
-		"font-medium",
-		"transition-colors",
-		"bg-primary-500",
-		"text-white",
-		"hover:bg-primary-600",
+	customPropertyUsages := []string{
+		"var(--primary)",
+		"var(--background)",
+		"var(--foreground)",
+		"var(--border)",
+		"var(--radius",
 	}
 
-	for _, utility := range tailwindUtilities {
-		assert.Contains(t, result, utility, "should use Tailwind utility: %s", utility)
+	for _, usage := range customPropertyUsages {
+		assert.Contains(t, result, usage, "should use CSS custom property: %s", usage)
 	}
 }

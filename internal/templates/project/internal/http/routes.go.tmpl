@@ -16,14 +16,21 @@ func (s *Server) routes() {
 	s.router.Use(httpmiddleware.NewRequestLogger(s.logger))
 	s.router.Use(middleware.RealIP)
 	s.router.Use(httpmiddleware.NewRecoverer(s.logger))
+	s.router.Use(httpmiddleware.NewCSPMiddleware())
 
 	// TRACKS:API_ROUTES:BEGIN
 	s.router.Get(routes.APIHealth, s.handleHealthCheck())
 	// TRACKS:API_ROUTES:END
 
 	// TRACKS:WEB_ROUTES:BEGIN
-	s.router.Get(routes.Home, s.handleHome())
+	counterHandler := handlers.NewCounterHandler(s.logger)
+
+	s.router.Get(routes.Home, s.handleHome(counterHandler))
 	s.router.Get(routes.About, s.handleAbout())
+
+	s.router.Post(routes.CounterIncrement, counterHandler.Increment)
+	s.router.Post(routes.CounterDecrement, counterHandler.Decrement)
+	s.router.Post(routes.CounterReset, counterHandler.Reset)
 	// TRACKS:WEB_ROUTES:END
 
 	s.router.Group(func(r chi.Router) {
@@ -42,8 +49,8 @@ func (s *Server) handleHealthCheck() http.HandlerFunc {
 	return handler.Check
 }
 
-func (s *Server) handleHome() http.HandlerFunc {
-	handler := handlers.NewHomeHandler(s.logger)
+func (s *Server) handleHome(counter handlers.CountGetter) http.HandlerFunc {
+	handler := handlers.NewHomeHandler(s.logger, counter)
 	return handler.ServeHTTP
 }
 

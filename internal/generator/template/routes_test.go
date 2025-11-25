@@ -69,6 +69,19 @@ func TestRoutesSharedConstantsOnly(t *testing.T) {
 	assert.Contains(t, result, "Robots", "should define shared Robots constant")
 }
 
+func TestRoutesCounterConstants(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{}
+
+	result, err := renderer.Render("internal/http/routes/routes.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, result, `CounterIncrement = "/counter/increment"`, "should define CounterIncrement route")
+	assert.Contains(t, result, `CounterDecrement = "/counter/decrement"`, "should define CounterDecrement route")
+	assert.Contains(t, result, `CounterReset     = "/counter/reset"`, "should define CounterReset route")
+}
+
 func TestRoutesConstBlock(t *testing.T) {
 	renderer := NewRenderer(templates.FS)
 

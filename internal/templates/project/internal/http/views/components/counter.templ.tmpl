@@ -1,49 +1,43 @@
 package components
 
-import "fmt"
+import (
+	"fmt"
+
+	"{{ .ModuleName }}/internal/http/routes"
+)
 
 templ CounterPartial(count int) {
-	<div id="counter-display" class="counter-partial">
-		<p>Current count: <strong>{ fmt.Sprintf("%d", count) }</strong></p>
-		<div class="counter-controls">
+	<div id="counter-display" class="flex flex-col gap-4">
+		<p class="text-lg">Current count: <strong class="text-2xl font-bold">{ fmt.Sprintf("%d", count) }</strong></p>
+		<div class="flex gap-2 flex-wrap">
 			<button
-				hx-post="/examples/counter/increment"
+				type="button"
+				class="btn btn-primary"
+				hx-post={ routes.CounterIncrement }
 				hx-target="#counter-display"
 				hx-swap="outerHTML"
 			>
 				Increment
 			</button>
 			<button
-				hx-post="/examples/counter/decrement"
+				type="button"
+				class="btn btn-secondary"
+				hx-post={ routes.CounterDecrement }
 				hx-target="#counter-display"
 				hx-swap="outerHTML"
 			>
 				Decrement
 			</button>
 			<button
-				hx-post="/examples/counter/reset"
+				type="button"
+				class="btn btn-outline"
+				hx-post={ routes.CounterReset }
 				hx-target="#counter-display"
 				hx-swap="outerHTML"
 			>
 				Reset
 			</button>
 		</div>
-	</div>
-}
-
-templ CounterPage(count int) {
-	<div>
-		<h1>HTMX Partial Rendering Example</h1>
-		<p>
-			This counter demonstrates HTMX partial rendering patterns.
-			See the <a href="https://go-tracks.io/docs/htmx-patterns">HTMX Patterns Guide</a> { "for" } comprehensive documentation.
-		</p>
-
-		@CounterPartial(count)
-
-		<section id="notification-area">
-			<!-- OOB swap target for server notifications -->
-		</section>
 	</div>
 }
 

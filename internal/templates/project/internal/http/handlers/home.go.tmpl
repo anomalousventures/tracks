@@ -8,16 +8,23 @@ import (
 	"{{.ModuleName}}/internal/interfaces"
 )
 
-type HomeHandler struct {
-	logger interfaces.Logger
+type CountGetter interface {
+	GetCount() int
 }
 
-func NewHomeHandler(logger interfaces.Logger) *HomeHandler {
+type HomeHandler struct {
+	logger  interfaces.Logger
+	counter CountGetter
+}
+
+func NewHomeHandler(logger interfaces.Logger, counter CountGetter) *HomeHandler {
 	return &HomeHandler{
-		logger: logger,
+		logger:  logger,
+		counter: counter,
 	}
 }
 
 func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helpers.RenderPage(w, r, pages.HomePage(), pages.HomePagePartial(), h.logger)
+	count := h.counter.GetCount()
+	helpers.RenderPage(w, r, pages.HomePage(count), pages.HomePagePartial(count), h.logger)
 }

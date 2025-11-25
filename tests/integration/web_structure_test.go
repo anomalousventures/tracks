@@ -60,7 +60,7 @@ func TestWebDirectoryStructure(t *testing.T) {
 		assert.Contains(t, contentStr, "Tailwind CSS v4 entry point", "app.css should contain TailwindCSS v4 comment")
 		assert.Contains(t, contentStr, "@import \"tailwindcss\"", "app.css should use Tailwind v4 @import")
 		assert.Contains(t, contentStr, "@theme {", "app.css should use Tailwind v4 @theme directive")
-		assert.Contains(t, contentStr, "--color-primary-500", "app.css should define theme variables")
+		assert.Contains(t, contentStr, "--primary", "app.css should define templUI theme variables")
 	})
 
 	t.Run("internal/assets/web/js directory exists with app.js", func(t *testing.T) {
