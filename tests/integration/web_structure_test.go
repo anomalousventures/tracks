@@ -57,9 +57,10 @@ func TestWebDirectoryStructure(t *testing.T) {
 		require.NoError(t, err, "app.css should exist and be readable")
 
 		contentStr := string(content)
-		assert.Contains(t, contentStr, "Tailwind CSS entry point", "app.css should contain TailwindCSS comment")
-		assert.Contains(t, contentStr, "body {", "app.css should contain CSS body styles")
-		assert.Contains(t, contentStr, "font-family: system-ui", "app.css should contain font-family")
+		assert.Contains(t, contentStr, "Tailwind CSS v4 entry point", "app.css should contain TailwindCSS v4 comment")
+		assert.Contains(t, contentStr, "@import \"tailwindcss\"", "app.css should use Tailwind v4 @import")
+		assert.Contains(t, contentStr, "@theme {", "app.css should use Tailwind v4 @theme directive")
+		assert.Contains(t, contentStr, "--color-primary-500", "app.css should define theme variables")
 	})
 
 	t.Run("internal/assets/web/js directory exists with app.js", func(t *testing.T) {
@@ -73,9 +74,10 @@ func TestWebDirectoryStructure(t *testing.T) {
 		require.NoError(t, err, "app.js should exist and be readable")
 
 		contentStr := string(content)
-		assert.Contains(t, contentStr, "JavaScript entry point", "app.js should contain entry point comment")
-		assert.Contains(t, contentStr, "web-structure-test loaded", "app.js should contain project name in console.log")
-		assert.Contains(t, contentStr, "console.log", "app.js should contain console.log statement")
+		assert.Contains(t, contentStr, "Main JavaScript Application", "app.js should contain main application comment")
+		assert.Contains(t, contentStr, "name: 'web-structure-test'", "app.js should contain project name in App object")
+		assert.Contains(t, contentStr, "(function() {", "app.js should use IIFE pattern")
+		assert.Contains(t, contentStr, "const App = {", "app.js should define App object")
 	})
 
 	t.Run("internal/assets/web/images directory exists with .gitkeep", func(t *testing.T) {
@@ -125,16 +127,17 @@ func TestWebDirectoryStructure(t *testing.T) {
 
 		cssStr := string(cssContent)
 		assert.Contains(t, cssStr, "/*", "CSS should contain comment syntax")
-		assert.Contains(t, cssStr, "margin: 0;", "CSS should contain margin reset")
-		assert.Contains(t, cssStr, "padding: 0;", "CSS should contain padding reset")
+		assert.Contains(t, cssStr, "@layer components", "CSS should define component layer")
+		assert.Contains(t, cssStr, "@layer utilities", "CSS should define utilities layer")
 
 		appJS := filepath.Join(projectRoot, "internal", "assets", "web", "js", "app.js")
 		jsContent, err := os.ReadFile(appJS)
 		require.NoError(t, err)
 
 		jsStr := string(jsContent)
-		assert.Contains(t, jsStr, "//", "JavaScript should contain comment syntax")
-		assert.Contains(t, jsStr, "Phase 3", "JavaScript should mention future HTMX integration")
+		assert.Contains(t, jsStr, "/**", "JavaScript should contain JSDoc comment syntax")
+		assert.Contains(t, jsStr, "'use strict'", "JavaScript should use strict mode")
+		assert.Contains(t, jsStr, "setupEventListeners", "JavaScript should have event listener setup")
 	})
 }
 
@@ -190,8 +193,11 @@ func TestWebDirectoryWithDifferentProjectNames(t *testing.T) {
 			content, err := os.ReadFile(appJS)
 			require.NoError(t, err, "app.js should exist for project: %s", tc.projectName)
 
-			assert.Contains(t, string(content), tc.projectName+" loaded",
-				"app.js should contain correct project name in console.log")
+			contentStr := string(content)
+			assert.Contains(t, contentStr, "name: '"+tc.projectName+"'",
+				"app.js should contain correct project name in App object")
+			assert.Contains(t, contentStr, tc.projectName+" - Main JavaScript Application",
+				"app.js should contain correct project name in header comment")
 		})
 	}
 }
