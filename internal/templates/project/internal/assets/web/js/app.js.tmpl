@@ -17,17 +17,11 @@ window.htmx = htmx;
 (function() {
   'use strict';
 
-  /**
-   * Application state and configuration
-   */
   const App = {
     name: '{{.ProjectName}}',
     version: '1.0.0',
     debug: false,
 
-    /**
-     * Initialize the application
-     */
     init() {
       this.debug = this.isDevelopment();
       this.log('Initializing application...');
@@ -38,34 +32,22 @@ window.htmx = htmx;
       });
     },
 
-    /**
-     * Check if running in development mode
-     */
     isDevelopment() {
       return window.location.hostname === 'localhost' ||
              window.location.hostname === '127.0.0.1' ||
              window.location.hostname.endsWith('.local');
     },
 
-    /**
-     * Debug logging utility
-     */
     log(...args) {
       if (this.debug) {
         console.log(`[${this.name}]`, ...args);
       }
     },
 
-    /**
-     * Error logging utility
-     */
     error(...args) {
       console.error(`[${this.name}]`, ...args);
     },
 
-    /**
-     * Execute callback when DOM is ready
-     */
     onReady(callback) {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', callback);
@@ -74,9 +56,6 @@ window.htmx = htmx;
       }
     },
 
-    /**
-     * Setup global event listeners
-     */
     setupEventListeners() {
       this.log('Setting up event listeners...');
 
