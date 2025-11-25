@@ -3,23 +3,28 @@ package middleware
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
 	"github.com/a-h/templ"
 )
 
-func generateNonce() string {
+func generateNonce() (string, error) {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
-		panic("failed to generate nonce: " + err.Error())
+		return "", fmt.Errorf("failed to generate nonce: %w", err)
 	}
-	return base64.StdEncoding.EncodeToString(b)
+	return base64.StdEncoding.EncodeToString(b), nil
 }
 
 func NewCSPMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			nonce := generateNonce()
+			nonce, err := generateNonce()
+			if err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 			ctx := templ.WithNonce(r.Context(), nonce)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
