@@ -3,18 +3,35 @@ package assets
 import (
 	"embed"
 	"io/fs"
-	"net/http"
+
+	"github.com/benbjohnson/hashfs"
 )
 
 //go:embed all:dist
 var distFS embed.FS
 
-func FileSystem() http.FileSystem {
+var fsys *hashfs.FS
+
+func init() {
 	stripped, err := fs.Sub(distFS, "dist")
-	// Embedded files are baked into the binary at compile time.
-	// Failure here indicates build corruption, not a recoverable runtime error.
 	if err != nil {
 		panic("failed to create assets filesystem: " + err.Error())
 	}
-	return http.FS(stripped)
+	fsys = hashfs.NewFS(stripped)
+}
+
+func FileSystem() *hashfs.FS {
+	return fsys
+}
+
+func AssetURL(path string) string {
+	return fsys.HashName(path)
+}
+
+func CSSURL() string {
+	return AssetURL("css/app.css")
+}
+
+func JSURL() string {
+	return AssetURL("js/app.js")
 }

@@ -97,12 +97,13 @@ test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 	@cd /tmp && $(CURDIR)/bin/tracks new testapp-e2e --db=sqlite3 --module=github.com/test/app || true
 	@cd /tmp/testapp-e2e && make test
 	@echo "Starting dev server..."
-	@cd /tmp/testapp-e2e && mkdir -p data && APP_SERVER_PORT=:18080 APP_DATABASE_URL=file:./data/test.db make dev &
-	@sleep 3
-	@curl -f http://localhost:18080/api/health || (echo "Health check failed" && exit 1)
+	@cd /tmp/testapp-e2e && mkdir -p data && nohup bash -c 'APP_SERVER_PORT=:18080 APP_DATABASE_URL=file:./data/test.db make dev' > /tmp/testapp-e2e.log 2>&1 &
+	@sleep 4
+	@curl -sf http://localhost:18080/api/health || (cat /tmp/testapp-e2e.log && echo "Health check failed" && exit 1)
 	@echo "✅ E2E workflow test passed!"
-	@pkill -f "testapp-e2e.*make dev" || true
-	@rm -rf /tmp/testapp-e2e
+	@-pkill -f "air.*testapp-e2e" 2>/dev/null
+	@-pkill -f "/tmp/testapp-e2e/tmp/main" 2>/dev/null
+	@rm -rf /tmp/testapp-e2e /tmp/testapp-e2e.log 2>/dev/null || true
 
 # Use test-docker-local when:
 # - Testing Docker containerization (build, scan, run)
