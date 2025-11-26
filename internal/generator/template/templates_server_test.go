@@ -347,7 +347,7 @@ func TestHTTPRoutesHandleHealthCheckHelper(t *testing.T) {
 	output, err := renderer.Render("internal/http/routes.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, output, "func (s *Server) handleHealthCheck() http.HandlerFunc", "should have handleHealthCheck helper")
+	assert.Contains(t, output, "func (s *Server) handleHealthCheck() nethttp.HandlerFunc", "should have handleHealthCheck helper")
 	assert.Contains(t, output, "handler := handlers.NewHealthHandler(s.healthService, s.logger)", "should instantiate handler with service and logger")
 	assert.Contains(t, output, "return handler.Check", "should return handler method")
 }
@@ -388,6 +388,56 @@ func TestHTTPRoutesModuleNameInterpolation(t *testing.T) {
 			assert.Contains(t, output, expectedRoutesImport, "should interpolate module name in routes import")
 		})
 	}
+}
+
+func TestHTTPRoutesHashfsImport(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/routes.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, `"github.com/benbjohnson/hashfs"`, "should import hashfs package")
+}
+
+func TestHTTPRoutesNetHTTPImport(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/routes.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, `nethttp "net/http"`, "should import net/http with nethttp alias")
+}
+
+func TestHTTPRoutesAssetsImport(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/routes.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, `"github.com/example/testapp/internal/assets"`, "should import assets package")
+}
+
+func TestHTTPRoutesHashfsFileServer(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/routes.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, `s.router.Handle("/assets/*"`, "should register /assets/* route")
+	assert.Contains(t, output, `nethttp.StripPrefix("/assets/"`, "should strip /assets/ prefix using nethttp alias")
+	assert.Contains(t, output, `hashfs.FileServer(assets.FileSystem())`, "should use hashfs.FileServer with assets.FileSystem()")
 }
 
 // Server Test Template Tests (internal/http/server_test.go.tmpl)

@@ -3,6 +3,7 @@ package layouts
 import (
 	"time"
 
+	"{{.ModuleName}}/internal/assets"
 	"{{.ModuleName}}/internal/http/routes"
 	"{{.ModuleName}}/internal/http/views/components"
 )
@@ -15,9 +16,9 @@ templ Base(title, description string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
 			<meta name="description" content={ description }/>
-			<link rel="stylesheet" href="/assets/css/app.css"/>
+			<link rel="stylesheet" href={ "/assets/" + assets.CSSURL() }/>
 			@components.HTMXConfig()
-			<script src="/assets/js/app.js" nonce={ templ.GetNonce(ctx) } defer></script>
+			<script src={ "/assets/" + assets.JSURL() } nonce={ templ.GetNonce(ctx) } defer></script>
 		</head>
 		<body>
 			@components.Nav(components.NavProps{
