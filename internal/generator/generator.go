@@ -92,6 +92,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"Dockerfile.tmpl":                          "Dockerfile",
 		"sqlc.yaml.tmpl":                           "sqlc.yaml",
 		"docker-compose.yml.tmpl":                  "docker-compose.yml",
+		"package.json.tmpl":                        "package.json",
 		"internal/config/config.go.tmpl":           "internal/config/config.go",
 		"internal/interfaces/health.go.tmpl":       "internal/interfaces/health.go",
 		"internal/interfaces/logger.go.tmpl":       "internal/interfaces/logger.go",
@@ -109,25 +110,26 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/views/components/nav.templ.tmpl":      "internal/http/views/components/nav.templ",
 		"internal/http/views/components/footer.templ.tmpl":   "internal/http/views/components/footer.templ",
 		"internal/http/views/components/meta.templ.tmpl":     "internal/http/views/components/meta.templ",
-		"internal/http/views/components/counter.templ.tmpl":  "internal/http/views/components/counter.templ",
-		"internal/http/views/pages/home.templ.tmpl":          "internal/http/views/pages/home.templ",
-		"internal/http/views/pages/about.templ.tmpl":      "internal/http/views/pages/about.templ",
-		"internal/http/views/pages/error.templ.tmpl":      "internal/http/views/pages/error.templ",
+		"internal/http/views/components/counter.templ.tmpl":     "internal/http/views/components/counter.templ",
+		"internal/http/views/components/htmx_config.templ.tmpl": "internal/http/views/components/htmx_config.templ",
+		"internal/http/views/pages/home.templ.tmpl":           "internal/http/views/pages/home.templ",
+		"internal/http/views/pages/about.templ.tmpl":          "internal/http/views/pages/about.templ",
+		"internal/http/views/pages/error.templ.tmpl":          "internal/http/views/pages/error.templ",
 		"internal/http/middleware/logging.go.tmpl":        "internal/http/middleware/logging.go",
+		"internal/http/middleware/security.go.tmpl":       "internal/http/middleware/security.go",
 		"internal/db/db.go.tmpl":                        "internal/db/db.go",
 		"internal/db/queries/.gitkeep.tmpl":             "internal/db/queries/.gitkeep",
 		"internal/db/queries/health.sql.tmpl":           "internal/db/queries/health.sql",
 		"internal/assets/web/images/.gitkeep.tmpl":      "internal/assets/web/images/.gitkeep",
 		"internal/assets/web/css/app.css.tmpl":          "internal/assets/web/css/app.css",
+		"internal/assets/web/js/lib/htmx.js.tmpl":       "internal/assets/web/js/lib/htmx.js",
 		"internal/assets/web/js/app.js.tmpl":            "internal/assets/web/js/app.js",
 		"internal/assets/dist/.gitkeep.tmpl":            "internal/assets/dist/.gitkeep",
-		"internal/assets/dist/css/app.css.tmpl":         "internal/assets/dist/css/app.css",
-		"internal/assets/dist/js/app.js.tmpl":           "internal/assets/dist/js/app.js",
 		"internal/assets/dist/images/.gitkeep.tmpl":     "internal/assets/dist/images/.gitkeep",
 	}
 
 	postGenerateTemplates := map[string]string{
-		"cmd/server/main.go.tmpl":                      "cmd/server/main.go",
+		"cmd/server/main.go.tmpl":                       "cmd/server/main.go",
 		"internal/domain/health/repository.go.tmpl":    "internal/domain/health/repository.go",
 		"internal/http/server.go.tmpl":                 "internal/http/server.go",
 		"internal/http/routes.go.tmpl":                 "internal/http/routes.go",
@@ -135,6 +137,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/handlers/home.go.tmpl":          "internal/http/handlers/home.go",
 		"internal/http/handlers/about.go.tmpl":         "internal/http/handlers/about.go",
 		"internal/http/handlers/error.go.tmpl":         "internal/http/handlers/error.go",
+		"internal/http/handlers/counter.go.tmpl":       "internal/http/handlers/counter.go",
 	}
 
 	testTemplates := map[string]string{
@@ -212,6 +215,30 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		return fmt.Errorf("failed to generate mocks and SQL code: %w", err)
 	} else {
 		logger.Info().Msg("mocks and SQL code generated successfully")
+	}
+
+	logger.Info().Msg("installing npm dependencies")
+	npmInstallCmd := exec.CommandContext(ctx, "npm", "install")
+	npmInstallCmd.Dir = projectRoot
+	if output, err := npmInstallCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("npm install failed - assets may not be built")
+	} else {
+		logger.Info().Msg("npm dependencies installed")
+	}
+
+	logger.Info().Msg("building assets")
+	assetsCmd := exec.CommandContext(ctx, "make", "assets")
+	assetsCmd.Dir = projectRoot
+	if output, err := assetsCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("make assets failed - assets may not be built")
+	} else {
+		logger.Info().Msg("assets built successfully")
 	}
 
 	logger.Info().

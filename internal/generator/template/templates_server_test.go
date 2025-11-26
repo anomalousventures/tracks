@@ -321,7 +321,7 @@ func TestHTTPRoutesWebRoutesEmpty(t *testing.T) {
 	require.NotEqual(t, -1, webEnd, "should have web routes end marker")
 
 	section := output[webBegin:webEnd]
-	assert.Contains(t, section, "s.router.Get(routes.Home, s.handleHome())", "should register home route")
+	assert.Contains(t, section, "s.router.Get(routes.Home, s.handleHome(counterHandler))", "should register home route with counter")
 	assert.Contains(t, section, "s.router.Get(routes.About, s.handleAbout())", "should register about route")
 }
 

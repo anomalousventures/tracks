@@ -2,95 +2,60 @@ package handlers
 
 import (
 	"net/http"
+	"sync/atomic"
 
-	"{{.ModuleName}}/internal/http/helpers"
 	"{{.ModuleName}}/internal/http/views/components"
-	"{{.ModuleName}}/internal/http/views/layouts"
 	"{{.ModuleName}}/internal/interfaces"
-	"github.com/alexedwards/scs/v2"
 )
 
 type CounterHandler struct {
-	logger         interfaces.Logger
-	sessionManager *scs.SessionManager
+	logger interfaces.Logger
+	count  atomic.Int64
 }
 
-func NewCounterHandler(logger interfaces.Logger, sm *scs.SessionManager) *CounterHandler {
+func NewCounterHandler(logger interfaces.Logger) *CounterHandler {
 	return &CounterHandler{
-		logger:         logger,
-		sessionManager: sm,
+		logger: logger,
 	}
 }
 
-func (h *CounterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	count := h.sessionManager.GetInt(r.Context(), "counter")
-
-	fullPage := layouts.Base("Counter Example", "HTMX partial rendering demonstration") {
-		@components.CounterPage(count)
-	}
-	partial := components.CounterPartial(count)
-
-	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+func (h *CounterHandler) GetCount() int {
+	return int(h.count.Load())
 }
 
 func (h *CounterHandler) Increment(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	count := h.sessionManager.GetInt(ctx, "counter")
-	count++
-	h.sessionManager.Put(ctx, "counter", count)
-
-	fullPage := layouts.Base("Counter", "Counter incremented") {
-		@components.CounterPage(count)
-	}
-	partial := components.CounterPartial(count)
-
-	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+	count := int(h.count.Add(1))
+	h.renderPartial(w, r, count)
 }
 
 func (h *CounterHandler) Decrement(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	count := h.sessionManager.GetInt(ctx, "counter")
-	count--
-	h.sessionManager.Put(ctx, "counter", count)
-
-	fullPage := layouts.Base("Counter", "Counter decremented") {
-		@components.CounterPage(count)
-	}
-	partial := components.CounterPartial(count)
-
-	helpers.RenderPage(w, r, fullPage, partial, h.logger)
+	count := int(h.count.Add(-1))
+	h.renderPartial(w, r, count)
 }
 
 func (h *CounterHandler) Reset(w http.ResponseWriter, r *http.Request) {
+	h.count.Store(0)
 	ctx := r.Context()
-	h.sessionManager.Put(ctx, "counter", 0)
-
-	// OOB swaps require manual composition to include multiple elements in response
-	if helpers.IsHTMXRequest(r) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-		if err := components.CounterPartial(0).Render(ctx, w); err != nil {
-			h.logger.Error(ctx).Err(err).Msg("failed to render counter partial")
-			helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to render counter", h.logger)
-			return
-		}
-
-		if err := components.NotificationOOB("Counter reset to 0", "success").Render(ctx, w); err != nil {
-			h.logger.Error(ctx).Err(err).Msg("failed to render notification")
-			// Notification is non-critical, don't fail the whole response
-			return
-		}
-		return
-	}
-
-	fullPage := layouts.Base("Counter", "Counter reset") {
-		@components.CounterPage(0)
-	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := fullPage.Render(ctx, w); err != nil {
-		h.logger.Error(ctx).Err(err).Msg("failed to render template")
-		helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to render page", h.logger)
+
+	if err := components.CounterPartial(0).Render(ctx, w); err != nil {
+		h.logger.Error(ctx).Err(err).Msg("failed to render counter partial")
+		http.Error(w, "Failed to render counter", http.StatusInternalServerError)
 		return
+	}
+
+	if err := components.NotificationOOB("Counter reset to 0", "success").Render(ctx, w); err != nil {
+		h.logger.Error(ctx).Err(err).Msg("failed to render notification")
+	}
+}
+
+func (h *CounterHandler) renderPartial(w http.ResponseWriter, r *http.Request, count int) {
+	ctx := r.Context()
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	if err := components.CounterPartial(count).Render(ctx, w); err != nil {
+		h.logger.Error(ctx).Err(err).Msg("failed to render counter partial")
+		http.Error(w, "Failed to render counter", http.StatusInternalServerError)
 	}
 }

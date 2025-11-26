@@ -5,14 +5,10 @@
  * It will be bundled by esbuild and minified for production.
  */
 
-// Import HTMX and extensions
-import htmx from 'htmx.org';
+import './lib/htmx.js';
 import 'htmx-ext-head-support';
 import 'idiomorph';
 import 'htmx-ext-response-targets';
-
-// Make HTMX globally available
-window.htmx = htmx;
 
 (function() {
   'use strict';

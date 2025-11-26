@@ -93,15 +93,16 @@ test-all: test test-integration ## Run all tests
 # - Quick local validation before pushing changes
 test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 	@echo "Testing E2E workflow for sqlite3..."
-	@./bin/tracks new testapp-e2e --db=sqlite3 --module=github.com/test/app || true
-	@cd testapp-e2e && make test
+	@rm -rf /tmp/testapp-e2e
+	@cd /tmp && $(CURDIR)/bin/tracks new testapp-e2e --db=sqlite3 --module=github.com/test/app || true
+	@cd /tmp/testapp-e2e && make test
 	@echo "Starting dev server..."
-	@cd testapp-e2e && mkdir -p data && APP_SERVER_PORT=:18080 APP_DATABASE_URL=file:./data/test.db make dev &
+	@cd /tmp/testapp-e2e && mkdir -p data && APP_SERVER_PORT=:18080 APP_DATABASE_URL=file:./data/test.db make dev &
 	@sleep 3
 	@curl -f http://localhost:18080/api/health || (echo "Health check failed" && exit 1)
 	@echo "✅ E2E workflow test passed!"
 	@pkill -f "testapp-e2e.*make dev" || true
-	@rm -rf testapp-e2e
+	@rm -rf /tmp/testapp-e2e
 
 # Use test-docker-local when:
 # - Testing Docker containerization (build, scan, run)
@@ -109,8 +110,9 @@ test-e2e-local: ## Test E2E workflow locally (mimics CI e2e-workflow job)
 # - Testing production-like deployment before pushing
 test-docker-local: ## Test Docker workflow locally (mimics CI docker-workflow job)
 	@echo "Testing Docker workflow for sqlite3..."
-	@./bin/tracks new testapp-docker --db=sqlite3 --module=github.com/test/app || true
-	@cd testapp-docker && docker build -t testapp-docker:test .
+	@rm -rf /tmp/testapp-docker
+	@cd /tmp && $(CURDIR)/bin/tracks new testapp-docker --db=sqlite3 --module=github.com/test/app || true
+	@cd /tmp/testapp-docker && docker build -t testapp-docker:test .
 	@echo "Running Trivy scan..."
 	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity CRITICAL,HIGH --exit-code 0 testapp-docker:test
 	@echo "Starting container..."
@@ -121,13 +123,13 @@ test-docker-local: ## Test Docker workflow locally (mimics CI docker-workflow jo
 	@docker stop testapp-docker || true
 	@docker rm testapp-docker || true
 	@docker rmi testapp-docker:test || true
-	@rm -rf testapp-docker
+	@rm -rf /tmp/testapp-docker
 
 test-gen-app: ## Generate a test application in /tmp/testapp
 	@echo "Generating test application..."
 	@$(MAKE) build
 	@rm -rf /tmp/testapp
-	@./bin/tracks new testapp --module example.com/testapp --db sqlite3 --no-git
+	@cd /tmp && $(CURDIR)/bin/tracks new testapp --module example.com/testapp --db sqlite3 --no-git
 	@echo "✅ Test app generated at /tmp/testapp"
 
 test-gen-app-clean: ## Clean up test application

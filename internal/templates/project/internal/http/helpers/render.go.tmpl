@@ -12,11 +12,15 @@ func IsHTMXRequest(r *http.Request) bool {
 	return r.Header.Get("HX-Request") == "true"
 }
 
+func IsBoostedRequest(r *http.Request) bool {
+	return r.Header.Get("HX-Boosted") == "true"
+}
+
 func RenderPage(w http.ResponseWriter, r *http.Request, full templ.Component, partial templ.Component, logger interfaces.Logger) {
 	ctx := r.Context()
 
 	component := full
-	if partial != nil && IsHTMXRequest(r) {
+	if partial != nil && IsHTMXRequest(r) && !IsBoostedRequest(r) {
 		component = partial
 	}
 

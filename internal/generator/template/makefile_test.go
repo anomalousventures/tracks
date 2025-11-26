@@ -48,7 +48,7 @@ func TestMakefileTargets(t *testing.T) {
 		{"css target", []string{
 			"css: ## Compile TailwindCSS with minification",
 			"@mkdir -p internal/assets/dist/css",
-			"npx tailwindcss -i internal/assets/web/css/app.css -o internal/assets/dist/css/app.css --minify",
+			"npx @tailwindcss/cli -i internal/assets/web/css/app.css -o internal/assets/dist/css/app.css --minify",
 		}},
 		{"js target", []string{
 			"js: ## Bundle JavaScript with esbuild and minification",

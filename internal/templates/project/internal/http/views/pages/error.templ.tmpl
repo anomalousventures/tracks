@@ -8,13 +8,13 @@ import (
 
 templ ErrorPage(statusCode int, message string) {
 	@layouts.Base("Error", "An error occurred") {
-		<main>
+		<div>
 			<header>
 				<h1>Error { fmt.Sprintf("%d", statusCode) }</h1>
 			</header>
 			<section>
 				<p>{ message }</p>
 			</section>
-		</main>
+		</div>
 	}
 }

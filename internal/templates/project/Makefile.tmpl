@@ -29,7 +29,7 @@ clean: ## Remove build artifacts
 
 css: ## Compile TailwindCSS with minification
 	@mkdir -p internal/assets/dist/css
-	npx tailwindcss -i internal/assets/web/css/app.css -o internal/assets/dist/css/app.css --minify
+	npx @tailwindcss/cli -i internal/assets/web/css/app.css -o internal/assets/dist/css/app.css --minify
 
 dev: ## Start development server (auto-starts services if needed)
 	@trap 'echo "Stopping services..."; docker-compose down' EXIT INT TERM; \

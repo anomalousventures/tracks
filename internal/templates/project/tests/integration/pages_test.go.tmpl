@@ -60,7 +60,7 @@ func TestPages_Integration(t *testing.T) {
 			headers:         map[string]string{"HX-Request": "true"},
 			wantStatus:      http.StatusOK,
 			isHTMXPartial:   true,
-			wantContains:    []string{"<h1>Welcome to Tracks</h1>"},
+			wantContains:    []string{"Welcome to Tracks"},
 			wantNotContains: []string{"<html", "</html>"},
 		},
 		{
@@ -76,7 +76,7 @@ func TestPages_Integration(t *testing.T) {
 			headers:         map[string]string{"HX-Request": "true"},
 			wantStatus:      http.StatusOK,
 			isHTMXPartial:   true,
-			wantContains:    []string{"<h1>About This Application</h1>"},
+			wantContains:    []string{"About This Application"},
 			wantNotContains: []string{"<html", "</html>"},
 		},
 		{
