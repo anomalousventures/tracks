@@ -267,13 +267,27 @@ func TestHTTPRoutesMiddlewareOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	requestIDIdx := strings.Index(output, "middleware.RequestID")
+	compressIdx := strings.Index(output, "httpmiddleware.NewCompressMiddleware()")
 	loggerIdx := strings.Index(output, "httpmiddleware.NewRequestLogger(s.logger)")
 	realIPIdx := strings.Index(output, "middleware.RealIP")
 	recovererIdx := strings.Index(output, "httpmiddleware.NewRecoverer(s.logger)")
 
-	assert.Greater(t, loggerIdx, requestIDIdx, "RequestLogger should come after RequestID")
+	assert.Greater(t, compressIdx, requestIDIdx, "Compress should come after RequestID")
+	assert.Greater(t, loggerIdx, compressIdx, "RequestLogger should come after Compress")
 	assert.Greater(t, realIPIdx, loggerIdx, "RealIP should come after RequestLogger")
 	assert.Greater(t, recovererIdx, realIPIdx, "Recoverer should come after RealIP")
+}
+
+func TestHTTPRoutesCompressMiddleware(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+	data := TemplateData{
+		ModuleName: "github.com/example/testapp",
+	}
+
+	output, err := renderer.Render("internal/http/routes.go.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, output, "httpmiddleware.NewCompressMiddleware()", "should use compress middleware")
 }
 
 func TestHTTPRoutesMarkerSections(t *testing.T) {
