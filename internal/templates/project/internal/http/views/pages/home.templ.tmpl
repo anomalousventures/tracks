@@ -15,15 +15,8 @@ templ homeContent(count int) {
 			<p class="text-muted mb-4">Edit this template at <code class="bg-[var(--muted)] px-2 py-1 rounded text-sm">internal/http/views/pages/home.templ</code> to customize your homepage.</p>
 			<p class="text-muted">Learn more at <a href="https://go-tracks.io" target="_blank" rel="noopener noreferrer" class="link">go-tracks.io</a></p>
 		</section>
-		<article class="card">
-			<h2 class="text-xl font-semibold mb-4">HTMX Counter Example</h2>
-			<p class="text-muted mb-4">
-				This counter demonstrates HTMX partial rendering with server-side state.
-				Click the buttons to see instant updates without page reloads.
-			</p>
-			@components.CounterPartial(count)
-			<aside id="notification-area" aria-live="polite"></aside>
-		</article>
+		@components.CounterPartial(count)
+		<aside id="notification-area" aria-live="polite"></aside>
 	</main>
 }
 

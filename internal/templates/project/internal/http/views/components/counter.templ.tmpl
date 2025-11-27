@@ -4,41 +4,61 @@ import (
 	"fmt"
 
 	"{{ .ModuleName }}/internal/http/routes"
+	"{{ .ModuleName }}/internal/http/views/components/ui/button"
+	"{{ .ModuleName }}/internal/http/views/components/ui/card"
 )
 
 templ CounterPartial(count int) {
-	<div id="counter-display" class="flex flex-col gap-4">
-		<p class="text-lg">Current count: <strong class="text-2xl font-bold">{ fmt.Sprintf("%d", count) }</strong></p>
-		<div class="flex gap-2 flex-wrap">
-			<button
-				type="button"
-				class="btn btn-primary"
-				hx-post={ routes.CounterIncrement }
-				hx-target="#counter-display"
-				hx-swap="outerHTML"
-			>
-				Increment
-			</button>
-			<button
-				type="button"
-				class="btn btn-secondary"
-				hx-post={ routes.CounterDecrement }
-				hx-target="#counter-display"
-				hx-swap="outerHTML"
-			>
-				Decrement
-			</button>
-			<button
-				type="button"
-				class="btn btn-outline"
-				hx-post={ routes.CounterReset }
-				hx-target="#counter-display"
-				hx-swap="outerHTML"
-			>
-				Reset
-			</button>
-		</div>
-	</div>
+	@card.Card() {
+		@card.Header() {
+			@card.Title() {
+				HTMX Counter Example
+			}
+			@card.Description() {
+				This counter demonstrates HTMX partial rendering with server-side state.
+				Click the buttons to see instant updates without page reloads.
+			}
+		}
+		@card.Content() {
+			<div id="counter-display" class="flex flex-col gap-4">
+				<p class="text-lg">Current count: <strong class="text-2xl font-bold">{ fmt.Sprintf("%d", count) }</strong></p>
+				<div class="flex gap-2 flex-wrap">
+					@button.Button(button.Props{
+						Type: button.TypeButton,
+						Attributes: templ.Attributes{
+							"hx-post":   routes.CounterIncrement,
+							"hx-target": "#counter-display",
+							"hx-swap":   "outerHTML",
+						},
+					}) {
+						Increment
+					}
+					@button.Button(button.Props{
+						Variant: button.VariantSecondary,
+						Type:    button.TypeButton,
+						Attributes: templ.Attributes{
+							"hx-post":   routes.CounterDecrement,
+							"hx-target": "#counter-display",
+							"hx-swap":   "outerHTML",
+						},
+					}) {
+						Decrement
+					}
+					@button.Button(button.Props{
+						Variant: button.VariantOutline,
+						Type:    button.TypeButton,
+						Attributes: templ.Attributes{
+							"hx-post":   routes.CounterReset,
+							"hx-target": "#counter-display",
+							"hx-swap":   "outerHTML",
+						},
+					}) {
+						Reset
+					}
+				</div>
+			</div>
+		}
+	}
 }
 
 templ NotificationOOB(message string, messageType string) {
