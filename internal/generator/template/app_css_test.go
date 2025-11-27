@@ -44,14 +44,17 @@ func TestAppCSSTailwindV4Theme(t *testing.T) {
 	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "@theme {", "should use Tailwind v4 @theme directive")
+	assert.Contains(t, result, "@theme inline {", "should use Tailwind v4 @theme inline directive")
 
 	themeVars := []string{
-		"--font-family-sans",
-		"--font-family-mono",
+		"--breakpoint-3xl",
+		"--breakpoint-4xl",
 		"--radius-sm",
 		"--radius-md",
 		"--radius-lg",
+		"--color-background",
+		"--color-foreground",
+		"--color-primary",
 	}
 
 	for _, themeVar := range themeVars {
@@ -133,7 +136,7 @@ func TestAppCSSDarkModeSupport(t *testing.T) {
 	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, result, "@media (prefers-color-scheme: dark)", "should have system dark mode support")
+	assert.Contains(t, result, "@custom-variant dark", "should have custom dark variant")
 	assert.Contains(t, result, ".dark {", "should have manual dark mode class support")
 }
 
@@ -193,4 +196,20 @@ func TestAppCSSTemplUIAnimationKeyframes(t *testing.T) {
 	for _, keyframe := range keyframes {
 		assert.Contains(t, result, keyframe, "should define templUI animation keyframe: %s", keyframe)
 	}
+}
+
+func TestAppCSSBaseLayerStyles(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{
+		ProjectName: "myapp",
+	}
+
+	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
+	require.NoError(t, err)
+
+	assert.Contains(t, result, "@layer base {", "should have base layer")
+	assert.Contains(t, result, "@apply border-border", "should apply border-border to all elements")
+	assert.Contains(t, result, "::selection", "should style text selection")
+	assert.Contains(t, result, "@apply bg-background text-foreground", "should apply background and foreground to body")
 }
