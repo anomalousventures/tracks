@@ -31,6 +31,8 @@ const sidebars = {
         'guides/troubleshooting-routing',
         'guides/patterns',
         'guides/testing',
+        'guides/development-workflow',
+        'guides/caching',
       ],
     },
     {
