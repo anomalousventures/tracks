@@ -100,16 +100,8 @@ func TestAppCSSComponentLayer(t *testing.T) {
 
 	assert.Contains(t, result, "@layer components {", "should have components layer")
 
-	components := []string{
-		".btn",
-		".btn-primary",
-		".btn-secondary",
-		".card",
-	}
-
-	for _, component := range components {
-		assert.Contains(t, result, component, "should define component: %s", component)
-	}
+	// templUI provides .btn and .card classes, so we don't define them here
+	assert.Contains(t, result, "templUI provides .btn and .card classes", "should note that templUI provides component classes")
 }
 
 func TestAppCSSUtilitiesLayer(t *testing.T) {
@@ -176,11 +168,32 @@ func TestAppCSSUsesCustomProperties(t *testing.T) {
 		"var(--primary)",
 		"var(--background)",
 		"var(--foreground)",
-		"var(--border)",
 		"var(--radius",
 	}
 
 	for _, usage := range customPropertyUsages {
 		assert.Contains(t, result, usage, "should use CSS custom property: %s", usage)
+	}
+}
+
+func TestAppCSSTemplUIAnimationKeyframes(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	data := TemplateData{
+		ProjectName: "myapp",
+	}
+
+	result, err := renderer.Render("internal/assets/web/css/app.css.tmpl", data)
+	require.NoError(t, err)
+
+	keyframes := []string{
+		"@keyframes spin",
+		"@keyframes pulse",
+		"@keyframes accordion-down",
+		"@keyframes accordion-up",
+	}
+
+	for _, keyframe := range keyframes {
+		assert.Contains(t, result, keyframe, "should define templUI animation keyframe: %s", keyframe)
 	}
 }
