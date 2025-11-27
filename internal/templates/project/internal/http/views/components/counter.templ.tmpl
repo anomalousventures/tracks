@@ -8,7 +8,47 @@ import (
 	"{{ .ModuleName }}/internal/http/views/components/ui/card"
 )
 
-templ CounterPartial(count int) {
+templ CounterDisplay(count int) {
+	<div id="counter-display" class="flex flex-col gap-4">
+		<p class="text-lg">Current count: <strong class="text-2xl font-bold">{ fmt.Sprintf("%d", count) }</strong></p>
+		<div class="flex gap-2 flex-wrap">
+			@button.Button(button.Props{
+				Type: button.TypeButton,
+				Attributes: templ.Attributes{
+					"hx-post":   routes.CounterIncrement,
+					"hx-target": "#counter-display",
+					"hx-swap":   "outerHTML transition:false",
+				},
+			}) {
+				Increment
+			}
+			@button.Button(button.Props{
+				Variant: button.VariantSecondary,
+				Type:    button.TypeButton,
+				Attributes: templ.Attributes{
+					"hx-post":   routes.CounterDecrement,
+					"hx-target": "#counter-display",
+					"hx-swap":   "outerHTML transition:false",
+				},
+			}) {
+				Decrement
+			}
+			@button.Button(button.Props{
+				Variant: button.VariantOutline,
+				Type:    button.TypeButton,
+				Attributes: templ.Attributes{
+					"hx-post":   routes.CounterReset,
+					"hx-target": "#counter-display",
+					"hx-swap":   "outerHTML transition:false",
+				},
+			}) {
+				Reset
+			}
+		</div>
+	</div>
+}
+
+templ CounterCard(count int) {
 	@card.Card() {
 		@card.Header() {
 			@card.Title() {
@@ -20,43 +60,7 @@ templ CounterPartial(count int) {
 			}
 		}
 		@card.Content() {
-			<div id="counter-display" class="flex flex-col gap-4">
-				<p class="text-lg">Current count: <strong class="text-2xl font-bold">{ fmt.Sprintf("%d", count) }</strong></p>
-				<div class="flex gap-2 flex-wrap">
-					@button.Button(button.Props{
-						Type: button.TypeButton,
-						Attributes: templ.Attributes{
-							"hx-post":   routes.CounterIncrement,
-							"hx-target": "#counter-display",
-							"hx-swap":   "outerHTML",
-						},
-					}) {
-						Increment
-					}
-					@button.Button(button.Props{
-						Variant: button.VariantSecondary,
-						Type:    button.TypeButton,
-						Attributes: templ.Attributes{
-							"hx-post":   routes.CounterDecrement,
-							"hx-target": "#counter-display",
-							"hx-swap":   "outerHTML",
-						},
-					}) {
-						Decrement
-					}
-					@button.Button(button.Props{
-						Variant: button.VariantOutline,
-						Type:    button.TypeButton,
-						Attributes: templ.Attributes{
-							"hx-post":   routes.CounterReset,
-							"hx-target": "#counter-display",
-							"hx-swap":   "outerHTML",
-						},
-					}) {
-						Reset
-					}
-				</div>
-			</div>
+			@CounterDisplay(count)
 		}
 	}
 }

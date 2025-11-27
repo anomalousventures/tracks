@@ -12,7 +12,7 @@ import (
 	"{{.ModuleName}}/internal/http/routes"
 )
 
-func TestCounterPartial(t *testing.T) {
+func TestCounterDisplay(t *testing.T) {
 	tests := []struct {
 		name       string
 		count      int
@@ -45,7 +45,7 @@ func TestCounterPartial(t *testing.T) {
 
 				hxSwap, exists := incrementBtn.Attr("hx-swap")
 				assert.True(t, exists, "increment button should have hx-swap attribute")
-				assert.Equal(t, "outerHTML", hxSwap, "increment button should use outerHTML swap")
+				assert.Equal(t, "outerHTML transition:false", hxSwap, "increment button should use outerHTML swap without transition")
 
 				decrementBtn := doc.Find("button").FilterFunction(func(i int, s *goquery.Selection) bool {
 					return s.Text() == "Decrement"
@@ -92,7 +92,7 @@ func TestCounterPartial(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			err := CounterPartial(tt.count).Render(context.Background(), &buf)
+			err := CounterDisplay(tt.count).Render(context.Background(), &buf)
 			require.NoError(t, err, "component should render without error")
 
 			doc, err := goquery.NewDocumentFromReader(&buf)
@@ -166,7 +166,7 @@ func TestNotificationOOB(t *testing.T) {
 func TestCounter_HTMXAttributeValidation(t *testing.T) {
 	count := 0
 	var buf bytes.Buffer
-	err := CounterPartial(count).Render(context.Background(), &buf)
+	err := CounterDisplay(count).Render(context.Background(), &buf)
 	require.NoError(t, err, "component should render without error")
 
 	doc, err := goquery.NewDocumentFromReader(&buf)
@@ -178,9 +178,9 @@ func TestCounter_HTMXAttributeValidation(t *testing.T) {
 		hxTarget string
 		hxSwap   string
 	}{
-		{"Increment", routes.CounterIncrement, "#counter-display", "outerHTML"},
-		{"Decrement", routes.CounterDecrement, "#counter-display", "outerHTML"},
-		{"Reset", routes.CounterReset, "#counter-display", "outerHTML"},
+		{"Increment", routes.CounterIncrement, "#counter-display", "outerHTML transition:false"},
+		{"Decrement", routes.CounterDecrement, "#counter-display", "outerHTML transition:false"},
+		{"Reset", routes.CounterReset, "#counter-display", "outerHTML transition:false"},
 	}
 
 	for _, expected := range expectedButtons {
