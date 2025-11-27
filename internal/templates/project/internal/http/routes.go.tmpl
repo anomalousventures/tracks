@@ -42,7 +42,7 @@ func (s *Server) routes() {
 
 	s.router.NotFound(s.handleError())
 
-	s.router.Handle("/assets/*", nethttp.StripPrefix("/assets/", hashfs.FileServer(assets.FileSystem())))
+	s.router.Handle("/assets/*", httpmiddleware.NewCacheMiddleware()(nethttp.StripPrefix("/assets/", hashfs.FileServer(assets.FileSystem()))))
 }
 
 func (s *Server) handleHealthCheck() nethttp.HandlerFunc {

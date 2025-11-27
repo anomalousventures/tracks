@@ -1,0 +1,19 @@
+package middleware
+
+import (
+	"net/http"
+	"regexp"
+)
+
+var hashPattern = regexp.MustCompile(`\.[a-f0-9]{8,}\.[^.]+$`)
+
+func NewCacheMiddleware() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if hashPattern.MatchString(r.URL.Path) {
+				w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
