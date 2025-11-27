@@ -82,6 +82,20 @@ make mocks     # Generate mocks from interfaces
 make sqlc      # Generate type-safe SQL code
 ```
 
+## Development Workflow
+
+The `make dev` command uses [Air](https://github.com/air-verse/air) for live reload:
+
+- **Auto-rebuild on file changes** - Watches `.go`, `.templ`, `.css`, `.js` files
+- **Asset pipeline integration** - Rebuilds CSS/JS before Go compilation
+- **Generated file exclusion** - Ignores `*_templ.go` and `internal/assets/dist/`
+
+```bash
+make dev    # Start development server with live reload
+```
+
+See the [Development Workflow Guide](https://go-tracks.io/docs/guides/development-workflow) for details.
+
 ## Docker
 
 ### Building the Docker Image
