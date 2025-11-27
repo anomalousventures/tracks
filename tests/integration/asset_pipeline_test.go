@@ -47,8 +47,8 @@ func TestAssetPipeline(t *testing.T) {
 
 		assert.Contains(t, cssStr, "@import \"tailwindcss\"",
 			"source CSS should use Tailwind v4 @import syntax")
-		assert.Contains(t, cssStr, "@theme {",
-			"source CSS should contain @theme directive for Tailwind v4")
+		assert.Contains(t, cssStr, "@theme inline {",
+			"source CSS should contain @theme inline directive for templUI")
 		assert.Contains(t, cssStr, ":root {",
 			"source CSS should define CSS custom properties in :root")
 		assert.Contains(t, cssStr, "--primary",

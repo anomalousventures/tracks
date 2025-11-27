@@ -128,6 +128,8 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/assets/web/js/app.js.tmpl":            "internal/assets/web/js/app.js",
 		"internal/assets/dist/.gitkeep.tmpl":            "internal/assets/dist/.gitkeep",
 		"internal/assets/dist/images/.gitkeep.tmpl":     "internal/assets/dist/images/.gitkeep",
+		"internal/assets/dist/css/app.css.tmpl":         "internal/assets/dist/css/app.css",
+		"internal/assets/dist/js/app.js.tmpl":           "internal/assets/dist/js/app.js",
 	}
 
 	postGenerateTemplates := map[string]string{

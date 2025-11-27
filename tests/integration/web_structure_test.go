@@ -59,7 +59,7 @@ func TestWebDirectoryStructure(t *testing.T) {
 		contentStr := string(content)
 		assert.Contains(t, contentStr, "Tailwind CSS v4 entry point", "app.css should contain TailwindCSS v4 comment")
 		assert.Contains(t, contentStr, "@import \"tailwindcss\"", "app.css should use Tailwind v4 @import")
-		assert.Contains(t, contentStr, "@theme {", "app.css should use Tailwind v4 @theme directive")
+		assert.Contains(t, contentStr, "@theme inline {", "app.css should use @theme inline directive for templUI")
 		assert.Contains(t, contentStr, "--primary", "app.css should define templUI theme variables")
 	})
 
