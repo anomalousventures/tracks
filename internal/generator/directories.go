@@ -20,6 +20,8 @@ func CreateProjectDirectories(config ProjectConfig) error {
 		filepath.Join(projectRoot, "internal", "http", "views", "layouts"),
 		filepath.Join(projectRoot, "internal", "http", "views", "pages"),
 		filepath.Join(projectRoot, "internal", "http", "views", "components"),
+		filepath.Join(projectRoot, "internal", "http", "views", "components", "ui"),
+		filepath.Join(projectRoot, "internal", "http", "views", "components", "utils"),
 		filepath.Join(projectRoot, "internal", "db", "migrations", "sqlite"),
 		filepath.Join(projectRoot, "internal", "db", "migrations", "postgres"),
 		filepath.Join(projectRoot, "internal", "db", "queries"),
