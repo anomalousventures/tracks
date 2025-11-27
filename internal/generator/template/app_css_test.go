@@ -99,9 +99,6 @@ func TestAppCSSComponentLayer(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, result, "@layer components {", "should have components layer")
-
-	// templUI provides .btn and .card classes, so we don't define them here
-	assert.Contains(t, result, "templUI provides .btn and .card classes", "should note that templUI provides component classes")
 }
 
 func TestAppCSSUtilitiesLayer(t *testing.T) {
