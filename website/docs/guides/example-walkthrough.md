@@ -2,27 +2,6 @@
 
 Learn by doing: implement a complete feature from start to finish in a Tracks-generated application.
 
-:::warning Incomplete - Awaiting Templ Template Support
-
-**This walkthrough is currently incomplete and shows JSON API patterns.**
-
-Tracks is a **hypermedia server framework** using templ templates and HTMX, not a JSON API framework. This guide currently demonstrates:
-
-- ❌ Handlers returning JSON responses (incorrect for Tracks)
-- ❌ Missing templ template rendering
-- ❌ Missing HTMX patterns for partial page updates
-
-**This guide will be completely rewritten** once templ template generation is implemented. For now, it demonstrates the lower layers (interfaces, repositories, services, testing) which remain valid, but the HTTP handler layer is incorrect.
-
-Use this guide to understand:
-
-- ✅ Database migrations and SQLC
-- ✅ Repository and service patterns
-- ✅ Testing with mocks
-- ⚠️ **Ignore the handler examples** - they will be replaced with templ/HTMX patterns
-
-:::
-
 ## What You'll Build
 
 In this tutorial, you'll add a complete **user management** feature to a Tracks application, implementing all layers from database schema to HTTP handlers. By the end, you'll have:
@@ -412,21 +391,9 @@ func validateCreateInput(name, email string) error {
 
 ## Step 6: Add HTTP Handler
 
-**Why:** Handlers convert HTTP requests/responses and orchestrate services.
+**Why:** Handlers convert HTTP requests/responses, render templ templates, and orchestrate services.
 
-:::caution This Section Will Be Replaced
-
-**The code below shows JSON handlers, which is INCORRECT for Tracks.**
-
-Tracks handlers should:
-
-- Render **templ templates** returning HTML
-- Accept **HTMX requests** for partial page updates
-- Return **HTML fragments**, not JSON
-
-This section will be completely rewritten once templ template generation is implemented. The patterns below (dependency injection, error handling) remain valid, but the response format is wrong.
-
-:::
+Tracks is a **hypermedia framework** - handlers render HTML templates, not JSON. HTMX enables partial page updates without full page reloads.
 
 Create `internal/http/handlers/user.go`:
 
@@ -434,117 +401,95 @@ Create `internal/http/handlers/user.go`:
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/youruser/myapp/internal/domain/users"
+	"github.com/youruser/myapp/internal/http/helpers"
+	"github.com/youruser/myapp/internal/http/views/pages"
 	"github.com/youruser/myapp/internal/interfaces"
 )
 
 type UserHandler struct {
-	userService interfaces.UserService
+	logger  interfaces.Logger
+	service interfaces.UserService
 }
 
-func NewUserHandler(userService interfaces.UserService) *UserHandler {
-	return &UserHandler{userService: userService}
+func NewUserHandler(logger interfaces.Logger, service interfaces.UserService) *UserHandler {
+	return &UserHandler{
+		logger:  logger,
+		service: service,
+	}
 }
 
-type CreateUserRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
+	userList, err := h.service.List(r.Context())
+	if err != nil {
+		helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to load users", h.logger)
+		return
+	}
+
+	helpers.RenderPage(w, r, pages.UsersPage(userList), pages.UsersPagePartial(userList), h.logger)
 }
 
-type UserResponse struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	CreatedAt string `json:"created_at"`
+func (h *UserHandler) New(w http.ResponseWriter, r *http.Request) {
+	helpers.RenderPage(w, r, pages.UserNewPage(), pages.UserNewPagePartial(), h.logger)
 }
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req CreateUserRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := r.ParseForm(); err != nil {
+		helpers.RenderError(w, r, http.StatusBadRequest, "Invalid form data", h.logger)
 		return
 	}
 
-	user, err := h.userService.Create(r.Context(), req.Name, req.Email)
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+
+	user, err := h.service.Create(r.Context(), name, email)
 	if err != nil {
 		if errors.Is(err, users.ErrInvalidInput) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			helpers.RenderError(w, r, http.StatusBadRequest, err.Error(), h.logger)
 			return
 		}
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to create user", h.logger)
 		return
 	}
 
-	resp := UserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z"),
+	if helpers.IsHTMXRequest(r) {
+		w.Header().Set("HX-Redirect", "/users/"+user.ID)
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	http.Redirect(w, r, "/users/"+user.ID, http.StatusSeeOther)
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	user, err := h.userService.GetByID(r.Context(), id)
+	user, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, users.ErrUserNotFound) {
-			http.Error(w, "user not found", http.StatusNotFound)
+			helpers.RenderError(w, r, http.StatusNotFound, "User not found", h.logger)
 			return
 		}
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		helpers.RenderError(w, r, http.StatusInternalServerError, "Failed to load user", h.logger)
 		return
 	}
 
-	resp := UserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z"),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
-}
-
-func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
-	users, err := h.userService.List(r.Context())
-	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	resp := make([]UserResponse, 0, len(users))
-	for _, user := range users {
-		resp = append(resp, UserResponse{
-			ID:        user.ID,
-			Name:      user.Name,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		})
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	helpers.RenderPage(w, r, pages.UserDetailPage(user), pages.UserDetailPagePartial(user), h.logger)
 }
 ```
 
 **Key Points:**
 
-- DTOs (Data Transfer Objects) for request/response (`CreateUserRequest`, `UserResponse`)
-- Domain errors mapped to HTTP status codes
-- Generic errors return 500, specific errors return appropriate codes
-- Handler is thin - just HTTP concerns, no business logic
+- **Dependency injection** - Handler receives logger and service via constructor
+- **Form parsing** - Use `r.ParseForm()` and `r.FormValue()` for HTML forms (not JSON)
+- **Templ rendering** - Use `helpers.RenderPage()` with full page and partial variants
+- **HTMX detection** - Check `helpers.IsHTMXRequest(r)` for partial vs full page
+- **HTMX redirects** - Use `HX-Redirect` header instead of HTTP redirect for HTMX requests
+- **Domain errors** - Map `ErrInvalidInput` and `ErrUserNotFound` to appropriate HTTP status
 
 ---
 
@@ -559,12 +504,13 @@ package routes
 
 const (
 	// Health
-	HealthCheck = "/api/health"
+	HealthCheck = "/health"
 
 	// Users
-	UsersList   = "/api/users"
-	UsersCreate = "/api/users"
-	UserGet     = "/api/users/{id}"
+	UsersList   = "/users"
+	UsersNew    = "/users/new"
+	UsersCreate = "/users"
+	UserGet     = "/users/{id}"
 )
 ```
 
@@ -590,16 +536,258 @@ func registerRoutes(s *Server) {
 	r.Get(routes.HealthCheck, healthHandler.Handle)
 
 	// Users (NEW)
-	userHandler := handlers.NewUserHandler(s.userService)
+	userHandler := handlers.NewUserHandler(s.logger, s.userService)
 	r.Get(routes.UsersList, userHandler.List)
+	r.Get(routes.UsersNew, userHandler.New)
 	r.Post(routes.UsersCreate, userHandler.Create)
 	r.Get(routes.UserGet, userHandler.Get)
 }
 ```
 
+**Key Points:**
+
+- **Web routes** - Use `/users` not `/api/users` (this is a hypermedia app, not a JSON API)
+- **RESTful pattern** - `GET /users/new` for form, `POST /users` for creation
+- **Route constants** - Type-safe URL references throughout the codebase
+
 ---
 
-## Step 8: Wire Dependencies
+## Step 8: Create Templ Views
+
+**Why:** Templ provides type-safe HTML templates that compile to Go code.
+
+Tracks uses [templUI](https://templui.io) components for consistent styling. These components are automatically installed when you run `tracks new`.
+
+Create `internal/http/views/pages/users.templ`:
+
+```go
+package pages
+
+import (
+	"github.com/youruser/myapp/internal/http/views/components"
+	"github.com/youruser/myapp/internal/http/views/components/ui"
+	"github.com/youruser/myapp/internal/http/views/layouts"
+	"github.com/youruser/myapp/internal/interfaces"
+)
+
+templ usersContent(users []*interfaces.User) {
+	<main class="container-app py-8">
+		<div class="flex justify-between items-center mb-6">
+			<h1 class="text-2xl font-bold">Users</h1>
+			<a
+				href="/users/new"
+				hx-get="/users/new"
+				hx-target="#content"
+				hx-push-url="true"
+			>
+				@ui.Button(ui.ButtonProps{Variant: "primary"}) {
+					Add User
+				}
+			</a>
+		</div>
+
+		<div id="users-list" class="space-y-4">
+			if len(users) == 0 {
+				@ui.Card(ui.CardProps{Class: "text-center py-8"}) {
+					<p class="text-muted-foreground">No users yet. Create your first user!</p>
+				}
+			} else {
+				for _, user := range users {
+					@components.UserCard(user)
+				}
+			}
+		</div>
+	</main>
+}
+
+templ UsersPage(users []*interfaces.User) {
+	@layouts.Base("Users", "Manage users") {
+		@usersContent(users)
+	}
+}
+
+templ UsersPagePartial(users []*interfaces.User) {
+	@usersContent(users)
+}
+```
+
+Create `internal/http/views/pages/user_new.templ`:
+
+```go
+package pages
+
+import (
+	"github.com/youruser/myapp/internal/http/views/components/ui"
+	"github.com/youruser/myapp/internal/http/views/layouts"
+)
+
+templ userNewContent() {
+	<main class="container-app py-8">
+		<h1 class="text-2xl font-bold mb-6">Create User</h1>
+
+		@ui.Card(ui.CardProps{Class: "max-w-lg"}) {
+			@ui.CardContent() {
+				<form hx-post="/users" hx-target="#content" hx-swap="innerHTML">
+					<div class="space-y-4">
+						<div>
+							@ui.Label(ui.LabelProps{For: "name"}) {
+								Name
+							}
+							@ui.Input(ui.InputProps{
+								Type:        "text",
+								ID:          "name",
+								Name:        "name",
+								Placeholder: "Enter full name",
+								Required:    true,
+							})
+						</div>
+
+						<div>
+							@ui.Label(ui.LabelProps{For: "email"}) {
+								Email
+							}
+							@ui.Input(ui.InputProps{
+								Type:        "email",
+								ID:          "email",
+								Name:        "email",
+								Placeholder: "user@example.com",
+								Required:    true,
+							})
+						</div>
+
+						<div class="flex gap-2 pt-4">
+							@ui.Button(ui.ButtonProps{Variant: "primary", Type: "submit"}) {
+								Create User
+							}
+							<a href="/users" hx-get="/users" hx-target="#content" hx-push-url="true">
+								@ui.Button(ui.ButtonProps{Variant: "outline", Type: "button"}) {
+									Cancel
+								}
+							</a>
+						</div>
+					</div>
+				</form>
+			}
+		}
+	</main>
+}
+
+templ UserNewPage() {
+	@layouts.Base("Create User", "Create a new user") {
+		@userNewContent()
+	}
+}
+
+templ UserNewPagePartial() {
+	@userNewContent()
+}
+```
+
+Create `internal/http/views/pages/user_detail.templ`:
+
+```go
+package pages
+
+import (
+	"github.com/youruser/myapp/internal/http/views/components/ui"
+	"github.com/youruser/myapp/internal/http/views/layouts"
+	"github.com/youruser/myapp/internal/interfaces"
+)
+
+templ userDetailContent(user *interfaces.User) {
+	<main class="container-app py-8">
+		<div class="flex items-center gap-4 mb-6">
+			<a href="/users" hx-get="/users" hx-target="#content" hx-push-url="true">
+				@ui.Button(ui.ButtonProps{Variant: "outline", Size: "sm"}) {
+					← Back
+				}
+			</a>
+			<h1 class="text-2xl font-bold">User Details</h1>
+		</div>
+
+		@ui.Card(ui.CardProps{Class: "max-w-lg"}) {
+			@ui.CardHeader() {
+				<h2 class="text-xl font-semibold">{ user.Name }</h2>
+			}
+			@ui.CardContent() {
+				<dl class="space-y-2">
+					<div>
+						<dt class="text-sm text-muted-foreground">Email</dt>
+						<dd>{ user.Email }</dd>
+					</div>
+					<div>
+						<dt class="text-sm text-muted-foreground">Created</dt>
+						<dd>{ user.CreatedAt.Format("January 2, 2006") }</dd>
+					</div>
+				</dl>
+			}
+		}
+	</main>
+}
+
+templ UserDetailPage(user *interfaces.User) {
+	@layouts.Base(user.Name, "User details") {
+		@userDetailContent(user)
+	}
+}
+
+templ UserDetailPagePartial(user *interfaces.User) {
+	@userDetailContent(user)
+}
+```
+
+Create `internal/http/views/components/user_card.templ`:
+
+```go
+package components
+
+import (
+	"github.com/youruser/myapp/internal/http/views/components/ui"
+	"github.com/youruser/myapp/internal/interfaces"
+)
+
+templ UserCard(user *interfaces.User) {
+	@ui.Card(ui.CardProps{Class: "hover:shadow-md transition-shadow"}) {
+		<a
+			href={ templ.SafeURL("/users/" + user.ID) }
+			hx-get={ "/users/" + user.ID }
+			hx-target="#content"
+			hx-push-url="true"
+			class="block p-4"
+		>
+			<div class="flex justify-between items-center">
+				<div>
+					<h3 class="font-semibold">{ user.Name }</h3>
+					<p class="text-sm text-muted-foreground">{ user.Email }</p>
+				</div>
+				<span class="text-sm text-muted-foreground">
+					{ user.CreatedAt.Format("Jan 2, 2006") }
+				</span>
+			</div>
+		</a>
+	}
+}
+```
+
+**Key Points:**
+
+- **Full + Partial pattern** - Every page has `*Page()` (with layout) and `*PagePartial()` (content only)
+- **HTMX attributes** - `hx-get`, `hx-post`, `hx-target="#content"`, `hx-push-url="true"`
+- **templUI components** - `@ui.Button`, `@ui.Card`, `@ui.Input`, `@ui.Label` for consistent styling
+- **Type safety** - Templates receive typed Go parameters (`*interfaces.User`, `[]*interfaces.User`)
+- **Navigation** - Links use both `href` (for non-JS) and `hx-get` (for HTMX enhancement)
+
+**Generate the Go code:**
+
+```bash
+make generate
+```
+
+This compiles `.templ` files into `.go` files that can be rendered by handlers.
+
+---
+
+## Step 9: Wire Dependencies
 
 **Why:** Dependency injection connects all the layers.
 
@@ -649,7 +837,7 @@ srv := http.NewServer(&cfg.Server, logger).
 
 ---
 
-## Step 9: Generate Mocks
+## Step 10: Generate Mocks
 
 **Why:** Mocks enable testing services and handlers without real dependencies.
 
@@ -677,7 +865,7 @@ You should see:
 
 ---
 
-## Step 10: Write Tests
+## Step 11: Write Tests
 
 ### Repository Tests
 
@@ -1026,7 +1214,7 @@ PASS
 
 ---
 
-## Step 11: Verify It Works
+## Step 12: Verify It Works
 
 **Start the server:**
 
@@ -1034,36 +1222,33 @@ PASS
 make dev
 ```
 
+**Open your browser:**
+
+Navigate to `http://localhost:8080/users`
+
+You should see:
+
+- The Users list page with an "Add User" button
+- An empty state message if no users exist yet
+
 **Create a user:**
 
-```bash
-curl -X POST http://localhost:8080/api/users \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Alice","email":"alice@example.com"}'
-```
+1. Click the **Add User** button
+2. Fill in the form with a name and email
+3. Click **Create User**
+4. You'll be redirected to the user detail page
 
-**Response:**
+**Verify HTMX:**
 
-```json
-{
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "name": "Alice",
-  "email": "alice@example.com",
-  "created_at": "2025-01-12T15:30:45Z"
-}
-```
+Notice that navigation happens without full page reloads:
 
-**List users:**
+- The URL updates in the browser (`/users` → `/users/new` → `/users/{id}`)
+- Only the `#content` area updates, not the entire page
+- Browser back/forward buttons work correctly
 
-```bash
-curl http://localhost:8080/api/users
-```
+**Test without JavaScript:**
 
-**Get user by ID:**
-
-```bash
-curl http://localhost:8080/api/users/a1b2c3d4-e5f6-7890-abcd-ef1234567890
-```
+Disable JavaScript in your browser and repeat the steps. The app should still work - HTMX is progressive enhancement, not a requirement.
 
 ---
 
@@ -1095,7 +1280,14 @@ Congratulations! You just implemented a complete feature across all layers. Here
 - ✅ **Error wrapping** - Preserve error chain with `fmt.Errorf(...: %w, err)`
 - ✅ **Domain errors** - Convert technical errors to domain-specific errors
 - ✅ **Validation** - Business rules live in services, not handlers
-- ✅ **Type safety** - SQLC for SQL, route constants for URLs, DTOs for HTTP
+- ✅ **Type safety** - SQLC for SQL, templ for HTML, route constants for URLs
+
+### Hypermedia Patterns
+
+- ✅ **Templ templates** - Type-safe HTML that compiles to Go code
+- ✅ **HTMX enhancement** - Partial page updates without full reloads
+- ✅ **Progressive enhancement** - Works without JavaScript enabled
+- ✅ **templUI components** - Consistent, accessible UI components
 
 ---
 
