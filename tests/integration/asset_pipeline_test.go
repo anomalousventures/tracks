@@ -203,6 +203,24 @@ func TestAssetPipeline(t *testing.T) {
 		assert.True(t, found, "Air pre_cmd should include 'make generate assets'")
 	})
 
+	t.Run("templUI configuration (#465)", func(t *testing.T) {
+		templuiConfig := filepath.Join(projectRoot, ".templui.json")
+		content, err := os.ReadFile(templuiConfig)
+		require.NoError(t, err, ".templui.json should exist")
+
+		configStr := string(content)
+		assert.Contains(t, configStr, "componentsDir",
+			".templui.json should define components directory")
+		assert.Contains(t, configStr, "internal/http/views/components/ui",
+			".templui.json should point to correct ui directory")
+		assert.Contains(t, configStr, "internal/http/views/components/utils",
+			".templui.json should point to correct utils directory")
+		assert.Contains(t, configStr, "github.com/test/asset-pipeline-test",
+			".templui.json should contain module name")
+		assert.Contains(t, configStr, "internal/assets/web/js",
+			".templui.json should define jsDir for JavaScript assets")
+	})
+
 	t.Run("complete asset pipeline (#452)", func(t *testing.T) {
 		webCSSDir := filepath.Join(projectRoot, "internal", "assets", "web", "css")
 		webJSDir := filepath.Join(projectRoot, "internal", "assets", "web", "js")

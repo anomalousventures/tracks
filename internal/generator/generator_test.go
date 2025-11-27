@@ -48,6 +48,7 @@ func TestProjectGenerator_Generate_Success(t *testing.T) {
 		".golangci.yml",
 		".mockery.yaml",
 		".tracks.yaml",
+		".templui.json",
 		".env.example",
 		"Makefile",
 		"sqlc.yaml",
@@ -380,6 +381,63 @@ func TestUserEditURL_SpecialCharacters(t *testing.T) {
 	require.NoError(t, err, "test code should be valid Go")
 
 	assert.NotNil(t, f, "parsed file should not be nil")
+}
+
+func TestTemplUIComponents_Count(t *testing.T) {
+	assert.Len(t, TemplUIComponents, 20, "should have 20 starter components")
+}
+
+func TestTemplUIComponents_NoDuplicates(t *testing.T) {
+	seen := make(map[string]bool)
+	for _, c := range TemplUIComponents {
+		assert.False(t, seen[c], "duplicate component: %s", c)
+		seen[c] = true
+	}
+}
+
+func TestTemplUIComponents_ExpectedComponents(t *testing.T) {
+	expected := []string{
+		"button", "card", "input", "alert", "badge",
+		"textarea", "label", "checkbox", "radio", "select",
+		"switch", "form", "modal", "dialog", "tabs",
+		"accordion", "sheet", "toast", "progress", "spinner",
+	}
+
+	assert.ElementsMatch(t, expected, TemplUIComponents,
+		"TemplUIComponents should contain exactly the expected components")
+}
+
+func TestProjectGenerator_Generate_TempluiConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cfg := ProjectConfig{
+		ProjectName:    "testapp",
+		ModulePath:     "github.com/test/testapp",
+		DatabaseDriver: "sqlite3",
+		EnvPrefix:      "APP",
+		InitGit:        false,
+		OutputPath:     tmpDir,
+	}
+
+	gen := NewProjectGenerator()
+	ctx := context.Background()
+
+	err := gen.Generate(ctx, cfg)
+	require.NoError(t, err)
+
+	templuiConfig := filepath.Join(tmpDir, "testapp", ".templui.json")
+	content, err := os.ReadFile(templuiConfig)
+	require.NoError(t, err, ".templui.json should exist")
+
+	contentStr := string(content)
+	assert.Contains(t, contentStr, "github.com/test/testapp",
+		".templui.json should contain module name")
+	assert.Contains(t, contentStr, "internal/http/views/components/ui",
+		".templui.json should contain componentsDir")
+	assert.Contains(t, contentStr, "internal/http/views/components/utils",
+		".templui.json should contain utilsDir")
+	assert.Contains(t, contentStr, "internal/assets/web/js",
+		".templui.json should contain jsDir")
 }
 
 func TestProjectGenerator_ExampleTemplatesNotGenerated(t *testing.T) {
