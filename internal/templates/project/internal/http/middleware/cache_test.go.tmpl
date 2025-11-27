@@ -1,0 +1,60 @@
+package middleware
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCacheMiddleware(t *testing.T) {
+	handler := NewCacheMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	tests := []struct {
+		name          string
+		path          string
+		wantImmutable bool
+	}{
+		{"hashed CSS", "/assets/app.abc12345.css", true},
+		{"hashed JS", "/assets/htmx.def67890.js", true},
+		{"hashed with long hash", "/assets/app.abc123456789abcdef.css", true},
+		{"non-hashed favicon", "/assets/favicon.ico", false},
+		{"short hash ignored", "/assets/app.abc.css", false},
+		{"HTML page", "/about", false},
+		{"root path", "/", false},
+		{"nested hashed asset", "/assets/js/lib/htmx.abc12345.js", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+
+			cc := rec.Header().Get("Cache-Control")
+			if tt.wantImmutable {
+				assert.Equal(t, "public, max-age=31536000, immutable", cc)
+			} else {
+				assert.Empty(t, cc)
+			}
+		})
+	}
+}
+
+func TestCacheMiddleware_CallsNext(t *testing.T) {
+	called := false
+	handler := NewCacheMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/assets/app.abc12345.css", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	assert.True(t, called, "next handler should be called")
+	assert.Equal(t, http.StatusOK, rec.Code)
+}

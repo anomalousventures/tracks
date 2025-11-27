@@ -153,6 +153,16 @@ Having routing issues or server problems? Check the [Tracks Troubleshooting Guid
 - CORS and preflight request issues
 - Graceful shutdown problems
 
+## Asset Caching
+
+This project uses content-addressed asset serving via hashfs:
+
+- **Hashed assets** (e.g., `app.abc123.css`) get 1-year immutable cache headers
+- **ETags** enable 304 Not Modified responses for unchanged assets
+- **Compression** via gzip for text-based assets
+
+See the [Tracks Asset Caching Guide](https://go-tracks.io/docs/guides/caching) for details.
+
 ## License
 
 [Your license here]
