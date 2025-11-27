@@ -17,6 +17,14 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// TemplUIComponents defines the curated starter set of UI components.
+var TemplUIComponents = []string{
+	"button", "card", "input", "alert", "badge",
+	"textarea", "label", "checkbox", "radio", "select",
+	"switch", "form", "modal", "dialog", "tabs",
+	"accordion", "sheet", "toast", "progress", "spinner",
+}
+
 type projectGenerator struct {
 	renderer generatorinterfaces.TemplateRenderer
 }
@@ -130,6 +138,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/assets/dist/images/.gitkeep.tmpl":     "internal/assets/dist/images/.gitkeep",
 		"internal/assets/dist/css/app.css.tmpl":         "internal/assets/dist/css/app.css",
 		"internal/assets/dist/js/app.js.tmpl":           "internal/assets/dist/js/app.js",
+		".templui.json.tmpl":                             ".templui.json",
 	}
 
 	postGenerateTemplates := map[string]string{
@@ -207,6 +216,46 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 			Msg("go mod download all failed - continuing anyway")
 	} else {
 		logger.Info().Msg("all dependencies downloaded and go.sum populated")
+	}
+
+	logger.Info().Msg("initializing templUI and installing utils")
+	initCmd := exec.CommandContext(ctx, "go", "tool", "templui", "-f", "init")
+	initCmd.Dir = projectRoot
+	if output, err := initCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("templui init failed - components may not work without utils")
+	} else {
+		logger.Info().Msg("templUI initialized and utils installed")
+	}
+
+	logger.Info().
+		Int("component_count", len(TemplUIComponents)).
+		Msg("installing templUI components")
+	templuiArgs := append([]string{"tool", "templui", "add"}, TemplUIComponents...)
+	templuiCmd := exec.CommandContext(ctx, "go", templuiArgs...)
+	templuiCmd.Dir = projectRoot
+	if output, err := templuiCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("templui add failed - project will work but without UI components")
+	} else {
+		logger.Info().Msg("templUI components installed")
+	}
+
+	logger.Info().Msg("formatting templUI files")
+	componentsDir := filepath.Join(projectRoot, "internal", "http", "views", "components")
+	gofmtCmd := exec.CommandContext(ctx, "gofmt", "-w", componentsDir)
+	gofmtCmd.Dir = projectRoot
+	if output, err := gofmtCmd.CombinedOutput(); err != nil {
+		logger.Warn().
+			Err(err).
+			Str("output", string(output)).
+			Msg("gofmt failed - some files may have formatting issues")
+	} else {
+		logger.Info().Msg("templUI files formatted")
 	}
 
 	logger.Info().Msg("generating mocks and SQL code")
