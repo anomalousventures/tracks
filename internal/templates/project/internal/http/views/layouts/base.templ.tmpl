@@ -21,6 +21,8 @@ templ Base(title, description string) {
 			<script src={ "/assets/" + assets.JSURL() } nonce={ templ.GetNonce(ctx) } defer></script>
 		</head>
 		<body>
+			<!-- TRACKS:UI_SCRIPTS:BEGIN -->
+			<!-- TRACKS:UI_SCRIPTS:END -->
 			@components.Nav(components.NavProps{
 				Logo: "{{.ProjectName}}",
 				Links: []components.NavLink{
