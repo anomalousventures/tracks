@@ -69,7 +69,6 @@ func TestErrorPages(t *testing.T) {
 			doc, err := goquery.NewDocumentFromReader(rec.Body)
 			require.NoError(t, err)
 
-			// Alert component uses div elements with specific classes
 			errorTitle := doc.Find("*:contains(\"" + tt.wantTitleText + "\")")
 			assert.GreaterOrEqual(t, errorTitle.Length(), 1, "should have error title with text %q", tt.wantTitleText)
 
