@@ -38,7 +38,7 @@ lint-go: ## Run golangci-lint
 lint-mocks: ## Check that generated mocks are up-to-date
 	@echo "Checking generated mocks are up-to-date..."
 	@go tool mockery
-	@if [ -n "$$(git status --porcelain tests/mocks)" ]; then \
+	@if ! git diff --quiet tests/mocks; then \
 		echo "❌ Generated mocks are out of date. Run 'make generate-mocks' and commit the changes."; \
 		git diff tests/mocks; \
 		exit 1; \

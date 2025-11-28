@@ -84,7 +84,7 @@ func TestParseComponentList(t *testing.T) {
 func TestExecutor_Add_EmptyComponents(t *testing.T) {
 	executor := NewExecutor()
 
-	err := executor.Add(t.Context(), ".", []string{}, false)
+	err := executor.Add(t.Context(), ".", "", []string{}, false)
 	if err == nil {
 		t.Fatal("expected error for empty components, got nil")
 	}

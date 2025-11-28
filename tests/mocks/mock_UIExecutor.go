@@ -39,16 +39,16 @@ func (_m *MockUIExecutor) EXPECT() *MockUIExecutor_Expecter {
 }
 
 // Add provides a mock function for the type MockUIExecutor
-func (_mock *MockUIExecutor) Add(ctx context.Context, projectDir string, components []string, force bool) error {
-	ret := _mock.Called(ctx, projectDir, components, force)
+func (_mock *MockUIExecutor) Add(ctx context.Context, projectDir string, ref string, components []string, force bool) error {
+	ret := _mock.Called(ctx, projectDir, ref, components, force)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, bool) error); ok {
-		r0 = returnFunc(ctx, projectDir, components, force)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, bool) error); ok {
+		r0 = returnFunc(ctx, projectDir, ref, components, force)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,13 +63,14 @@ type MockUIExecutor_Add_Call struct {
 // Add is a helper method to define mock.On call
 //   - ctx context.Context
 //   - projectDir string
+//   - ref string
 //   - components []string
 //   - force bool
-func (_e *MockUIExecutor_Expecter) Add(ctx interface{}, projectDir interface{}, components interface{}, force interface{}) *MockUIExecutor_Add_Call {
-	return &MockUIExecutor_Add_Call{Call: _e.mock.On("Add", ctx, projectDir, components, force)}
+func (_e *MockUIExecutor_Expecter) Add(ctx interface{}, projectDir interface{}, ref interface{}, components interface{}, force interface{}) *MockUIExecutor_Add_Call {
+	return &MockUIExecutor_Add_Call{Call: _e.mock.On("Add", ctx, projectDir, ref, components, force)}
 }
 
-func (_c *MockUIExecutor_Add_Call) Run(run func(ctx context.Context, projectDir string, components []string, force bool)) *MockUIExecutor_Add_Call {
+func (_c *MockUIExecutor_Add_Call) Run(run func(ctx context.Context, projectDir string, ref string, components []string, force bool)) *MockUIExecutor_Add_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -79,19 +80,24 @@ func (_c *MockUIExecutor_Add_Call) Run(run func(ctx context.Context, projectDir 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []string
+		var arg2 string
 		if args[2] != nil {
-			arg2 = args[2].([]string)
+			arg2 = args[2].(string)
 		}
-		var arg3 bool
+		var arg3 []string
 		if args[3] != nil {
-			arg3 = args[3].(bool)
+			arg3 = args[3].([]string)
+		}
+		var arg4 bool
+		if args[4] != nil {
+			arg4 = args[4].(bool)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -102,7 +108,7 @@ func (_c *MockUIExecutor_Add_Call) Return(err error) *MockUIExecutor_Add_Call {
 	return _c
 }
 
-func (_c *MockUIExecutor_Add_Call) RunAndReturn(run func(ctx context.Context, projectDir string, components []string, force bool) error) *MockUIExecutor_Add_Call {
+func (_c *MockUIExecutor_Add_Call) RunAndReturn(run func(ctx context.Context, projectDir string, ref string, components []string, force bool) error) *MockUIExecutor_Add_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -165,8 +171,8 @@ func (_c *MockUIExecutor_IsAvailable_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // List provides a mock function for the type MockUIExecutor
-func (_mock *MockUIExecutor) List(ctx context.Context, projectDir string) ([]interfaces.UIComponent, error) {
-	ret := _mock.Called(ctx, projectDir)
+func (_mock *MockUIExecutor) List(ctx context.Context, projectDir string, ref string) ([]interfaces.UIComponent, error) {
+	ret := _mock.Called(ctx, projectDir, ref)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
@@ -174,18 +180,18 @@ func (_mock *MockUIExecutor) List(ctx context.Context, projectDir string) ([]int
 
 	var r0 []interfaces.UIComponent
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]interfaces.UIComponent, error)); ok {
-		return returnFunc(ctx, projectDir)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) ([]interfaces.UIComponent, error)); ok {
+		return returnFunc(ctx, projectDir, ref)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []interfaces.UIComponent); ok {
-		r0 = returnFunc(ctx, projectDir)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) []interfaces.UIComponent); ok {
+		r0 = returnFunc(ctx, projectDir, ref)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]interfaces.UIComponent)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, projectDir)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, projectDir, ref)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -200,11 +206,12 @@ type MockUIExecutor_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - projectDir string
-func (_e *MockUIExecutor_Expecter) List(ctx interface{}, projectDir interface{}) *MockUIExecutor_List_Call {
-	return &MockUIExecutor_List_Call{Call: _e.mock.On("List", ctx, projectDir)}
+//   - ref string
+func (_e *MockUIExecutor_Expecter) List(ctx interface{}, projectDir interface{}, ref interface{}) *MockUIExecutor_List_Call {
+	return &MockUIExecutor_List_Call{Call: _e.mock.On("List", ctx, projectDir, ref)}
 }
 
-func (_c *MockUIExecutor_List_Call) Run(run func(ctx context.Context, projectDir string)) *MockUIExecutor_List_Call {
+func (_c *MockUIExecutor_List_Call) Run(run func(ctx context.Context, projectDir string, ref string)) *MockUIExecutor_List_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -214,9 +221,14 @@ func (_c *MockUIExecutor_List_Call) Run(run func(ctx context.Context, projectDir
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -227,22 +239,22 @@ func (_c *MockUIExecutor_List_Call) Return(uIComponents []interfaces.UIComponent
 	return _c
 }
 
-func (_c *MockUIExecutor_List_Call) RunAndReturn(run func(ctx context.Context, projectDir string) ([]interfaces.UIComponent, error)) *MockUIExecutor_List_Call {
+func (_c *MockUIExecutor_List_Call) RunAndReturn(run func(ctx context.Context, projectDir string, ref string) ([]interfaces.UIComponent, error)) *MockUIExecutor_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Upgrade provides a mock function for the type MockUIExecutor
-func (_mock *MockUIExecutor) Upgrade(ctx context.Context, projectDir string) error {
-	ret := _mock.Called(ctx, projectDir)
+func (_mock *MockUIExecutor) Upgrade(ctx context.Context, projectDir string, ref string) error {
+	ret := _mock.Called(ctx, projectDir, ref)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Upgrade")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, projectDir)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, projectDir, ref)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -257,11 +269,12 @@ type MockUIExecutor_Upgrade_Call struct {
 // Upgrade is a helper method to define mock.On call
 //   - ctx context.Context
 //   - projectDir string
-func (_e *MockUIExecutor_Expecter) Upgrade(ctx interface{}, projectDir interface{}) *MockUIExecutor_Upgrade_Call {
-	return &MockUIExecutor_Upgrade_Call{Call: _e.mock.On("Upgrade", ctx, projectDir)}
+//   - ref string
+func (_e *MockUIExecutor_Expecter) Upgrade(ctx interface{}, projectDir interface{}, ref interface{}) *MockUIExecutor_Upgrade_Call {
+	return &MockUIExecutor_Upgrade_Call{Call: _e.mock.On("Upgrade", ctx, projectDir, ref)}
 }
 
-func (_c *MockUIExecutor_Upgrade_Call) Run(run func(ctx context.Context, projectDir string)) *MockUIExecutor_Upgrade_Call {
+func (_c *MockUIExecutor_Upgrade_Call) Run(run func(ctx context.Context, projectDir string, ref string)) *MockUIExecutor_Upgrade_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -271,9 +284,14 @@ func (_c *MockUIExecutor_Upgrade_Call) Run(run func(ctx context.Context, project
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -284,7 +302,7 @@ func (_c *MockUIExecutor_Upgrade_Call) Return(err error) *MockUIExecutor_Upgrade
 	return _c
 }
 
-func (_c *MockUIExecutor_Upgrade_Call) RunAndReturn(run func(ctx context.Context, projectDir string) error) *MockUIExecutor_Upgrade_Call {
+func (_c *MockUIExecutor_Upgrade_Call) RunAndReturn(run func(ctx context.Context, projectDir string, ref string) error) *MockUIExecutor_Upgrade_Call {
 	_c.Call.Return(run)
 	return _c
 }
