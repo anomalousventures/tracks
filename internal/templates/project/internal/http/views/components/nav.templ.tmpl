@@ -5,6 +5,13 @@ import (
 	"{{.ModuleName}}/internal/http/views/components/ui/button"
 )
 
+func activeClass(active bool) string {
+	if active {
+		return "bg-accent/10"
+	}
+	return ""
+}
+
 type NavLink struct {
 	Label  string
 	Href   string
@@ -30,16 +37,16 @@ templ Nav(props NavProps) {
 				for _, link := range props.Links {
 					@button.Button(button.Props{
 						Variant: button.VariantGhost,
-						Size:    button.SizeSmall,
+						Size:    button.SizeSm,
+						Href:    link.Href,
 						Attributes: templ.Attributes{
-							"href":         link.Href,
 							"hx-get":       link.Href,
 							"hx-target":    "#content",
 							"hx-push-url":  "true",
 							"hx-swap":      "innerHTML",
 							"aria-current": templ.KV("page", link.Active),
 						},
-						Class: templ.KV("bg-accent/10", link.Active),
+						Class: activeClass(link.Active),
 					}) {
 						{ link.Label }
 					}
