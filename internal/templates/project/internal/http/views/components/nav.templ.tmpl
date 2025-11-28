@@ -1,6 +1,9 @@
 package components
 
-import "{{.ModuleName}}/internal/http/routes"
+import (
+	"{{.ModuleName}}/internal/http/routes"
+	"{{.ModuleName}}/internal/http/views/components/ui/button"
+)
 
 type NavLink struct {
 	Label  string
@@ -23,21 +26,23 @@ templ Nav(props NavProps) {
 					<a href={ templ.URL(routes.Home) } class={ "text-xl", "font-bold", "text-gray-900", "dark:text-white", "hover:text-gray-700", "dark:hover:text-gray-300" }>{ props.Logo }</a>
 				</div>
 			}
-			<div class={ "flex", "items-center", "space-x-6" }>
+			<div class={ "flex", "items-center", "space-x-2" }>
 				for _, link := range props.Links {
-					<a
-						href={ templ.SafeURL(link.Href) }
-						hx-get={ link.Href }
-						hx-target="#content"
-						hx-push-url="true"
-						hx-swap="innerHTML"
-						class={ "px-3", "py-2", "text-sm", "font-medium", "text-gray-700", "dark:text-gray-300", "hover:text-gray-900", "dark:hover:text-white", "rounded-md", templ.KV("bg-gray-100", link.Active), templ.KV("dark:bg-gray-800", link.Active) }
-						if link.Active {
-							aria-current="page"
-						}
-					>
+					@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Size:    button.SizeSmall,
+						Attributes: templ.Attributes{
+							"href":         link.Href,
+							"hx-get":       link.Href,
+							"hx-target":    "#content",
+							"hx-push-url":  "true",
+							"hx-swap":      "innerHTML",
+							"aria-current": templ.KV("page", link.Active),
+						},
+						Class: templ.KV("bg-accent/10", link.Active),
+					}) {
 						{ link.Label }
-					</a>
+					}
 				}
 			</div>
 			if props.MobileNav {
