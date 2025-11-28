@@ -45,15 +45,30 @@ This command must be run from within a Tracks project (containing .tracks.yaml).
 		Example: `  # Show templUI version
   tracks ui --version
 
-  # Add a button component (future)
+  # Add a button component
   tracks ui add button
 
-  # List available components (future)
-  tracks ui list`,
+  # Add multiple components
+  tracks ui add button card toast
+
+  # List available components
+  tracks ui list
+
+  # Upgrade templUI to latest
+  tracks ui upgrade`,
 		Run: c.run,
 	}
 
 	cmd.Flags().Bool("version", false, "Show templUI version")
+
+	addCmd := NewUIAddCommand(c.detector, c.executor, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(addCmd.Command())
+
+	listCmd := NewUIListCommand(c.detector, c.executor, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(listCmd.Command())
+
+	upgradeCmd := NewUIUpgradeCommand(c.detector, c.executor, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(upgradeCmd.Command())
 
 	return cmd
 }
