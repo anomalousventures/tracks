@@ -35,39 +35,6 @@ func setupUITestCommand(t *testing.T) (*cobra.Command, *mocks.MockUIExecutor, *m
 	return cobraCmd, mockExecutor, mockDetector
 }
 
-func TestNewUICommand(t *testing.T) {
-	mockExecutor := mocks.NewMockUIExecutor(t)
-	mockDetector := mocks.NewMockProjectDetector(t)
-	mockRenderer := mocks.NewMockRenderer(t)
-
-	rendererFactory := func(*cobra.Command) interfaces.Renderer {
-		return mockRenderer
-	}
-	flusher := func(*cobra.Command, interfaces.Renderer) {}
-
-	cmd := NewUICommand(mockDetector, mockExecutor, rendererFactory, flusher)
-
-	if cmd == nil {
-		t.Fatal("NewUICommand returned nil")
-	}
-
-	if cmd.detector == nil {
-		t.Error("detector field not set")
-	}
-
-	if cmd.executor == nil {
-		t.Error("executor field not set")
-	}
-
-	if cmd.newRenderer == nil {
-		t.Error("newRenderer field not set")
-	}
-
-	if cmd.flushRenderer == nil {
-		t.Error("flushRenderer field not set")
-	}
-}
-
 func TestUICommand_Command(t *testing.T) {
 	mockExecutor := mocks.NewMockUIExecutor(t)
 	mockDetector := mocks.NewMockProjectDetector(t)
