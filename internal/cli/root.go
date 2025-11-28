@@ -13,6 +13,8 @@ import (
 	"github.com/anomalousventures/tracks/internal/cli/ui"
 	trackscontext "github.com/anomalousventures/tracks/internal/context"
 	"github.com/anomalousventures/tracks/internal/generator"
+	"github.com/anomalousventures/tracks/internal/project"
+	"github.com/anomalousventures/tracks/internal/templui"
 	"github.com/anomalousventures/tracks/internal/validation"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -147,6 +149,11 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 
 	newCmd := commands.NewNewCommand(validator, projectGenerator, NewRendererFromCommand, FlushRenderer)
 	rootCmd.AddCommand(newCmd.Command())
+
+	detector := project.NewDetector()
+	uiExecutor := templui.NewExecutor()
+	uiCmd := commands.NewUICommand(detector, uiExecutor, NewRendererFromCommand, FlushRenderer)
+	rootCmd.AddCommand(uiCmd.Command())
 
 	return rootCmd, nil
 }
