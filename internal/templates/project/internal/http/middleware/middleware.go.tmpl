@@ -1,0 +1,35 @@
+// Package middleware provides HTTP middleware for the application.
+//
+// # Middleware Order (Critical for Security)
+//
+// The order of middleware registration matters. The recommended order is:
+//
+//  1. RequestID - Generate unique request ID first (for all subsequent logging)
+//  2. RealIP - Extract real client IP from proxy headers (before rate limiting)
+//  3. Compress - Response compression (early in chain)
+//  4. Logger - Log all requests (after RequestID/RealIP setup)
+//  5. Recoverer - Catch panics and log stack traces
+//  6. Timeout - Cancel long-running requests
+//  7. Throttle - Limit concurrent requests
+//  8. CSP (Nonce) - Generate nonce for Content-Security-Policy
+//  9. SecurityHeaders - Set security headers (HSTS, X-Frame-Options, CSP)
+//  10. CORS - Handle cross-origin requests (if enabled)
+//  11. Cache - Set cache headers for hashed assets
+//
+// # Example Usage
+//
+//	s.router.Use(middleware.RequestID)
+//	s.router.Use(middleware.RealIP)
+//	s.router.Use(httpmiddleware.NewCompressMiddleware())
+//	s.router.Use(httpmiddleware.NewRequestLogger(s.logger))
+//	s.router.Use(httpmiddleware.NewRecoverer(s.logger))
+//	s.router.Use(httpmiddleware.NewTimeoutMiddleware(60 * time.Second))
+//	s.router.Use(httpmiddleware.NewThrottleMiddleware(100))
+//	s.router.Use(httpmiddleware.NewCSPMiddleware())
+//	s.router.Use(httpmiddleware.NewSecurityHeadersMiddleware())
+//	if cfg.CORS.Enabled {
+//	    s.router.Use(httpmiddleware.NewCORSMiddleware(&cfg.CORS))
+//	}
+//
+// See https://go-tracks.io/docs/guides/middleware for detailed documentation.
+package middleware

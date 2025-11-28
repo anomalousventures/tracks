@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	Environment string         `mapstructure:"environment"`
-	Server      ServerConfig   `mapstructure:"server"`
-	Database    DatabaseConfig `mapstructure:"database"`
-	Logging     LoggingConfig  `mapstructure:"logging"`
+	Environment string           `mapstructure:"environment"`
+	Server      ServerConfig     `mapstructure:"server"`
+	Database    DatabaseConfig   `mapstructure:"database"`
+	Logging     LoggingConfig    `mapstructure:"logging"`
+	Middleware  MiddlewareConfig `mapstructure:"middleware"`
 }
 
 type ServerConfig struct {
@@ -35,6 +36,32 @@ type DatabaseConfig struct {
 type LoggingConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
+}
+
+type MiddlewareConfig struct {
+	Timeout  TimeoutConfig  `mapstructure:"timeout"`
+	Throttle ThrottleConfig `mapstructure:"throttle"`
+	CORS     CORSConfig     `mapstructure:"cors"`
+}
+
+type TimeoutConfig struct {
+	Request time.Duration `mapstructure:"request"`
+}
+
+type ThrottleConfig struct {
+	Limit          int           `mapstructure:"limit"`
+	BacklogLimit   int           `mapstructure:"backlog_limit"`
+	BacklogTimeout time.Duration `mapstructure:"backlog_timeout"`
+}
+
+type CORSConfig struct {
+	Enabled          bool     `mapstructure:"enabled"`
+	AllowedOrigins   []string `mapstructure:"allowed_origins"`
+	AllowedMethods   []string `mapstructure:"allowed_methods"`
+	AllowedHeaders   []string `mapstructure:"allowed_headers"`
+	ExposedHeaders   []string `mapstructure:"exposed_headers"`
+	AllowCredentials bool     `mapstructure:"allow_credentials"`
+	MaxAge           int      `mapstructure:"max_age"`
 }
 
 func Load() (*Config, error) {
@@ -59,6 +86,17 @@ func Load() (*Config, error) {
 	v.SetDefault("database.conn_max_lifetime", "5m")
 	v.SetDefault("logging.level", "info")
 	v.SetDefault("logging.format", "json")
+	v.SetDefault("middleware.timeout.request", "60s")
+	v.SetDefault("middleware.throttle.limit", 100)
+	v.SetDefault("middleware.throttle.backlog_limit", 50)
+	v.SetDefault("middleware.throttle.backlog_timeout", "30s")
+	v.SetDefault("middleware.cors.enabled", false)
+	v.SetDefault("middleware.cors.allowed_origins", []string{})
+	v.SetDefault("middleware.cors.allowed_methods", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
+	v.SetDefault("middleware.cors.allowed_headers", []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"})
+	v.SetDefault("middleware.cors.exposed_headers", []string{})
+	v.SetDefault("middleware.cors.allow_credentials", false)
+	v.SetDefault("middleware.cors.max_age", 300)
 
 	if _, err := os.Stat(".env"); err == nil {
 		v.SetConfigFile(".env")

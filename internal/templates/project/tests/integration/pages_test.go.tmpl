@@ -26,8 +26,10 @@ func TestPages_Integration(t *testing.T) {
 	}
 
 	logger := logging.NewLogger("test")
-	cfg := &config.ServerConfig{
-		Port: ":8080",
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Port: ":8080",
+		},
 	}
 
 	mockHealthService := mocks.NewMockHealthService(t)
@@ -145,8 +147,10 @@ func TestPages_ContextPropagation(t *testing.T) {
 	}
 
 	logger := logging.NewLogger("test")
-	cfg := &config.ServerConfig{
-		Port: ":8080",
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Port: ":8080",
+		},
 	}
 
 	mockHealthService := mocks.NewMockHealthService(t)

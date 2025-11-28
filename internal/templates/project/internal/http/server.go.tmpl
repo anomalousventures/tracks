@@ -15,13 +15,13 @@ import (
 
 type Server struct {
 	router chi.Router
-	config *config.ServerConfig
+	config *config.Config
 	logger interfaces.Logger
 
 	healthService interfaces.HealthService
 }
 
-func NewServer(cfg *config.ServerConfig, logger interfaces.Logger) *Server {
+func NewServer(cfg *config.Config, logger interfaces.Logger) *Server {
 	return &Server{
 		router: chi.NewRouter(),
 		config: cfg,
@@ -45,15 +45,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) ListenAndServe() error {
 	srv := &http.Server{
-		Addr:         s.config.Port,
+		Addr:         s.config.Server.Port,
 		Handler:      s,
-		ReadTimeout:  s.config.ReadTimeout,
-		WriteTimeout: s.config.WriteTimeout,
-		IdleTimeout:  s.config.IdleTimeout,
+		ReadTimeout:  s.config.Server.ReadTimeout,
+		WriteTimeout: s.config.Server.WriteTimeout,
+		IdleTimeout:  s.config.Server.IdleTimeout,
 	}
 
 	ctx := context.Background()
-	s.logger.Info(ctx).Str("addr", s.config.Port).Msg("server listening")
+	s.logger.Info(ctx).Str("addr", s.config.Server.Port).Msg("server listening")
 
 	serverErr := make(chan error, 1)
 
@@ -73,7 +73,7 @@ func (s *Server) ListenAndServe() error {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), s.config.ShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), s.config.Server.ShutdownTimeout)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {

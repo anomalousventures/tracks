@@ -25,8 +25,10 @@ func newTestLogger() *logging.Logger {
 }
 
 func TestServer_NewServer(t *testing.T) {
-	cfg := &config.ServerConfig{
-		Port: ":8080",
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Port: ":8080",
+		},
 	}
 	logger := newTestLogger()
 
@@ -36,7 +38,9 @@ func TestServer_NewServer(t *testing.T) {
 }
 
 func TestServer_HealthEndpoint(t *testing.T) {
-	cfg := &config.ServerConfig{Port: ":8080"}
+	cfg := &config.Config{
+		Server: config.ServerConfig{Port: ":8080"},
+	}
 	logger := newTestLogger()
 	mockHealthSvc := mocks.NewMockHealthService(t)
 
@@ -61,7 +65,9 @@ func TestServer_HealthEndpoint(t *testing.T) {
 }
 
 func TestServer_NotFoundRoute(t *testing.T) {
-	cfg := &config.ServerConfig{Port: ":8080"}
+	cfg := &config.Config{
+		Server: config.ServerConfig{Port: ":8080"},
+	}
 	logger := newTestLogger()
 
 	srv := NewServer(cfg, logger).RegisterRoutes()

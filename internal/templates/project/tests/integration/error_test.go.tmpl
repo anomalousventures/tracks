@@ -21,8 +21,10 @@ func TestErrorPages(t *testing.T) {
 	}
 
 	logger := logging.NewLogger("test")
-	cfg := &config.ServerConfig{
-		Port: ":8080",
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			Port: ":8080",
+		},
 	}
 
 	mockHealthService := mocks.NewMockHealthService(t)

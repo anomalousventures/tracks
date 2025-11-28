@@ -53,7 +53,7 @@ func TestServerStructDefinition(t *testing.T) {
 
 	assert.Contains(t, output, "type Server struct", "should define Server struct")
 	assert.Contains(t, output, "router chi.Router", "should have router field")
-	assert.Contains(t, output, "config *config.ServerConfig", "should have config field")
+	assert.Contains(t, output, "config *config.Config", "should have config field")
 	assert.Contains(t, output, "logger interfaces.Logger", "should have logger field")
 	assert.Contains(t, output, "healthService interfaces.HealthService", "should have healthService field")
 }
@@ -67,7 +67,7 @@ func TestServerConstructor(t *testing.T) {
 	output, err := renderer.Render("internal/http/server.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, output, "func NewServer(cfg *config.ServerConfig, logger interfaces.Logger) *Server", "should have NewServer constructor with config and logger")
+	assert.Contains(t, output, "func NewServer(cfg *config.Config, logger interfaces.Logger) *Server", "should have NewServer constructor with config and logger")
 	assert.Contains(t, output, "return &Server{", "should return Server pointer")
 	assert.Contains(t, output, "router: chi.NewRouter()", "should initialize chi router")
 	assert.Contains(t, output, "config: cfg", "should store config")
@@ -124,10 +124,10 @@ func TestServerTimeouts(t *testing.T) {
 	output, err := renderer.Render("internal/http/server.go.tmpl", data)
 	require.NoError(t, err)
 
-	assert.Contains(t, output, "ReadTimeout:  s.config.ReadTimeout", "should use config read timeout")
-	assert.Contains(t, output, "WriteTimeout: s.config.WriteTimeout", "should use config write timeout")
-	assert.Contains(t, output, "IdleTimeout:  s.config.IdleTimeout", "should use config idle timeout")
-	assert.Contains(t, output, "context.WithTimeout(context.Background(), s.config.ShutdownTimeout)", "should use config shutdown timeout")
+	assert.Contains(t, output, "ReadTimeout:  s.config.Server.ReadTimeout", "should use config read timeout")
+	assert.Contains(t, output, "WriteTimeout: s.config.Server.WriteTimeout", "should use config write timeout")
+	assert.Contains(t, output, "IdleTimeout:  s.config.Server.IdleTimeout", "should use config idle timeout")
+	assert.Contains(t, output, "context.WithTimeout(context.Background(), s.config.Server.ShutdownTimeout)", "should use config shutdown timeout")
 }
 
 func TestServerModuleNameInterpolation(t *testing.T) {
@@ -267,15 +267,25 @@ func TestHTTPRoutesMiddlewareOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	requestIDIdx := strings.Index(output, "middleware.RequestID")
+	realIPIdx := strings.Index(output, "middleware.RealIP")
 	compressIdx := strings.Index(output, "httpmiddleware.NewCompressMiddleware()")
 	loggerIdx := strings.Index(output, "httpmiddleware.NewRequestLogger(s.logger)")
-	realIPIdx := strings.Index(output, "middleware.RealIP")
 	recovererIdx := strings.Index(output, "httpmiddleware.NewRecoverer(s.logger)")
+	timeoutBlockIdx := strings.Index(output, "if s.config.Middleware.Timeout.Request > 0")
+	throttleBlockIdx := strings.Index(output, "if s.config.Middleware.Throttle.Limit > 0")
+	cspIdx := strings.Index(output, "httpmiddleware.NewCSPMiddleware()")
+	securityHeadersIdx := strings.Index(output, "httpmiddleware.NewSecurityHeadersMiddleware()")
+	corsBlockIdx := strings.Index(output, "if s.config.Middleware.CORS.Enabled")
 
-	assert.Greater(t, compressIdx, requestIDIdx, "Compress should come after RequestID")
+	assert.Greater(t, realIPIdx, requestIDIdx, "RealIP should come after RequestID")
+	assert.Greater(t, compressIdx, realIPIdx, "Compress should come after RealIP")
 	assert.Greater(t, loggerIdx, compressIdx, "RequestLogger should come after Compress")
-	assert.Greater(t, realIPIdx, loggerIdx, "RealIP should come after RequestLogger")
-	assert.Greater(t, recovererIdx, realIPIdx, "Recoverer should come after RealIP")
+	assert.Greater(t, recovererIdx, loggerIdx, "Recoverer should come after RequestLogger")
+	assert.Greater(t, timeoutBlockIdx, recovererIdx, "Timeout block should come after Recoverer")
+	assert.Greater(t, throttleBlockIdx, timeoutBlockIdx, "Throttle block should come after Timeout block")
+	assert.Greater(t, cspIdx, throttleBlockIdx, "CSP should come after Throttle block")
+	assert.Greater(t, securityHeadersIdx, cspIdx, "SecurityHeaders should come after CSP")
+	assert.Greater(t, corsBlockIdx, securityHeadersIdx, "CORS block should come after SecurityHeaders")
 }
 
 func TestHTTPRoutesCompressMiddleware(t *testing.T) {

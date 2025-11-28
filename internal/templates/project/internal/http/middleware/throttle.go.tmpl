@@ -1,0 +1,16 @@
+package middleware
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+)
+
+func NewThrottleMiddleware(limit int) func(next http.Handler) http.Handler {
+	return middleware.Throttle(limit)
+}
+
+func NewThrottleBacklogMiddleware(limit, backlogLimit int, backlogTimeout time.Duration) func(next http.Handler) http.Handler {
+	return middleware.ThrottleBacklog(limit, backlogLimit, backlogTimeout)
+}
