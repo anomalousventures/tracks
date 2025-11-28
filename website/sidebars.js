@@ -28,6 +28,7 @@ const sidebars = {
         'guides/example-walkthrough',
         'guides/layer-guide',
         'guides/routing-guide',
+        'guides/middleware',
         'guides/troubleshooting-routing',
         'guides/patterns',
         'guides/testing',

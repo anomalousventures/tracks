@@ -197,6 +197,19 @@ Having routing issues or server problems? Check the [Tracks Troubleshooting Guid
 - CORS and preflight request issues
 - Graceful shutdown problems
 
+## Middleware
+
+This application includes production-ready middleware for security and performance:
+
+- **Request Logging** - Structured logging with request IDs for tracing
+- **Compression** - Gzip response compression for text-based content
+- **Timeout** - Cancels long-running requests (configurable, default 60s)
+- **Throttling** - Limits concurrent requests to prevent overload (configurable, default 100)
+- **Security Headers** - X-Frame-Options, X-Content-Type-Options, CSP, etc.
+- **CORS** - Cross-origin request handling (disabled by default)
+
+Configure middleware via environment variables in `.env`. See `.env.example` for all options and the [Tracks Middleware Guide](https://go-tracks.io/docs/guides/middleware) for detailed documentation.
+
 ## Asset Caching
 
 This project uses content-addressed asset serving via hashfs:

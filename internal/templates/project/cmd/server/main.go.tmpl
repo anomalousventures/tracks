@@ -52,7 +52,7 @@ func run() error {
 	healthService := health.NewService(healthRepo)
 	// TRACKS:SERVICES:END
 
-	srv := http.NewServer(&cfg.Server, logger).
+	srv := http.NewServer(cfg, logger).
 		WithHealthService(healthService).
 		RegisterRoutes()
 

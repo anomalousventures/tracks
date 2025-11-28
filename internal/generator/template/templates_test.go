@@ -148,7 +148,7 @@ func TestMainGoTemplate(t *testing.T) {
 		{"db error wrap", `return fmt.Errorf("connect to database: %w", err)`, "should wrap database connection error"},
 		{"db cleanup", "database.Close()", "should close database"},
 		{"health service", "healthService := health.NewService(healthRepo)", "should instantiate health service with repository"},
-		{"server builder", "http.NewServer(&cfg.Server, logger)", "should use NewServer constructor"},
+		{"server builder", "http.NewServer(cfg, logger)", "should use NewServer constructor"},
 		{"with health", "WithHealthService(healthService)", "should chain WithHealthService"},
 		{"register routes", "RegisterRoutes()", "should chain RegisterRoutes"},
 		{"listen and serve", "return srv.ListenAndServe()", "run() should return srv.ListenAndServe()"},

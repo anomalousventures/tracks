@@ -14,11 +14,24 @@ import (
 
 func (s *Server) routes() {
 	s.router.Use(middleware.RequestID)
+	s.router.Use(middleware.RealIP)
 	s.router.Use(httpmiddleware.NewCompressMiddleware())
 	s.router.Use(httpmiddleware.NewRequestLogger(s.logger))
-	s.router.Use(middleware.RealIP)
 	s.router.Use(httpmiddleware.NewRecoverer(s.logger))
+
+	if s.config.Middleware.Timeout.Request > 0 {
+		s.router.Use(httpmiddleware.NewTimeoutMiddleware(s.config.Middleware.Timeout.Request))
+	}
+	if s.config.Middleware.Throttle.Limit > 0 {
+		s.router.Use(httpmiddleware.NewThrottleMiddleware(s.config.Middleware.Throttle.Limit))
+	}
+
 	s.router.Use(httpmiddleware.NewCSPMiddleware())
+	s.router.Use(httpmiddleware.NewSecurityHeadersMiddleware())
+
+	if s.config.Middleware.CORS.Enabled {
+		s.router.Use(httpmiddleware.NewCORSMiddleware(&s.config.Middleware.CORS))
+	}
 
 	// TRACKS:API_ROUTES:BEGIN
 	s.router.Get(routes.APIHealth, s.handleHealthCheck())
