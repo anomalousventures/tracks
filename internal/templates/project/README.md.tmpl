@@ -96,6 +96,36 @@ make dev    # Start development server with live reload
 
 See the [Development Workflow Guide](https://go-tracks.io/docs/guides/development-workflow) for details.
 
+## UI Components
+
+This project uses [templUI](https://templui.io) for UI components.
+
+### Adding Components
+
+```bash
+# Using tracks CLI
+tracks ui add button card toast
+
+# Or directly with templui
+go tool templui add button card toast
+```
+
+### Available Components
+
+```bash
+tracks ui list
+```
+
+### Component Location
+
+Components are installed in `internal/http/views/components/ui/`.
+
+### Customization
+
+templUI components are "copy-paste" - you own the code and can customize freely.
+
+See [templUI documentation](https://templui.io) for component reference.
+
 ## Docker
 
 ### Building the Docker Image
