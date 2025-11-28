@@ -3,18 +3,23 @@ package pages
 import (
 	"fmt"
 
+	"{{ .ModuleName }}/internal/http/views/components/ui/alert"
 	"{{ .ModuleName }}/internal/http/views/layouts"
 )
 
 templ ErrorPage(statusCode int, message string) {
 	@layouts.Base("Error", "An error occurred") {
-		<div>
-			<header>
-				<h1>Error { fmt.Sprintf("%d", statusCode) }</h1>
-			</header>
-			<section>
-				<p>{ message }</p>
-			</section>
-		</div>
+		<main class="container-app py-8">
+			@alert.Alert(alert.Props{
+				Variant: alert.VariantDestructive,
+			}) {
+				@alert.Title() {
+					Error { fmt.Sprintf("%d", statusCode) }
+				}
+				@alert.Description() {
+					{ message }
+				}
+			}
+		</main>
 	}
 }
