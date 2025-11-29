@@ -1,0 +1,286 @@
+---
+slug: v0-3-0-release
+title: 'Tracks v0.3.0: Phase 1 Complete - The Core Web Layer'
+authors: [aaron-ross]
+tags: [release, core-web, phase-1, htmx, templui, middleware]
+date: 2025-11-28
+---
+
+The day after Thanksgiving seems like the perfect time to share what we've been cooking up. **Tracks v0.3.0** marks the completion of Phase 1 (Core Web Layer), and we're grateful for the progress. Generated applications now include a complete web stack with Chi router, templ templates, HTMX v2, TemplUI components, and a production-ready middleware stack.
+
+:::info What's in v0.3.0
+
+**Status:** Phase 1 - Core Web Layer ✅ Complete
+
+**New in This Release:**
+- ✅ Complete middleware stack (10 middleware with security headers, CSP, CORS)
+- ✅ TemplUI integration with 100+ shadcn-style components
+- ✅ `tracks ui` CLI commands for component management
+- ✅ Asset pipeline with TailwindCSS v4, HTMX v2, and hashfs caching
+- ✅ Air live reload for .templ, .css, and .js files
+- ✅ Working counter example demonstrating HTMX patterns
+- ✅ Comprehensive documentation for all features
+
+**Try It:**
+```bash
+# Install via Homebrew (macOS/Linux)
+brew install anomalousventures/tap/tracks
+
+# Or with Go 1.25+
+go install github.com/anomalousventures/tracks/cmd/tracks@v0.3.0
+
+# Create a new project
+tracks new myapp
+cd myapp
+
+# Start development (live reload with Air)
+make dev
+```
+:::
+
+<!--truncate-->
+
+## Phase 1: Core Web Layer Complete
+
+Phase 1 builds on the foundation from v0.2.0, adding everything needed for a complete web application. All five epics are now finished:
+
+1. ✅ **Chi Router Setup** - Route registration, middleware chains, graceful shutdown
+2. ✅ **Templ Templates** - Type-safe HTML with layouts, pages, and components
+3. ✅ **Asset Pipeline** - TailwindCSS v4, HTMX v2, hashfs content-addressed URLs
+4. ✅ **TemplUI Integration** - 100+ components with `tracks ui` CLI commands
+5. ✅ **Middleware & Documentation** - Security headers, CSP, CORS, comprehensive guides
+
+Generated projects now have a complete, production-ready web layer out of the box.
+
+## Production-Ready Middleware Stack
+
+Every generated application includes a carefully ordered middleware stack with 10 middleware components:
+
+| Middleware | Purpose |
+|------------|---------|
+| RequestID | Unique ID for each request (tracing) |
+| RealIP | Extract client IP from proxy headers |
+| Compress | Gzip response compression |
+| Logger | Structured request logging |
+| Recoverer | Panic recovery with stack traces |
+| Timeout | Cancel long-running requests |
+| Throttle | Limit concurrent requests |
+| CSP | Content-Security-Policy with nonces |
+| SecurityHeaders | X-Frame-Options, X-Content-Type-Options, etc. |
+| CORS | Cross-origin requests (disabled by default) |
+
+All configurable via environment variables:
+
+```bash
+# Timeout: cancel requests after 60 seconds
+APP_MIDDLEWARE_TIMEOUT_REQUEST=60s
+
+# Throttle: max 100 concurrent requests, 50 in backlog
+APP_MIDDLEWARE_THROTTLE_LIMIT=100
+APP_MIDDLEWARE_THROTTLE_BACKLOG_LIMIT=50
+
+# CORS: enable for specific origins
+APP_MIDDLEWARE_CORS_ENABLED=true
+APP_MIDDLEWARE_CORS_ALLOWED_ORIGINS=https://app.example.com
+```
+
+See the [Middleware Guide](/docs/guides/middleware) for complete documentation.
+
+## TemplUI Component Integration
+
+Generated projects now include [TemplUI](https://templui.io), a component library inspired by shadcn/ui but built for Go's templ templating system. Over 100 components are available:
+
+```bash
+# Add components to your project
+tracks ui add button card toast alert
+
+# List available components
+tracks ui list
+
+# Upgrade templUI version
+tracks ui upgrade
+```
+
+Components are copied into your project at `internal/http/views/components/ui/`, giving you full ownership to customize as needed.
+
+**Example usage in templ:**
+
+```templ
+package pages
+
+import "myapp/internal/http/views/components/ui"
+
+templ HomePage() {
+    <div class="container mx-auto p-4">
+        @ui.Card(ui.CardProps{}) {
+            @ui.CardHeader() {
+                @ui.CardTitle() {
+                    Welcome to My App
+                }
+            }
+            @ui.CardContent() {
+                <p>Built with Tracks and TemplUI</p>
+            }
+            @ui.CardFooter() {
+                @ui.Button(ui.ButtonProps{}) {
+                    Get Started
+                }
+            }
+        }
+    </div>
+}
+```
+
+## Complete Asset Pipeline
+
+The asset pipeline handles everything from development to production:
+
+**TailwindCSS v4:**
+- Automatic compilation on file changes
+- Minified output for production
+- Custom configuration support
+
+**HTMX v2 with Extensions:**
+- head-support for `<head>` element updates
+- idiomorph for smooth DOM morphing
+- response-targets for flexible response handling
+
+**Content-Addressed URLs (hashfs):**
+- URLs include content hash: `app.abc123.css`
+- 1-year immutable cache headers
+- ETag support with 304 Not Modified responses
+- Gzip compression for text assets
+
+**Air Live Reload:**
+- Watches `.templ`, `.css`, `.js` files
+- Automatic rebuild and browser refresh
+- Fast feedback loop during development
+
+## Working HTMX Example
+
+Every generated project includes a counter component demonstrating HTMX patterns:
+
+<div style={{textAlign: 'center', margin: '2rem 0'}}>
+  <img src="/img/counter-demo.gif" alt="HTMX Counter Demo - clicking increment and decrement buttons updates the counter without page reloads" style={{maxWidth: '400px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'}} />
+</div>
+
+```templ
+// Counter component with HTMX
+templ Counter(count int) {
+    <div id="counter" class="flex items-center gap-4">
+        <button
+            hx-post="/counter/decrement"
+            hx-target="#counter"
+            hx-swap="outerHTML"
+            class="btn">
+            -
+        </button>
+        <span class="text-2xl font-bold">{ strconv.Itoa(count) }</span>
+        <button
+            hx-post="/counter/increment"
+            hx-target="#counter"
+            hx-swap="outerHTML"
+            class="btn">
+            +
+        </button>
+    </div>
+}
+```
+
+The counter updates without page reloads, showing how HTMX enables interactivity while keeping your application server-rendered.
+
+## Security by Default
+
+Generated applications are secure out of the box:
+
+**Content-Security-Policy with Nonces:**
+```go
+// Nonces are generated per-request and available in templates
+<script nonce={ templ.GetNonce(ctx) }>
+    // Inline scripts allowed with correct nonce
+</script>
+```
+
+**Security Headers:**
+- `X-Frame-Options: DENY` - Prevents clickjacking
+- `X-Content-Type-Options: nosniff` - Prevents MIME sniffing
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy` - Disables unused browser features
+
+**CORS Disabled by Default:**
+For same-origin HTMX applications, CORS is unnecessary and disabled. Enable it only when needed for cross-origin API access.
+
+## Documentation
+
+This release includes comprehensive documentation:
+
+- **[Middleware Guide](/docs/guides/middleware)** - Complete middleware configuration
+- **[Caching Guide](/docs/guides/caching)** - Asset caching with hashfs
+- **[Development Workflow](/docs/guides/development-workflow)** - Air setup and live reload
+- **[Architecture Overview](/docs/guides/architecture-overview)** - Updated with web layer details
+
+## What's Next
+
+With Phase 1 complete, development moves to **Phase 2 (Data Layer)**:
+
+- **SQLC integration** for type-safe SQL queries
+- **Goose migrations** with embedded migration files
+- **Repository pattern** implementation
+- **UUIDv7** for time-ordered identifiers
+
+See the [full roadmap](https://go-tracks.io/roadmap) for details on all planned phases.
+
+## Installation
+
+### Homebrew (macOS/Linux)
+```bash
+brew install anomalousventures/tap/tracks
+```
+
+### Scoop (Windows)
+```bash
+scoop bucket add anomalousventures https://github.com/anomalousventures/scoop-bucket
+scoop install tracks
+```
+
+### Go Install
+```bash
+go install github.com/anomalousventures/tracks/cmd/tracks@v0.3.0
+```
+
+### Docker
+```bash
+docker pull ghcr.io/anomalousventures/tracks:0.3.0
+docker run ghcr.io/anomalousventures/tracks:0.3.0 version
+```
+
+### Direct Download
+
+Download pre-built binaries from the [v0.3.0 release page](https://github.com/anomalousventures/tracks/releases/tag/v0.3.0).
+
+## Contributing
+
+Tracks is in active development and contributions are welcome!
+
+**Ways to contribute:**
+- Report bugs and request features via [GitHub Issues](https://github.com/anomalousventures/tracks/issues)
+- Discuss ideas in [GitHub Discussions](https://github.com/anomalousventures/tracks/discussions)
+- Submit pull requests (see [CONTRIBUTING.md](https://github.com/anomalousventures/tracks/blob/main/CONTRIBUTING.md))
+
+## Acknowledgments
+
+Special thanks to the maintainers of projects that make Tracks possible:
+
+- [Chi](https://github.com/go-chi/chi) - HTTP routing
+- [templ](https://github.com/a-h/templ) - Type-safe templates
+- [TemplUI](https://templui.io) - Component library
+- [HTMX](https://htmx.org) - HTML-driven interactivity
+- [hashfs](https://github.com/benbjohnson/hashfs) - Content-addressed serving
+- [TailwindCSS](https://tailwindcss.com) - Utility-first CSS
+- [Air](https://github.com/cosmtrek/air) - Live reload
+
+---
+
+**Ready to build?** Install Tracks and create your first project. We're thankful for everyone building with Tracks and helping shape its future.
+
+An [Anomalous Venture](https://github.com/enterprises/anomalousventures) by [Aaron Ross](https://github.com/ashmortar)

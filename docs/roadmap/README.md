@@ -4,8 +4,8 @@
 
 This roadmap outlines the development phases for the Tracks framework across **7 phases (Phase 0 through Phase 6)**. It is designed to be **flexible and adjustable** as we learn during implementation. Each phase builds on the previous ones, but the specifics can be revised based on discoveries and changing priorities.
 
-**Last Updated:** 2025-10-17
-**Roadmap Version:** 1.0.0
+**Last Updated:** 2025-11-28
+**Roadmap Version:** 1.1.0
 
 ## Quick Navigation
 
@@ -31,14 +31,15 @@ Track progress across all 7 phases below.
 | 0.3 | Build system | Complete | 2025-10-21 | 2025-11-13 | [Core Architecture](../prd/1_core_architecture.md#build-system) | Released in v0.2.0 |
 | 0.4 | Basic documentation | Complete | 2025-10-21 | 2025-11-13 | - | Released in v0.2.0 |
 
-### Phase 1: Core Web - 🚧 In Progress
+### Phase 1: Core Web - ✅ Complete
 
 | ID  | Feature | Status | Started | Completed | PRD Link | Notes |
 |-----|---------|--------|---------|-----------|----------|-------|
-| 1.1 | Chi router setup | Not Started | - | - | [Web Layer](../prd/5_web_layer.md#router-setup) | - |
-| 1.2 | templ templates | Not Started | - | - | [Templates & Assets](../prd/7_templates_assets.md#template-system) | - |
-| 1.3 | Asset Pipeline (merged 1.3+1.4) | Phase 1 Complete (5/62 tasks) | 2025-11-24 | - | [Asset Pipeline](./phases/1-core-web/epics/1.3-asset-pipeline.md) | Basic asset infrastructure working |
-| 1.4 | Middleware stack | Not Started | - | - | [Web Layer](../prd/5_web_layer.md#middleware-stack) | - |
+| 1.1 | Chi router setup | Complete | 2025-11-15 | 2025-11-17 | [Web Layer](../prd/5_web_layer.md#router-setup) | Released in v0.3.0 |
+| 1.2 | templ templates | Complete | 2025-11-17 | 2025-11-18 | [Templates & Assets](../prd/7_templates_assets.md#template-system) | Released in v0.3.0 |
+| 1.3 | Asset Pipeline (merged 1.3+1.4) | Complete | 2025-11-18 | 2025-11-24 | [Asset Pipeline](./phases/1-core-web/epics/1.3-asset-pipeline.md) | Released in v0.3.0 |
+| 1.5 | TemplUI Integration | Complete | 2025-11-24 | 2025-11-27 | [Templates & Assets](../prd/7_templates_assets.md#ui-component-library-templ-ui) | Released in v0.3.0 |
+| 1.6 | Middleware & Docs | Complete | 2025-11-27 | 2025-11-28 | [Web Layer](../prd/5_web_layer.md#middleware-stack) | Released in v0.3.0 |
 
 ### Phase 2: Data Layer - Not Started
 
@@ -122,6 +123,7 @@ Foundation → Core Web → Data Layer → Auth System → Generation
 | Version | Date | Changes | Reason |
 |---------|------|---------|--------|
 | 1.0.0 | 2025-10-17 | Initial roadmap | Project inception |
+| 1.1.0 | 2025-11-28 | Phase 1 complete, version targets updated | v0.3.0 release |
 
 ### Planned Review Points
 
