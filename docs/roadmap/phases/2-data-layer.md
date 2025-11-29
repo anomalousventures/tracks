@@ -6,7 +6,7 @@
 
 This phase implements the database layer with SQLC for type-safe queries, Goose for migrations, and support for multiple database drivers. Critical foundation for all data-driven features.
 
-**Target Version:** v0.3.0
+**Target Version:** v0.4.0
 **Estimated Duration:** 3-4 weeks
 **Status:** Not Started
 

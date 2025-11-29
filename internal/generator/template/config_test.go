@@ -48,6 +48,7 @@ func TestConfigImports(t *testing.T) {
 	testutil.AssertContainsAll(t, result, []string{
 		`"fmt"`,
 		`"time"`,
+		`"github.com/joho/godotenv"`,
 		`"github.com/spf13/viper"`,
 	})
 }
@@ -103,9 +104,8 @@ func TestConfigLoadFunction(t *testing.T) {
 
 	testutil.AssertContainsAll(t, result, []string{
 		"func Load() (*Config, error)",
+		"_ = godotenv.Load()",
 		"v := viper.New()",
-		`v.SetConfigFile(".env")`,
-		"v.ReadInConfig()",
 		"v.AutomaticEnv()",
 		"v.Unmarshal(&cfg)",
 	})

@@ -6,22 +6,81 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v0.3.0] - 2025-11-28
+
+**Phase 1 (Core Web Layer) Complete** - Generated applications now include a production-ready web stack with Chi router, templ templates, HTMX v2, TemplUI components, and comprehensive middleware.
+
+**Highlights:**
+
+- Complete middleware stack with 10 middleware (security headers, CSP, CORS, compression, request ID, logging)
+- TemplUI integration with 100+ shadcn-style components and `tracks ui` CLI commands
+- Asset pipeline with TailwindCSS v4, HTMX v2, and hashfs content-addressed URLs
+- Air live reload for .templ, .css, and .js files
+- Working HTMX counter example demonstrating server-side patterns
+
+### Bug Fixes
+
+- HTMX integration and move test apps to /tmp ([#455](https://github.com/anomalousventures/tracks/issues/455))
+- allow claude bot in code review workflow ([#368](https://github.com/anomalousventures/tracks/issues/368))
+
+### Code Refactoring
+
+- consolidate asset directories under internal/assets ([#453](https://github.com/anomalousventures/tracks/issues/453))
+- remove WHAT comment from SafeHTML ([#355](https://github.com/anomalousventures/tracks/issues/355))
+- separate path and parameter constants in routing ([#300](https://github.com/anomalousventures/tracks/issues/300))
+
+### Features
+
+- add middleware stack for generated projects ([#499](https://github.com/anomalousventures/tracks/issues/499))
+- complete Epic 1.5 documentation and integration tests ([#498](https://github.com/anomalousventures/tracks/issues/498))
+- add tracks ui subcommands for templUI integration ([#497](https://github.com/anomalousventures/tracks/issues/497))
+- add tracks ui command for templUI integration ([#496](https://github.com/anomalousventures/tracks/issues/496))
+- migrate nav.templ to use templUI components ([#494](https://github.com/anomalousventures/tracks/issues/494))
+- add script injection markers to base.templ ([#495](https://github.com/anomalousventures/tracks/issues/495))
+- migrate error.templ to use templUI Alert ([#493](https://github.com/anomalousventures/tracks/issues/493))
+- migrate about.templ to use templUI components ([#492](https://github.com/anomalousventures/tracks/issues/492))
+- migrate counter and home templates to templUI components ([#491](https://github.com/anomalousventures/tracks/issues/491))
+- wire templui execution into ProjectGenerator ([#465](https://github.com/anomalousventures/tracks/issues/465)) ([#490](https://github.com/anomalousventures/tracks/issues/490))
+- add templUI animation keyframes and remove redundant CSS ([#488](https://github.com/anomalousventures/tracks/issues/488))
+- add .templui.json configuration template ([#485](https://github.com/anomalousventures/tracks/issues/485))
+- add templUI directory structure for component organization ([#487](https://github.com/anomalousventures/tracks/issues/487))
+- add templui tool directive to go.mod template ([#486](https://github.com/anomalousventures/tracks/issues/486))
+- Air live reload configuration for asset and template changes ([#459](https://github.com/anomalousventures/tracks/issues/459))
+- add HTTP caching middleware for hashed assets ([#458](https://github.com/anomalousventures/tracks/issues/458))
+- add HTTP compression middleware for generated projects ([#457](https://github.com/anomalousventures/tracks/issues/457))
+- add hashfs content-addressed asset serving ([#456](https://github.com/anomalousventures/tracks/issues/456))
+- Epic 1.3 Phases 2 & 3 - Build Pipeline and HTMX Integration ([#454](https://github.com/anomalousventures/tracks/issues/454))
+- add basic assets.go template for static file serving ([#394](https://github.com/anomalousventures/tracks/issues/394))
+- update .gitignore template for asset pipeline ([#393](https://github.com/anomalousventures/tracks/issues/393))
+- create web/ directory structure template (issue [#386](https://github.com/anomalousventures/tracks/issues/386)) ([#392](https://github.com/anomalousventures/tracks/issues/392))
+- add make targets for working with generated test projects ([#385](https://github.com/anomalousventures/tracks/issues/385))
+- add make targets for test app generation ([#384](https://github.com/anomalousventures/tracks/issues/384))
+- wire component test templates into project generator ([#381](https://github.com/anomalousventures/tracks/issues/381))
+- wire footer, meta, counter component templates ([#344](https://github.com/anomalousventures/tracks/issues/344)) ([#380](https://github.com/anomalousventures/tracks/issues/380))
+- add error_test.go.tmpl with table-driven tests for error pages ([#378](https://github.com/anomalousventures/tracks/issues/378))
+- add component test templates with goquery assertions ([#379](https://github.com/anomalousventures/tracks/issues/379))
+- add goquery for accessible test queries ([#376](https://github.com/anomalousventures/tracks/issues/376))
+- create nav.templ component template (issue [#323](https://github.com/anomalousventures/tracks/issues/323)) ([#366](https://github.com/anomalousventures/tracks/issues/366))
+- add HTMX partial rendering pattern templates (issue [#336](https://github.com/anomalousventures/tracks/issues/336)) ([#365](https://github.com/anomalousventures/tracks/issues/365))
+- add HTMX attribute helper templates (Task 31, [#333](https://github.com/anomalousventures/tracks/issues/333)) ([#364](https://github.com/anomalousventures/tracks/issues/364))
+- add footer.templ component template (issue [#324](https://github.com/anomalousventures/tracks/issues/324)) ([#363](https://github.com/anomalousventures/tracks/issues/363))
+- add route registration and page rendering integration tests ([#367](https://github.com/anomalousventures/tracks/issues/367))
+- create handler helpers and page handlers (issues [#314](https://github.com/anomalousventures/tracks/issues/314)-318) ([#361](https://github.com/anomalousventures/tracks/issues/361))
+- create meta.templ component template (issue [#312](https://github.com/anomalousventures/tracks/issues/312)) ([#360](https://github.com/anomalousventures/tracks/issues/360))
+- create page templates (about.templ and error.templ) for Epic 1.2 (issues [#306](https://github.com/anomalousventures/tracks/issues/306), [#307](https://github.com/anomalousventures/tracks/issues/307)) ([#358](https://github.com/anomalousventures/tracks/issues/358))
+- create home.templ page template (issue [#305](https://github.com/anomalousventures/tracks/issues/305)) ([#357](https://github.com/anomalousventures/tracks/issues/357))
+- create base.templ layout template (issue [#304](https://github.com/anomalousventures/tracks/issues/304)) ([#356](https://github.com/anomalousventures/tracks/issues/356))
+- create view directory structure template (issue [#303](https://github.com/anomalousventures/tracks/issues/303)) ([#354](https://github.com/anomalousventures/tracks/issues/354))
+- enhance README template with architecture, routing, and troubleshooting docs (issues [#283](https://github.com/anomalousventures/tracks/issues/283), [#284](https://github.com/anomalousventures/tracks/issues/284), [#285](https://github.com/anomalousventures/tracks/issues/285), [#297](https://github.com/anomalousventures/tracks/issues/297)) ([#302](https://github.com/anomalousventures/tracks/issues/302))
+- organize route templates into active and example directories (issue [#275](https://github.com/anomalousventures/tracks/issues/275)) ([#301](https://github.com/anomalousventures/tracks/issues/301))
+- add users route test template (issue [#288](https://github.com/anomalousventures/tracks/issues/288)) ([#298](https://github.com/anomalousventures/tracks/issues/298))
+- add users route example template (issue [#287](https://github.com/anomalousventures/tracks/issues/287)) ([#296](https://github.com/anomalousventures/tracks/issues/296))
+- add health route test template (issue [#286](https://github.com/anomalousventures/tracks/issues/286)) ([#295](https://github.com/anomalousventures/tracks/issues/295))
+- refactor routes to domain-based structure ([#294](https://github.com/anomalousventures/tracks/issues/294))
+- **templates:** add server_test.go.tmpl with integration tests ([#291](https://github.com/anomalousventures/tracks/issues/291))
+
+
 ## [v0.2.0] - 2025-11-13
-
-### Phase 0 Complete - Foundation Ready for Production
-
-This release marks the completion of Phase 0 (Foundation) for Tracks. The CLI tool can now generate production-ready Go web applications with clean architecture, comprehensive tooling, and multi-database support.
-
-**Key Highlights:**
-
-- ✅ Complete `tracks new` command - generates full project scaffolds with layered architecture
-- ✅ Multi-database driver support - LibSQL, SQLite3, and PostgreSQL with type-safe queries (SQLC)
-- ✅ Development tooling - Makefile, Air live reload, Docker Compose, golangci-lint, Mockery, CI/CD
-- ✅ Auto-generated `.env` and automatic Docker service startup with `make dev`
-- ✅ Comprehensive documentation - Getting started guides, tutorials, architecture docs, CLI references
-- ✅ Production-ready templates - Health endpoints, structured logging, configuration management
-
-**What's Next:** Phase 1 (Core Web Layer) will add code generators for resources, handlers, services, and repositories, plus an interactive TUI for guided project setup.
 
 ### Bug Fixes
 
@@ -79,24 +138,13 @@ This release marks the completion of Phase 0 (Foundation) for Tracks. The CLI to
 - **templates:** implement embed system for template files ([#84](https://github.com/anomalousventures/tracks/issues/84))
 
 
-## [0.1.0] - 2025-10-24
-
-### Initial Release - CLI Infrastructure Complete (Epic 1)
-
-This is the first release of Tracks, a batteries-included toolkit for building hypermedia servers in Go. This release focuses on establishing the CLI tool infrastructure that will power project generation and code scaffolding in future releases.
-
-**Key Highlights:**
-
-- ✅ Complete CLI framework with Cobra
-- ✅ Flexible output system supporting console, JSON, and TUI modes (TUI coming in Phase 4)
-- ✅ Cross-platform builds (Linux, macOS, Windows on amd64/arm64)
-- ✅ Multi-distribution support (Homebrew, Scoop, Linux packages, Docker, go install)
-- ✅ Comprehensive test coverage with CI/CD automation
-
-**What's Next:** Phase 1 (Core Web) will add the `tracks new` command to generate full-stack Go web applications with type-safe templates, SQL, routing, and built-in auth/RBAC.
+## Unreleased - 2025-10-24
 
 ### Bug Fixes
 
+- **release:** remove duplicate changelog from release notes ([#50](https://github.com/anomalousventures/tracks/issues/50))
+- **release:** use TRACKS_RELEASER_TOKEN for Homebrew/Scoop publishing ([#49](https://github.com/anomalousventures/tracks/issues/49))
+- **release:** add QEMU and Buildx for multi-arch Docker builds ([#48](https://github.com/anomalousventures/tracks/issues/48))
 - **release:** update GoReleaser for v2 and add Linux packages ([#46](https://github.com/anomalousventures/tracks/issues/46))
 
 ### Features
@@ -123,5 +171,5 @@ This is the first release of Tracks, a batteries-included toolkit for building h
 - **test:** add CLI integration test framework ([#41](https://github.com/anomalousventures/tracks/issues/41))
 
 
+[v0.3.0]: https://github.com/anomalousventures/tracks/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/anomalousventures/tracks/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/anomalousventures/tracks/releases/tag/v0.1.0

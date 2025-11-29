@@ -6,7 +6,7 @@
 
 This phase implements code generation capabilities and the basic TUI interface. Developers can generate complete CRUD resources, services, and handlers through both CLI commands and interactive TUI.
 
-**Target Version:** v0.5.0
+**Target Version:** v0.6.0
 **Estimated Duration:** 4-5 weeks
 **Status:** Not Started
 

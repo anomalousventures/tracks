@@ -6,9 +6,9 @@
 
 This phase establishes the web foundation with Chi router, templ templates, and asset management. The goal is to have a working HTTP server with type-safe templates and optimized asset serving.
 
-**Target Version:** v0.2.0
+**Target Version:** v0.3.0
 **Estimated Duration:** 2-3 weeks
-**Status:** Not Started
+**Status:** Complete ✅ (All epics finished)
 
 ## Goals
 
@@ -28,10 +28,10 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 
 **Acceptance Criteria:**
 
-- [ ] Chi router initialized in generated apps
-- [ ] Basic route registration
-- [ ] Middleware chain support
-- [ ] Graceful shutdown handling
+- [x] Chi router initialized in generated apps
+- [x] Basic route registration
+- [x] Middleware chain support
+- [x] Graceful shutdown handling
 
 **PRD Reference:** [Web Layer - Router Setup](../../prd/5_web_layer.md#router-setup)
 
@@ -47,10 +47,10 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 
 **Acceptance Criteria:**
 
-- [ ] templ installed and configured
-- [ ] Base layout templates (internal/http/views/layouts/)
-- [ ] Component directory structure (internal/http/views/components/)
-- [ ] Template generation added to `make generate`
+- [x] templ installed and configured
+- [x] Base layout templates (internal/http/views/layouts/)
+- [x] Component directory structure (internal/http/views/components/)
+- [x] Template generation added to `make generate`
 
 **PRD Reference:** [Templates & Assets - Template System](../../prd/7_templates_assets.md#template-system)
 
@@ -62,29 +62,26 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 
 ### 1.3 Asset Build & Serving Pipeline (merged 1.3+1.4)
 
-**Status:** Phase 1 Complete (5/62 tasks) - Basic asset infrastructure working
+**Status:** Complete
 
 **Description:** Complete asset pipeline with TailwindCSS, JavaScript bundling, HTMX v2, and content-addressed serving
 
-**Phase 1 Complete:**
+**Completed:**
 
 - [x] Web/ directory structure created
 - [x] Basic assets.go template with embed.FS
 - [x] Static file handler template
 - [x] MIME type handling
 - [x] .gitignore template for asset pipeline
-
-**Remaining Phases (2-9):**
-
-- [ ] TailwindCSS configuration and compilation (Phase 2)
-- [ ] JavaScript bundling with esbuild (Phase 2)
-- [ ] HTMX v2 with extensions (head-support, idiomorph, response-targets) (Phase 3)
-- [ ] Counter component example (Phase 3)
-- [ ] Content-addressed serving with hashfs (Phase 4)
-- [ ] Asset compression and caching (Phases 5-6)
-- [ ] Air live reload for assets (Phase 7)
-- [ ] ProjectGenerator integration (Phase 8)
-- [ ] Comprehensive testing (Phase 9)
+- [x] TailwindCSS v4 configuration and compilation
+- [x] JavaScript bundling with esbuild
+- [x] HTMX v2 with extensions (head-support, idiomorph, response-targets)
+- [x] Counter component example
+- [x] Content-addressed serving with hashfs
+- [x] Asset compression and caching
+- [x] Air live reload for assets
+- [x] ProjectGenerator integration
+- [x] Comprehensive testing
 
 **Epic Document:** [1.3 Asset Pipeline](./epics/1.3-asset-pipeline.md) (62 total tasks)
 
@@ -107,12 +104,12 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 
 **Acceptance Criteria:**
 
-- [ ] templui CLI installed as tool dependency
-- [ ] templui init runs during project generation
-- [ ] Full starter set components installed
-- [ ] tracks ui add and tracks ui list commands implemented
-- [ ] Example pages using templ-ui components
-- [ ] Component customization documented
+- [x] templui CLI installed as tool dependency
+- [x] templui init runs during project generation
+- [x] Full starter set components installed
+- [x] tracks ui add and tracks ui list commands implemented
+- [x] Example pages using templ-ui components
+- [x] Component customization documented
 
 **PRD Reference:** [Templates & Assets - UI Component Library](../../prd/7_templates_assets.md#ui-component-library-templ-ui)
 
@@ -131,19 +128,23 @@ This phase establishes the web foundation with Chi router, templ templates, and 
 
 **Middleware:**
 
-- [ ] Request ID generation
-- [ ] Logging middleware
-- [ ] Recovery middleware
-- [ ] Compression middleware
-- [ ] Static file serving
+- [x] Request ID generation
+- [x] Logging middleware
+- [x] Recovery middleware
+- [x] Compression middleware
+- [x] Static file serving
+- [x] Timeout middleware
+- [x] Throttle middleware
+- [x] Security headers (X-Frame-Options, X-Content-Type-Options, CSP, etc.)
+- [x] CORS middleware (configurable)
 
 **Documentation:**
 
-- [ ] Router setup guide
-- [ ] Template component guide
-- [ ] Middleware documentation
-- [ ] Asset management guide
-- [ ] Templ-UI customization workflow
+- [x] Router setup guide
+- [x] Template component guide
+- [x] Middleware documentation
+- [x] Asset management guide
+- [x] Templ-UI customization workflow
 
 **PRD Reference:** [Web Layer - Middleware Stack](../../prd/5_web_layer.md#middleware-stack)
 

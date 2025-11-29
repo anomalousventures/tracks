@@ -6,7 +6,7 @@
 
 This phase implements authentication and authorization with passwordless auth by default, OAuth2 support, and Casbin-based RBAC. Security-first approach with rate limiting and secure sessions.
 
-**Target Version:** v0.4.0
+**Target Version:** v0.5.0
 **Estimated Duration:** 3-4 weeks
 **Status:** Not Started
 

@@ -6,7 +6,7 @@
 
 This phase focuses on production readiness with observability, comprehensive testing, security hardening, and deployment configurations. The goal is to ensure applications built with Tracks are production-ready.
 
-**Target Version:** v0.8.0
+**Target Version:** v0.7.0
 **Estimated Duration:** 4-5 weeks
 **Status:** Not Started
 
