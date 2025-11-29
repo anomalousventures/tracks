@@ -1,0 +1,71 @@
+package slug
+
+import (
+	"errors"
+	"regexp"
+	"strings"
+
+	"github.com/jaevor/go-nanoid"
+)
+
+var (
+	alphabet      = "0123456789abcdefghijklmnopqrstuvwxyz"
+	generator     func() string
+	shortGen      func() string
+	usernameRe    = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$`)
+	slugSanitizer = regexp.MustCompile(`[^a-z0-9-]`)
+	multiHyphen   = regexp.MustCompile(`-+`)
+)
+
+func init() {
+	var err error
+	generator, err = nanoid.CustomASCII(alphabet, 8)
+	if err != nil {
+		panic("failed to create slug generator: " + err.Error())
+	}
+	shortGen, err = nanoid.CustomASCII(alphabet, 6)
+	if err != nil {
+		panic("failed to create short slug generator: " + err.Error())
+	}
+}
+
+func Generate() string {
+	return generator()
+}
+
+func GenerateShort() string {
+	return shortGen()
+}
+
+func Sanitize(input string) string {
+	s := strings.ToLower(input)
+	s = slugSanitizer.ReplaceAllString(s, "-")
+	s = multiHyphen.ReplaceAllString(s, "-")
+	s = strings.Trim(s, "-")
+
+	if s == "" {
+		return Generate()
+	}
+	return s
+}
+
+func ValidateUsername(username string) error {
+	if len(username) < 3 {
+		return errors.New("username must be at least 3 characters")
+	}
+	if len(username) > 32 {
+		return errors.New("username must be at most 32 characters")
+	}
+
+	lower := strings.ToLower(username)
+	if !usernameRe.MatchString(lower) {
+		return errors.New("username must contain only letters, numbers, hyphens, and underscores, and cannot start or end with hyphen or underscore")
+	}
+
+	if strings.Contains(lower, "--") || strings.Contains(lower, "__") ||
+		strings.Contains(lower, "-_") || strings.Contains(lower, "_-") {
+		return errors.New("username cannot have consecutive hyphens or underscores")
+	}
+
+	return nil
+}
