@@ -33,24 +33,34 @@
 
 ## Current Status
 
-**Phase 0 (Foundation) is complete!** 🎉
+**Phase 1 (Core Web Layer) is complete!** 🎉
 
-The Tracks CLI tool is ready to generate production-ready Go web applications. Install it now and start building.
+Generated applications now include a production-ready web stack with Chi router, templ templates, HTMX v2, TemplUI components, and comprehensive middleware.
+
+<p align="center">
+  <img src="website/static/img/counter-demo.gif" alt="HTMX Counter Demo" width="300">
+</p>
 
 **What works now:**
 
-- ✅ CLI infrastructure (complete)
-  - Root command with version, help, and global flags
-  - Renderer pattern (Console, JSON, TUI-ready)
-  - Mode detection (TTY, CI, flags, env vars)
-  - Theme system with Lip Gloss styling
-  - Comprehensive test coverage (unit + integration + Docker E2E)
+- ✅ Complete web layer
+  - Chi router with middleware stack (10 middleware including security headers, CSP, CORS)
+  - templ templates with type-safe HTML
+  - HTMX v2 with extensions (head-support, idiomorph, response-targets)
+  - TemplUI integration with 100+ shadcn-style components
+  - TailwindCSS v4 with automatic compilation
+  - hashfs content-addressed asset serving with cache headers
+  - Air live reload for .templ, .css, and .js files
+- ✅ `tracks ui` CLI commands
+  - `tracks ui add <components>` - Add TemplUI components
+  - `tracks ui list` - List available and installed components
+  - `tracks ui upgrade` - Upgrade TemplUI version
 - ✅ Project generation (`tracks new` command)
   - Production-ready project scaffolding
   - Choice of database drivers (LibSQL, SQLite3, PostgreSQL)
   - Clean architecture with layered structure (handlers → services → repositories)
+  - Working HTMX counter example out of the box
   - Auto-generated `.env` with sensible defaults
-  - Health check endpoint with repository pattern
   - Cross-platform support (Linux, macOS, Windows)
 - ✅ Complete development tooling
   - Makefile with comprehensive targets (dev, test, lint, build, generate-mocks)
@@ -62,10 +72,9 @@ The Tracks CLI tool is ready to generate production-ready Go web applications. I
   - GitHub Actions CI workflow (tests on Ubuntu, macOS, Windows)
 - ✅ Comprehensive documentation
   - Live documentation site with guides and tutorials
-  - Architecture overview and layer-by-layer guide
+  - Middleware configuration guide
+  - Caching and asset pipeline documentation
   - CLI reference with examples
-  - Testing strategies and patterns
-  - Installation guides for all platforms
 
 ## Quick Start
 
@@ -102,10 +111,8 @@ See the [CLI documentation](https://go-tracks.io/cli/new) and [Getting Started g
 
 **Coming next:**
 
-- Phase 1 (In Progress): Code generation (resources, handlers, services)
-  - ✅ **Epic 1.3 Phase 1 Complete:** Basic asset infrastructure (web/ directory, embed.FS, static file handler)
-  - 🚧 Next: TailwindCSS, JavaScript bundling, HTMX v2
-- Phase 2: Authentication and authorization
+- Phase 2: Data Layer - SQLC integration, Goose migrations, repository pattern
+- Phase 3: Authentication - Magic links, OTP, OAuth providers
 - See [Roadmap](#roadmap) for details
 
 ## Vision
@@ -147,25 +154,28 @@ Tracks development is organized into 7 phases. See [`docs/roadmap`](./docs/roadm
 
 **Goal:** Working CLI that generates project scaffolds
 
-**Completed Epics:**
-
-1. ✅ [CLI Infrastructure](./docs/roadmap/phases/0-foundation/epics/1-cli-infrastructure.md) - Cobra framework, Renderer pattern, version tracking
-2. ✅ [Template Engine](./docs/roadmap/phases/0-foundation/epics/2-template-engine.md) - Embed system for project templates
-3. ✅ [Project Generation](./docs/roadmap/phases/0-foundation/epics/3-project-generation.md) - `tracks new` command
-4. ✅ [Generated Project Tooling](./docs/roadmap/phases/0-foundation/epics/4-generated-tooling.md) - Makefiles, Air, linting, Docker, CI/CD, Mockery, SQLC
-5. ✅ [Documentation](./docs/roadmap/phases/0-foundation/epics/5-documentation.md) - Installation guides, tutorials, architecture docs
-
 **Status:** Complete · **Released:** v0.1.0
+
+### Phase 1: Core Web Layer ✅ Complete
+
+**Goal:** Complete web stack with routing, templates, and assets
+
+**Key Features:**
+
+- Chi router with 10-middleware stack (security headers, CSP, CORS, compression)
+- templ templates with TemplUI components (100+ shadcn-style components)
+- HTMX v2 with extensions for dynamic UI
+- TailwindCSS v4 with hashfs content-addressed serving
+- `tracks ui` CLI for component management
+
+**Status:** Complete · **Released:** v0.3.0
 
 ### Future Phases
 
-- **Phase 1 (Current):** Core Web Layer - Chi router, handlers, middleware, templ templates
-- **Phase 2:** Database Layer - SQLC, Goose migrations, LibSQL/PostgreSQL support
+- **Phase 2 (Current):** Data Layer - SQLC integration, Goose migrations, repository pattern
 - **Phase 3:** Authentication - Magic links, OTP, OAuth providers
 - **Phase 4:** Interactive TUI - Bubble Tea interface for generators
 - **Phase 5:** Production - OpenTelemetry, health checks, deployment
-- **Phase 6:** Authorization - Casbin RBAC
-- **Phase 7:** Advanced Features - Real-time, file uploads, background jobs
 
 [View Full Roadmap →](./docs/roadmap/README.md)
 
@@ -275,9 +285,9 @@ Sensible defaults with escape hatches:
 
 ## Project Status
 
-Tracks is in **pre-alpha development** (Phase 1). The API and generated code structure may change significantly before v1.0.
+Tracks is in **active development** (Phase 2). The API and generated code structure may change before v1.0.
 
-**Not ready for production use.** Follow development progress via [GitHub Issues](https://github.com/anomalousventures/tracks/issues) and [Roadmap](./docs/roadmap/README.md).
+Generated projects are **suitable for development and prototyping**. Follow development progress via [GitHub Issues](https://github.com/anomalousventures/tracks/issues) and [Roadmap](./docs/roadmap/README.md).
 
 ## Contributing
 
@@ -299,8 +309,12 @@ Tracks builds on excellent open-source projects:
 
 - [Chi](https://github.com/go-chi/chi) - HTTP routing
 - [templ](https://github.com/a-h/templ) - Type-safe templates
+- [TemplUI](https://templui.io) - Component library
+- [HTMX](https://htmx.org) - HTML-driven interactivity
 - [SQLC](https://sqlc.dev/) - SQL code generation
-- [Casbin](https://casbin.org/) - Authorization framework
+- [hashfs](https://github.com/benbjohnson/hashfs) - Content-addressed serving
+- [TailwindCSS](https://tailwindcss.com) - Utility-first CSS
+- [Air](https://github.com/cosmtrek/air) - Live reload
 - [Goose](https://github.com/pressly/goose) - Database migrations
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - TUI framework
 - [Cobra](https://github.com/spf13/cobra) - CLI framework
