@@ -28,6 +28,8 @@ func CreateProjectDirectories(config ProjectConfig) error {
 		filepath.Join(projectRoot, "internal", "db", "generated"),
 		filepath.Join(projectRoot, "tests", "mocks"),
 		filepath.Join(projectRoot, "tests", "integration"),
+		filepath.Join(projectRoot, "internal", "pkg", "identifier"),
+		filepath.Join(projectRoot, "internal", "pkg", "slug"),
 		filepath.Join(projectRoot, "internal", "assets", "web", "css"),
 		filepath.Join(projectRoot, "internal", "assets", "web", "js"),
 		filepath.Join(projectRoot, "internal", "assets", "web", "images"),

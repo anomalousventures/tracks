@@ -95,6 +95,10 @@ func TestGenerateFullProject(t *testing.T) {
 				"internal/http/handlers/health.go",
 				"internal/http/middleware/logging.go",
 				"internal/db/db.go",
+				"internal/pkg/identifier/uuid.go",
+				"internal/pkg/identifier/uuid_test.go",
+				"internal/pkg/slug/slug.go",
+				"internal/pkg/slug/slug_test.go",
 			}
 
 			for _, file := range expectedFiles {
@@ -119,6 +123,9 @@ func TestGenerateFullProject(t *testing.T) {
 				"internal/http/handlers",
 				"internal/http/middleware",
 				"internal/db",
+				"internal/pkg",
+				"internal/pkg/identifier",
+				"internal/pkg/slug",
 			}
 
 			for _, dir := range expectedDirs {
@@ -136,6 +143,8 @@ func TestGenerateFullProject(t *testing.T) {
 
 			assert.Contains(t, string(content), tt.modulePath, "go.mod should contain module path")
 			assert.Contains(t, string(content), "go 1.25", "go.mod should contain Go version")
+			assert.Contains(t, string(content), "github.com/gofrs/uuid/v5", "go.mod should contain uuid dependency")
+			assert.Contains(t, string(content), "github.com/jaevor/go-nanoid", "go.mod should contain nanoid dependency")
 
 			dbPath := filepath.Join(projectRoot, "internal/db/db.go")
 			dbContent, err := os.ReadFile(dbPath)

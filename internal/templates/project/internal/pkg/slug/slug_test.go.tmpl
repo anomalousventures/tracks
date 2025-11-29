@@ -1,0 +1,69 @@
+package slug
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestGenerate(t *testing.T) {
+	s := Generate()
+	assert.Len(t, s, 8)
+	assert.Regexp(t, "^[a-z0-9]+$", s)
+}
+
+func TestGenerateShort(t *testing.T) {
+	s := GenerateShort()
+	assert.Len(t, s, 6)
+	assert.Regexp(t, "^[a-z0-9]+$", s)
+}
+
+func TestSanitize(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Hello World!", "hello-world"},
+		{"Test--Multiple---Hyphens", "test-multiple-hyphens"},
+		{"  leading trailing  ", "leading-trailing"},
+		{"UPPERCASE", "uppercase"},
+		{"special@#$chars", "special-chars"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, Sanitize(tt.input))
+		})
+	}
+}
+
+func TestSanitize_EmptyReturnsGenerated(t *testing.T) {
+	s := Sanitize("@#$%")
+	assert.Len(t, s, 8)
+}
+
+func TestValidateUsername(t *testing.T) {
+	valid := []string{"john", "john-doe", "john_doe", "a1b", "abc123"}
+	for _, u := range valid {
+		t.Run("valid:"+u, func(t *testing.T) {
+			assert.NoError(t, ValidateUsername(u))
+		})
+	}
+
+	invalid := []struct {
+		name     string
+		username string
+	}{
+		{"too short", "ab"},
+		{"starts with hyphen", "-invalid"},
+		{"ends with hyphen", "invalid-"},
+		{"consecutive hyphens", "in--valid"},
+		{"consecutive underscores", "in__valid"},
+		{"too long", "abcdefghijklmnopqrstuvwxyz1234567"},
+	}
+	for _, tt := range invalid {
+		t.Run("invalid:"+tt.name, func(t *testing.T) {
+			assert.Error(t, ValidateUsername(tt.username))
+		})
+	}
+}
