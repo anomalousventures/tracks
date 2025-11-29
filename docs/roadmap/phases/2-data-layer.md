@@ -7,7 +7,7 @@
 This phase implements the database layer with SQLC for type-safe queries, Goose for migrations, and support for multiple database drivers. Critical foundation for all data-driven features.
 
 **Target Version:** v0.4.0
-**Estimated Duration:** 3-4 weeks
+**Estimated Effort:** 135 tasks across 5 epics
 **Status:** Not Started
 
 ## Goals
@@ -55,7 +55,7 @@ Epic 2.2: Goose Migration System                 [Needs 2.1 for UUIDs in schema]
 
 **PRD Reference:** [Database Layer - UUID Implementation](../../prd/2_database_layer.md#uuid-implementation-uuidv7)
 
-**Task Estimate:** 12-15 tasks
+**Task Estimate:** 18 tasks
 
 ### 2.2 Goose Migration System
 
@@ -78,7 +78,7 @@ Epic 2.2: Goose Migration System                 [Needs 2.1 for UUIDs in schema]
 
 **PRD Reference:** [Database Layer - Migration System](../../prd/2_database_layer.md#migration-system)
 
-**Task Estimate:** 20-25 tasks
+**Task Estimate:** 32 tasks
 
 ### 2.3 SQLC Query Enhancement
 
@@ -99,7 +99,7 @@ Epic 2.2: Goose Migration System                 [Needs 2.1 for UUIDs in schema]
 
 **PRD Reference:** [Database Layer - SQLC Configuration](../../prd/2_database_layer.md#sqlc-configuration)
 
-**Task Estimate:** 12-15 tasks
+**Task Estimate:** 25 tasks
 
 ### 2.4 Database CLI Commands
 
@@ -120,7 +120,7 @@ Epic 2.2: Goose Migration System                 [Needs 2.1 for UUIDs in schema]
 
 **PRD Reference:** [Database Layer - Migration Commands](../../prd/2_database_layer.md#migration-system)
 
-**Task Estimate:** 15-18 tasks
+**Task Estimate:** 28 tasks
 
 ### 2.5 Audit, Integration & Documentation
 
@@ -141,7 +141,7 @@ Epic 2.2: Goose Migration System                 [Needs 2.1 for UUIDs in schema]
 
 **PRD Reference:** [Database Layer](../../prd/2_database_layer.md)
 
-**Task Estimate:** 12-15 tasks
+**Task Estimate:** 32 tasks
 
 ## Dependencies
 
