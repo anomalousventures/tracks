@@ -33,7 +33,8 @@ const (
 
 {{- end}}
 
-// MigrationStatus represents the state of a single migration.
+// MigrationStatus provides rich migration state for CLI consumption.
+// AppliedAt is a pointer because Goose returns time.Time (zero value means not applied).
 type MigrationStatus struct {
 	Version   int64
 	Name      string
@@ -41,7 +42,7 @@ type MigrationStatus struct {
 	IsPending bool
 }
 
-// MigrationResult represents the outcome of a migration operation.
+// MigrationResult provides structured output for CLI commands to display.
 type MigrationResult struct {
 	Direction   string // "up" or "down"
 	FromVersion int64
@@ -100,6 +101,8 @@ func MigrateUp(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 		}
 	}
 
+	// When no migrations were applied (all up-to-date), toVersion stays 0.
+	// In this case, report the current version as the "to" version.
 	if toVersion == 0 {
 		toVersion = currentVersion
 	}
@@ -139,7 +142,7 @@ func MigrateDown(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 				Version:   result.Source.Version,
 				Name:      result.Source.Path,
 				AppliedAt: &now,
-				IsPending: true,
+				IsPending: true, // After rollback, this migration is pending (needs to be re-applied)
 			},
 		}
 
