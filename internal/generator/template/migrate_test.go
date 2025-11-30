@@ -1,6 +1,7 @@
 package template
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -80,21 +81,82 @@ func TestMigrateTemplateDialectMapping(t *testing.T) {
 func TestMigrateTemplateFunctions(t *testing.T) {
 	result := renderMigrateTemplate(t, "postgres")
 
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "migrate.go", result, parser.AllErrors)
+	require.NoError(t, err, "should parse as valid Go code")
+
 	functions := []struct {
-		name      string
-		signature string
+		name       string
+		params     []string
+		returns    []string
 	}{
-		{"MigrateUp", "func MigrateUp(ctx context.Context, db *sql.DB) (*MigrationResult, error)"},
-		{"MigrateDown", "func MigrateDown(ctx context.Context, db *sql.DB) (*MigrationResult, error)"},
-		{"MigrateStatus", "func MigrateStatus(ctx context.Context, db *sql.DB) ([]MigrationStatus, error)"},
-		{"MigrateTo", "func MigrateTo(ctx context.Context, db *sql.DB, version int64) (*MigrationResult, error)"},
-		{"GetDialect", "func GetDialect() string"},
+		{"MigrateUp", []string{"context.Context", "*sql.DB"}, []string{"*MigrationResult", "error"}},
+		{"MigrateDown", []string{"context.Context", "*sql.DB"}, []string{"*MigrationResult", "error"}},
+		{"MigrateStatus", []string{"context.Context", "*sql.DB"}, []string{"[]MigrationStatus", "error"}},
+		{"MigrateTo", []string{"context.Context", "*sql.DB", "int64"}, []string{"*MigrationResult", "error"}},
+		{"GetDialect", []string{}, []string{"string"}},
 	}
 
 	for _, fn := range functions {
 		t.Run(fn.name, func(t *testing.T) {
-			assert.Contains(t, result, fn.signature, "should have %s function with correct signature", fn.name)
+			found := false
+			for _, decl := range file.Decls {
+				funcDecl, ok := decl.(*ast.FuncDecl)
+				if !ok || funcDecl.Name.Name != fn.name {
+					continue
+				}
+				found = true
+
+				// Check parameters
+				actualParams := []string{}
+				if funcDecl.Type.Params != nil {
+					for _, param := range funcDecl.Type.Params.List {
+						paramType := exprToString(param.Type)
+						// Each field may have multiple names (e.g., "a, b int")
+						count := len(param.Names)
+						if count == 0 {
+							count = 1
+						}
+						for i := 0; i < count; i++ {
+							actualParams = append(actualParams, paramType)
+						}
+					}
+				}
+				assert.Equal(t, fn.params, actualParams, "%s should have correct parameters", fn.name)
+
+				// Check return types
+				var actualReturns []string
+				if funcDecl.Type.Results != nil {
+					for _, result := range funcDecl.Type.Results.List {
+						returnType := exprToString(result.Type)
+						count := len(result.Names)
+						if count == 0 {
+							count = 1
+						}
+						for i := 0; i < count; i++ {
+							actualReturns = append(actualReturns, returnType)
+						}
+					}
+				}
+				assert.Equal(t, fn.returns, actualReturns, "%s should have correct return types", fn.name)
+			}
+			assert.True(t, found, "function %s should exist", fn.name)
 		})
+	}
+}
+
+func exprToString(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.SelectorExpr:
+		return exprToString(t.X) + "." + t.Sel.Name
+	case *ast.StarExpr:
+		return "*" + exprToString(t.X)
+	case *ast.ArrayType:
+		return "[]" + exprToString(t.Elt)
+	default:
+		return ""
 	}
 }
 
