@@ -100,18 +100,27 @@ jobs:
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=20s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=30s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_E2E_TIMEOUT=180s" >> $GITHUB_ENV
+              echo "GO_TEST_TIMEOUT=15m" >> $GITHUB_ENV
               ;;
             windows-latest|windows-11-arm)
               echo "INTEGRATION_TEST_SHORT_TIMEOUT=6s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_MEDIUM_TIMEOUT=30s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_LONG_TIMEOUT=45s" >> $GITHUB_ENV
               echo "INTEGRATION_TEST_E2E_TIMEOUT=240s" >> $GITHUB_ENV
+              echo "GO_TEST_TIMEOUT=20m" >> $GITHUB_ENV
               ;;
           esac
 
+      - name: Set Go test timeout
+        shell: bash
+        run: |
+          if [ -z "$GO_TEST_TIMEOUT" ]; then
+            echo "GO_TEST_TIMEOUT=10m" >> $GITHUB_ENV
+          fi
+
       - name: Run integration tests
         shell: bash
-        run: go test -v -coverprofile=coverage-integration.out -p 1 ./tests/integration
+        run: go test -v -timeout $GO_TEST_TIMEOUT -coverprofile=coverage-integration.out -p 1 ./tests/integration
 
       - name: Upload integration test coverage
         uses: codecov/codecov-action@v5
