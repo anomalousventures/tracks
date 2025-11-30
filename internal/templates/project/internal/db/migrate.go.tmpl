@@ -33,7 +33,6 @@ const (
 
 {{- end}}
 
-// MigrationStatus provides rich migration state for CLI consumption.
 // AppliedAt is a pointer because Goose returns time.Time (zero value means not applied).
 type MigrationStatus struct {
 	Version   int64
@@ -42,7 +41,6 @@ type MigrationStatus struct {
 	IsPending bool
 }
 
-// MigrationResult provides structured output for CLI commands to display.
 type MigrationResult struct {
 	Direction   string // "up" or "down"
 	FromVersion int64
@@ -50,7 +48,6 @@ type MigrationResult struct {
 	Applied     []MigrationStatus
 }
 
-// GetDialect returns the Goose dialect for the configured database driver.
 func GetDialect() string {
 	return dialect
 }
@@ -69,7 +66,6 @@ func newProvider(db *sql.DB) (*goose.Provider, error) {
 	return provider, nil
 }
 
-// MigrateUp applies all pending migrations.
 func MigrateUp(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 	provider, err := newProvider(db)
 	if err != nil {
@@ -115,7 +111,6 @@ func MigrateUp(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 	}, nil
 }
 
-// MigrateDown rolls back the last migration.
 func MigrateDown(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 	provider, err := newProvider(db)
 	if err != nil {
@@ -135,6 +130,7 @@ func MigrateDown(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 	var applied []MigrationStatus
 	var toVersion int64
 
+	// provider.Down() returns nil when already at version 0 (no migrations to rollback)
 	if result != nil {
 		now := time.Now()
 		applied = []MigrationStatus{
@@ -163,7 +159,6 @@ func MigrateDown(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
 	}, nil
 }
 
-// MigrateStatus returns the status of all migrations.
 func MigrateStatus(ctx context.Context, db *sql.DB) ([]MigrationStatus, error) {
 	provider, err := newProvider(db)
 	if err != nil {
@@ -192,7 +187,6 @@ func MigrateStatus(ctx context.Context, db *sql.DB) ([]MigrationStatus, error) {
 	return result, nil
 }
 
-// MigrateTo migrates to a specific version.
 func MigrateTo(ctx context.Context, db *sql.DB, version int64) (*MigrationResult, error) {
 	provider, err := newProvider(db)
 	if err != nil {
