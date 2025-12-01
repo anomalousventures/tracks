@@ -1,0 +1,228 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	"embed"
+	"fmt"
+	"io/fs"
+	"time"
+
+	"github.com/pressly/goose/v3"
+)
+
+{{- if eq .DBDriver "postgres"}}
+
+//go:embed migrations/postgres/*.sql
+var migrations embed.FS
+
+const (
+	dialect       = "postgres"
+	migrationsDir = "migrations/postgres"
+)
+
+{{- else}}
+
+//go:embed migrations/sqlite/*.sql
+var migrations embed.FS
+
+const (
+	dialect       = "sqlite3"
+	migrationsDir = "migrations/sqlite"
+)
+
+{{- end}}
+
+// AppliedAt is a pointer because Goose returns time.Time (zero value means not applied).
+type MigrationStatus struct {
+	Version   int64
+	Name      string
+	AppliedAt *time.Time
+	IsPending bool
+}
+
+type MigrationResult struct {
+	Direction   string // "up" or "down"
+	FromVersion int64
+	ToVersion   int64
+	Applied     []MigrationStatus
+}
+
+func GetDialect() string {
+	return dialect
+}
+
+func newProvider(db *sql.DB) (*goose.Provider, error) {
+	fsys, err := fs.Sub(migrations, migrationsDir)
+	if err != nil {
+		return nil, fmt.Errorf("create migrations filesystem: %w", err)
+	}
+
+	provider, err := goose.NewProvider(goose.Dialect(dialect), db, fsys)
+	if err != nil {
+		return nil, fmt.Errorf("create migration provider: %w", err)
+	}
+
+	return provider, nil
+}
+
+func MigrateUp(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
+	provider, err := newProvider(db)
+	if err != nil {
+		return nil, err
+	}
+
+	currentVersion, err := provider.GetDBVersion(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get current version: %w", err)
+	}
+
+	results, err := provider.Up(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("apply migrations: %w", err)
+	}
+
+	applied := make([]MigrationStatus, 0, len(results))
+	var toVersion int64
+	for _, r := range results {
+		now := time.Now()
+		applied = append(applied, MigrationStatus{
+			Version:   r.Source.Version,
+			Name:      r.Source.Path,
+			AppliedAt: &now,
+			IsPending: false,
+		})
+		if r.Source.Version > toVersion {
+			toVersion = r.Source.Version
+		}
+	}
+
+	// When no migrations were applied (all up-to-date), toVersion stays 0.
+	// In this case, report the current version as the "to" version.
+	if toVersion == 0 {
+		toVersion = currentVersion
+	}
+
+	return &MigrationResult{
+		Direction:   "up",
+		FromVersion: currentVersion,
+		ToVersion:   toVersion,
+		Applied:     applied,
+	}, nil
+}
+
+func MigrateDown(ctx context.Context, db *sql.DB) (*MigrationResult, error) {
+	provider, err := newProvider(db)
+	if err != nil {
+		return nil, err
+	}
+
+	currentVersion, err := provider.GetDBVersion(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get current version: %w", err)
+	}
+
+	result, err := provider.Down(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("rollback migration: %w", err)
+	}
+
+	var applied []MigrationStatus
+	var toVersion int64
+
+	// provider.Down() returns nil when already at version 0 (no migrations to rollback)
+	if result != nil {
+		now := time.Now()
+		applied = []MigrationStatus{
+			{
+				Version:   result.Source.Version,
+				Name:      result.Source.Path,
+				AppliedAt: &now,
+				IsPending: true, // After rollback, this migration is pending (needs to be re-applied)
+			},
+		}
+
+		newVersion, err := provider.GetDBVersion(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get new version: %w", err)
+		}
+		toVersion = newVersion
+	} else {
+		toVersion = currentVersion
+	}
+
+	return &MigrationResult{
+		Direction:   "down",
+		FromVersion: currentVersion,
+		ToVersion:   toVersion,
+		Applied:     applied,
+	}, nil
+}
+
+func MigrateStatus(ctx context.Context, db *sql.DB) ([]MigrationStatus, error) {
+	provider, err := newProvider(db)
+	if err != nil {
+		return nil, err
+	}
+
+	statuses, err := provider.Status(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get migration status: %w", err)
+	}
+
+	result := make([]MigrationStatus, 0, len(statuses))
+	for _, s := range statuses {
+		status := MigrationStatus{
+			Version:   s.Source.Version,
+			Name:      s.Source.Path,
+			IsPending: s.State == goose.StatePending,
+		}
+		if !s.AppliedAt.IsZero() {
+			t := s.AppliedAt
+			status.AppliedAt = &t
+		}
+		result = append(result, status)
+	}
+
+	return result, nil
+}
+
+func MigrateTo(ctx context.Context, db *sql.DB, version int64) (*MigrationResult, error) {
+	provider, err := newProvider(db)
+	if err != nil {
+		return nil, err
+	}
+
+	currentVersion, err := provider.GetDBVersion(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get current version: %w", err)
+	}
+
+	results, err := provider.UpTo(ctx, version)
+	if err != nil {
+		return nil, fmt.Errorf("migrate to version %d: %w", version, err)
+	}
+
+	applied := make([]MigrationStatus, 0, len(results))
+	for _, r := range results {
+		now := time.Now()
+		applied = append(applied, MigrationStatus{
+			Version:   r.Source.Version,
+			Name:      r.Source.Path,
+			AppliedAt: &now,
+			IsPending: false,
+		})
+	}
+
+	newVersion, err := provider.GetDBVersion(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get new version: %w", err)
+	}
+
+	return &MigrationResult{
+		Direction:   "up",
+		FromVersion: currentVersion,
+		ToVersion:   newVersion,
+		Applied:     applied,
+	}, nil
+}
