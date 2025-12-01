@@ -30,4 +30,9 @@ type TemplateData struct {
 
 	// SecretKey is a cryptographically secure random key for session management.
 	SecretKey string
+
+	// MigrationTimestamp is the timestamp prefix for initial migration files.
+	// Format: YYYYMMDDHHMMSS (e.g., "20251130143022")
+	// Used to generate unique, sortable migration filenames.
+	MigrationTimestamp string
 }

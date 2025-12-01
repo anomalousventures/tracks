@@ -61,14 +61,17 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		return fmt.Errorf("failed to generate secret key: %w", err)
 	}
 
+	migrationTimestamp := time.Now().Format("20060102150405")
+
 	data := template.TemplateData{
-		ModuleName:  projectCfg.ModulePath,
-		ProjectName: projectCfg.ProjectName,
-		DBDriver:    projectCfg.DatabaseDriver,
-		GoVersion:   "1.25",
-		Year:        time.Now().Year(),
-		EnvPrefix:   projectCfg.EnvPrefix,
-		SecretKey:   secretKey,
+		ModuleName:         projectCfg.ModulePath,
+		ProjectName:        projectCfg.ProjectName,
+		DBDriver:           projectCfg.DatabaseDriver,
+		GoVersion:          "1.25",
+		Year:               time.Now().Year(),
+		EnvPrefix:          projectCfg.EnvPrefix,
+		SecretKey:          secretKey,
+		MigrationTimestamp: migrationTimestamp,
 	}
 
 	logger.Info().
@@ -132,11 +135,9 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/middleware/cors.go.tmpl":             "internal/http/middleware/cors.go",
 		"internal/http/middleware/security_headers.go.tmpl": "internal/http/middleware/security_headers.go",
 		"internal/http/middleware/middleware.go.tmpl":       "internal/http/middleware/middleware.go",
-		"internal/db/db.go.tmpl":                                      "internal/db/db.go",
-		"internal/db/migrate.go.tmpl":                                 "internal/db/migrate.go",
-		"internal/db/migrations/sqlite/placeholder.sql.tmpl":          "internal/db/migrations/sqlite/placeholder.sql",
-		"internal/db/migrations/postgres/placeholder.sql.tmpl":        "internal/db/migrations/postgres/placeholder.sql",
-		"internal/db/queries/.gitkeep.tmpl":                           "internal/db/queries/.gitkeep",
+		"internal/db/db.go.tmpl":             "internal/db/db.go",
+		"internal/db/migrate.go.tmpl":        "internal/db/migrate.go",
+		"internal/db/queries/.gitkeep.tmpl":  "internal/db/queries/.gitkeep",
 		"internal/db/queries/health.sql.tmpl":           "internal/db/queries/health.sql",
 		"internal/assets/web/images/.gitkeep.tmpl":      "internal/assets/web/images/.gitkeep",
 		"internal/assets/web/css/app.css.tmpl":          "internal/assets/web/css/app.css",
@@ -205,6 +206,35 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 	}
 
 	logger.Info().Msg("pre-generate templates rendered successfully")
+
+	logger.Info().Msg("rendering initial migration templates")
+	migrationTemplates := []struct {
+		template string
+		dir      string
+	}{
+		{"internal/db/migrations/sqlite/initial_schema.sql.tmpl", "internal/db/migrations/sqlite"},
+		{"internal/db/migrations/postgres/initial_schema.sql.tmpl", "internal/db/migrations/postgres"},
+	}
+
+	for _, m := range migrationTemplates {
+		outputFile := fmt.Sprintf("%s/%s_initial_schema.sql", m.dir, migrationTimestamp)
+		outputPath := filepath.Join(projectRoot, outputFile)
+
+		logger.Debug().
+			Str("template", m.template).
+			Str("output", outputPath).
+			Msg("rendering migration template")
+
+		if err := g.renderer.RenderToFile(m.template, data, outputPath); err != nil {
+			logger.Error().
+				Err(err).
+				Str("template", m.template).
+				Str("output", outputPath).
+				Msg("migration template rendering failed")
+			return fmt.Errorf("failed to render %s: %w", m.template, err)
+		}
+	}
+	logger.Info().Msg("initial migration templates rendered successfully")
 
 	logger.Info().Msg("tidying dependencies")
 	tidyCmd := exec.CommandContext(ctx, "go", "mod", "tidy")
