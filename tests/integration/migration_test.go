@@ -245,3 +245,130 @@ func TestMigrationTimestampFormat(t *testing.T) {
 	assert.Regexp(t, `^[0-5]\d$`, minute, "minute should be 00-59")
 	assert.Regexp(t, `^[0-5]\d$`, second, "second should be 00-59")
 }
+
+func TestMigrateCLIGenerated(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tests := []struct {
+		name           string
+		databaseDriver string
+	}{
+		{"sqlite3", "sqlite3"},
+		{"go-libsql", "go-libsql"},
+		{"postgres", "postgres"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			projectName := "testapp"
+
+			cfg := generator.ProjectConfig{
+				ProjectName:    projectName,
+				ModulePath:     "github.com/test/app",
+				DatabaseDriver: tt.databaseDriver,
+				EnvPrefix:      "APP",
+				InitGit:        false,
+				OutputPath:     tmpDir,
+			}
+
+			gen := generator.NewProjectGenerator()
+			err := gen.Generate(context.Background(), cfg)
+			require.NoError(t, err)
+
+			projectRoot := filepath.Join(tmpDir, projectName)
+
+			migrateCLI := filepath.Join(projectRoot, "cmd", "migrate", "main.go")
+			stat, err := os.Stat(migrateCLI)
+			require.NoError(t, err, "migrate CLI should be generated")
+			assert.False(t, stat.IsDir(), "should be a file, not directory")
+
+			content, err := os.ReadFile(migrateCLI)
+			require.NoError(t, err)
+
+			assert.Contains(t, string(content), "package main", "should be main package")
+			assert.Contains(t, string(content), "github.com/test/app/internal/db", "should import db package")
+			assert.Contains(t, string(content), "github.com/test/app/internal/config", "should import config package")
+			assert.Contains(t, string(content), "db.MigrateUp", "should call MigrateUp")
+			assert.Contains(t, string(content), "db.MigrateDown", "should call MigrateDown")
+			assert.Contains(t, string(content), "db.MigrateStatus", "should call MigrateStatus")
+		})
+	}
+}
+
+func TestMakefileMigrationTargetsGenerated(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tests := []struct {
+		driver           string
+		expectedMigrateDir string
+	}{
+		{"sqlite3", "internal/db/migrations/sqlite"},
+		{"go-libsql", "internal/db/migrations/sqlite"},
+		{"postgres", "internal/db/migrations/postgres"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.driver, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			projectName := "testapp"
+
+			cfg := generator.ProjectConfig{
+				ProjectName:    projectName,
+				ModulePath:     "github.com/test/app",
+				DatabaseDriver: tt.driver,
+				EnvPrefix:      "APP",
+				InitGit:        false,
+				OutputPath:     tmpDir,
+			}
+
+			gen := generator.NewProjectGenerator()
+			err := gen.Generate(context.Background(), cfg)
+			require.NoError(t, err)
+
+			makefilePath := filepath.Join(tmpDir, projectName, "Makefile")
+			content, err := os.ReadFile(makefilePath)
+			require.NoError(t, err)
+
+			makefileStr := string(content)
+
+			assert.Contains(t, makefileStr, "MIGRATE_DIR := "+tt.expectedMigrateDir, "should set MIGRATE_DIR for %s", tt.driver)
+			assert.Contains(t, makefileStr, "migrate-up:", "should have migrate-up target")
+			assert.Contains(t, makefileStr, "migrate-down:", "should have migrate-down target")
+			assert.Contains(t, makefileStr, "migrate-status:", "should have migrate-status target")
+			assert.Contains(t, makefileStr, "migrate-create:", "should have migrate-create target")
+			assert.Contains(t, makefileStr, "go run ./cmd/migrate", "should use migrate CLI")
+		})
+	}
+}
+
+func TestMigrateCLIDirectoryCreated(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tmpDir := t.TempDir()
+	projectName := "testapp"
+
+	cfg := generator.ProjectConfig{
+		ProjectName:    projectName,
+		ModulePath:     "github.com/test/app",
+		DatabaseDriver: "sqlite3",
+		EnvPrefix:      "APP",
+		InitGit:        false,
+		OutputPath:     tmpDir,
+	}
+
+	gen := generator.NewProjectGenerator()
+	err := gen.Generate(context.Background(), cfg)
+	require.NoError(t, err)
+
+	migrateDir := filepath.Join(tmpDir, projectName, "cmd", "migrate")
+	stat, err := os.Stat(migrateDir)
+	require.NoError(t, err, "cmd/migrate directory should exist")
+	assert.True(t, stat.IsDir(), "should be a directory")
+}

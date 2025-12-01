@@ -1,0 +1,135 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"os"
+
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/internal/db"
+)
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	if len(os.Args) < 2 {
+		printUsage()
+		return fmt.Errorf("missing command")
+	}
+
+	command := os.Args[1]
+
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+
+	ctx := context.Background()
+
+	database, err := db.New(ctx, cfg.Database)
+	if err != nil {
+		return fmt.Errorf("connect to database: %w", err)
+	}
+	defer func() {
+		if err := database.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to close database: %v\n", err)
+		}
+	}()
+
+	switch command {
+	case "up":
+		return migrateUp(ctx, database)
+	case "down":
+		return migrateDown(ctx, database)
+	case "status":
+		return migrateStatus(ctx, database)
+	default:
+		printUsage()
+		return fmt.Errorf("unknown command: %s", command)
+	}
+}
+
+func migrateUp(ctx context.Context, database *sql.DB) error {
+	result, err := db.MigrateUp(ctx, database)
+	if err != nil {
+		return fmt.Errorf("migrate up: %w", err)
+	}
+
+	if len(result.Applied) == 0 {
+		fmt.Println("No migrations to apply. Database is up to date.")
+		return nil
+	}
+
+	fmt.Printf("Applied %d migration(s):\n", len(result.Applied))
+	for _, m := range result.Applied {
+		fmt.Printf("  - %d: %s\n", m.Version, m.Name)
+	}
+	fmt.Printf("Database version: %d -> %d\n", result.FromVersion, result.ToVersion)
+	return nil
+}
+
+func migrateDown(ctx context.Context, database *sql.DB) error {
+	result, err := db.MigrateDown(ctx, database)
+	if err != nil {
+		return fmt.Errorf("migrate down: %w", err)
+	}
+
+	if len(result.Applied) == 0 {
+		fmt.Println("No migrations to rollback. Database is at version 0.")
+		return nil
+	}
+
+	fmt.Printf("Rolled back %d migration(s):\n", len(result.Applied))
+	for _, m := range result.Applied {
+		fmt.Printf("  - %d: %s\n", m.Version, m.Name)
+	}
+	fmt.Printf("Database version: %d -> %d\n", result.FromVersion, result.ToVersion)
+	return nil
+}
+
+func migrateStatus(ctx context.Context, database *sql.DB) error {
+	statuses, err := db.MigrateStatus(ctx, database)
+	if err != nil {
+		return fmt.Errorf("get migration status: %w", err)
+	}
+
+	if len(statuses) == 0 {
+		fmt.Println("No migrations found.")
+		return nil
+	}
+
+	fmt.Printf("Migration status (dialect: %s):\n\n", db.GetDialect())
+	fmt.Printf("%-14s  %-8s  %s\n", "VERSION", "STATUS", "NAME")
+	fmt.Printf("%-14s  %-8s  %s\n", "-------", "------", "----")
+
+	for _, s := range statuses {
+		status := "applied"
+		if s.IsPending {
+			status = "pending"
+		}
+		fmt.Printf("%-14d  %-8s  %s\n", s.Version, status, s.Name)
+	}
+
+	return nil
+}
+
+func printUsage() {
+	fmt.Fprintf(os.Stderr, `Usage: go run ./cmd/migrate <command>
+
+Commands:
+  up      Apply all pending migrations
+  down    Rollback the last migration
+  status  Show migration status
+
+Examples:
+  go run ./cmd/migrate up
+  go run ./cmd/migrate down
+  go run ./cmd/migrate status
+`)
+}
