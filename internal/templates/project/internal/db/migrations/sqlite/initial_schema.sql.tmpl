@@ -1,0 +1,34 @@
+-- +goose Up
+-- +goose StatementBegin
+-- Initial schema for SQLite/go-libsql
+--
+-- Conventions established:
+-- - UUIDv7 TEXT columns for primary keys
+-- - TIMESTAMP columns with CURRENT_TIMESTAMP defaults
+-- - AFTER UPDATE triggers for updated_at columns
+--
+-- Trigger pattern (create when adding tables with updated_at):
+--
+-- CREATE TRIGGER trg_<tablename>_updated_at
+-- AFTER UPDATE ON <tablename>
+-- FOR EACH ROW
+-- BEGIN
+--     UPDATE <tablename> SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+-- END;
+--
+-- Example table:
+--
+-- CREATE TABLE example (
+--     id TEXT PRIMARY KEY,
+--     name TEXT NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+
+SELECT 1;
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+SELECT 1;
+-- +goose StatementEnd

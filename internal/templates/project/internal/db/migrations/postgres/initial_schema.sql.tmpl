@@ -1,0 +1,38 @@
+-- +goose Up
+-- +goose StatementBegin
+-- Initial schema for PostgreSQL
+--
+-- Conventions established:
+-- - UUIDv7 TEXT columns for primary keys
+-- - TIMESTAMPTZ columns with NOW() defaults
+-- - BEFORE UPDATE triggers for updated_at columns
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Usage: When creating tables with updated_at, add:
+--
+-- CREATE TRIGGER trg_<tablename>_updated_at
+--     BEFORE UPDATE ON <tablename>
+--     FOR EACH ROW
+--     EXECUTE FUNCTION update_updated_at_column();
+--
+-- Example table:
+--
+-- CREATE TABLE example (
+--     id TEXT PRIMARY KEY,
+--     name TEXT NOT NULL,
+--     created_at TIMESTAMPTZ DEFAULT NOW(),
+--     updated_at TIMESTAMPTZ DEFAULT NOW()
+-- );
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP FUNCTION IF EXISTS update_updated_at_column();
+-- +goose StatementEnd
