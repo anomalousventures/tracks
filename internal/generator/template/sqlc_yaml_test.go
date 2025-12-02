@@ -341,3 +341,47 @@ func TestSqlcYamlStructure(t *testing.T) {
 		assert.Contains(t, sqlConfig, field, "sql config should have %s field", field)
 	}
 }
+
+func TestSqlcYamlOverrides(t *testing.T) {
+	renderer := NewRenderer(templates.FS)
+
+	drivers := []string{"go-libsql", "sqlite3", "postgres"}
+
+	for _, driver := range drivers {
+		t.Run(driver, func(t *testing.T) {
+			data := TemplateData{
+				DBDriver: driver,
+			}
+
+			result, err := renderer.Render("sqlc.yaml.tmpl", data)
+			require.NoError(t, err)
+
+			var config map[string]interface{}
+			err = yaml.Unmarshal([]byte(result), &config)
+			require.NoError(t, err)
+
+			sql, ok := config["sql"].([]interface{})
+			require.True(t, ok, "sql should be an array")
+
+			sqlConfig, ok := sql[0].(map[string]interface{})
+			require.True(t, ok, "sql[0] should be a map")
+
+			gen, ok := sqlConfig["gen"].(map[string]interface{})
+			require.True(t, ok, "gen should be a map")
+
+			goGen, ok := gen["go"].(map[string]interface{})
+			require.True(t, ok, "gen.go should be a map")
+
+			overrides, ok := goGen["overrides"].([]interface{})
+			require.True(t, ok, "overrides should exist for %s", driver)
+			require.Len(t, overrides, 1, "should have one override for %s", driver)
+
+			override, ok := overrides[0].(map[string]interface{})
+			require.True(t, ok, "override should be a map")
+
+			assert.Equal(t, "TEXT", override["db_type"], "db_type should be TEXT for %s", driver)
+			assert.Equal(t, "string", override["go_type"], "go_type should be string for %s", driver)
+			assert.Equal(t, false, override["nullable"], "nullable should be false for %s", driver)
+		})
+	}
+}
