@@ -215,7 +215,7 @@ Tracks uses a multi-layered testing approach for maximum cross-platform coverage
 ```bash
 make test                            # Unit tests (fast, all platforms)
 go test ./tests/integration          # Integration tests (all platforms)
-go test -tags=docker ./tests/integration  # Docker E2E tests (Ubuntu only)
+make test-e2e-local                  # E2E workflow locally (sqlite3 only)
 make test-coverage                   # All tests with coverage reports
 ```
 
@@ -223,9 +223,9 @@ make test-coverage                   # All tests with coverage reports
 
 - **Unit Tests** - Colocated with source, run with `-short` flag, use race detector
 - **Integration Tests** - File generation, validation, git operations (no external services)
-- **Docker E2E Tests** - Full end-to-end with databases (Postgres, LibSQL) via Docker Compose
+- **E2E Workflow Tests** - Full end-to-end with databases (SQLite3, Postgres, LibSQL) in CI
 
-Docker E2E tests use the `//go:build docker` tag and only run on Ubuntu in CI due to Docker setup complexity on macOS/Windows. Non-Docker tests run on all platforms.
+E2E tests run as shell commands in CI workflows on Ubuntu, testing generated projects with all database drivers. Non-E2E tests run on all platforms.
 
 See [Testing Strategy PRD](./docs/prd/13_testing.md) for complete details.
 
