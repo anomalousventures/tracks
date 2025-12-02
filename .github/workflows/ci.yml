@@ -212,6 +212,33 @@ jobs:
               ;;
           esac
 
+      - name: Run migrations
+        run: |
+          cd testapp
+          mkdir -p data
+
+          output=$(make migrate-status 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "pending" || { echo "FAIL: Expected pending migrations"; exit 1; }
+
+          output=$(make migrate-up 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "Applied" || { echo "FAIL: Expected 'Applied' in output"; exit 1; }
+
+          output=$(make migrate-up 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "up to date" || { echo "FAIL: Expected 'up to date' on second run"; exit 1; }
+
+          output=$(make migrate-status 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "applied" || { echo "FAIL: Expected applied migrations"; exit 1; }
+
+          output=$(make migrate-down 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "Rolled back" || { echo "FAIL: Expected 'Rolled back' in output"; exit 1; }
+
+          make migrate-up
+
       - name: Start dev server
         run: |
           cd testapp

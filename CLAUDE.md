@@ -344,27 +344,12 @@ Tracks uses a multi-layered testing approach to ensure code quality while maximi
 - Include file generation, validation, git operations
 - Execute on ALL platforms (Ubuntu, macOS, Windows)
 
-**Docker E2E Tests** (`tests/integration/` with `//go:build docker` tag):
+**E2E Workflow Tests** (CI shell commands):
 
-- Full end-to-end tests requiring Docker Compose
-- Test generated projects with databases (Postgres, LibSQL)
-- Execute ONLY on Ubuntu runners (Docker setup issues on macOS/Windows)
-
-### Build Tags for Test Separation
-
-Use Go build tags to separate Docker-requiring tests:
-
-```go
-//go:build docker
-
-package integration
-
-import "testing"
-
-func TestE2E_Postgres(t *testing.T) {
-    runE2ETest(t, "postgres")
-}
-```
+- Full end-to-end tests in CI using shell commands
+- Test generated projects with all database drivers (SQLite3, Postgres, LibSQL)
+- Test migrations, dev server startup, and health endpoints
+- Execute ONLY on Ubuntu runners (Docker setup for Postgres/LibSQL)
 
 **Running tests locally:**
 
