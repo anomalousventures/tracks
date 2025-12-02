@@ -33,7 +33,6 @@ const (
 
 {{- end}}
 
-// AppliedAt is a pointer because Goose returns time.Time (zero value means not applied).
 type MigrationStatus struct {
 	Version   int64
 	Name      string

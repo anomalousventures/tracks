@@ -12,6 +12,7 @@ func CreateProjectDirectories(config ProjectConfig) error {
 	directories := []string{
 		filepath.Join(projectRoot, ".github", "workflows"),
 		filepath.Join(projectRoot, "cmd", "server"),
+		filepath.Join(projectRoot, "cmd", "migrate"),
 		filepath.Join(projectRoot, "internal", "interfaces"),
 		filepath.Join(projectRoot, "internal", "domain", "health"),
 		filepath.Join(projectRoot, "internal", "http", "handlers"),

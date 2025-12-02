@@ -137,6 +137,7 @@ func (g *projectGenerator) Generate(ctx context.Context, cfg any) error {
 		"internal/http/middleware/middleware.go.tmpl":       "internal/http/middleware/middleware.go",
 		"internal/db/db.go.tmpl":             "internal/db/db.go",
 		"internal/db/migrate.go.tmpl":        "internal/db/migrate.go",
+		"cmd/migrate/main.go.tmpl":           "cmd/migrate/main.go",
 		"internal/db/queries/.gitkeep.tmpl":  "internal/db/queries/.gitkeep",
 		"internal/db/queries/health.sql.tmpl":           "internal/db/queries/health.sql",
 		"internal/assets/web/images/.gitkeep.tmpl":      "internal/assets/web/images/.gitkeep",

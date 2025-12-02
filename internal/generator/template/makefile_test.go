@@ -11,8 +11,15 @@ import (
 
 func renderMakefileTemplate(t *testing.T) string {
 	t.Helper()
+	return renderMakefileTemplateWithDriver(t, "sqlite3")
+}
+
+func renderMakefileTemplateWithDriver(t *testing.T, driver string) string {
+	t.Helper()
 	renderer := NewRenderer(templates.FS)
-	data := TemplateData{}
+	data := TemplateData{
+		DBDriver: driver,
+	}
 	result, err := renderer.Render("Makefile.tmpl", data)
 	require.NoError(t, err)
 	return result
@@ -31,7 +38,7 @@ func TestMakefileTargets(t *testing.T) {
 		items []string
 	}{
 		{"phony declarations", []string{
-			".PHONY: assets build clean css dev dev-down dev-services generate help js lint mocks sqlc templ test",
+			".PHONY: assets build clean css dev dev-down dev-services generate help js lint migrate-create migrate-down migrate-status migrate-up mocks sqlc templ test",
 		}},
 		{"help target", []string{
 			"help: ## Show this help message",
@@ -98,21 +105,25 @@ func TestMakefileHelpText(t *testing.T) {
 	result := renderMakefileTemplate(t)
 
 	testutil.AssertContainsAll(t, result, []string{
-		"assets       - Build all assets (CSS and JS)",
-		"build        - Build the server binary (includes assets)",
-		"clean        - Remove build artifacts",
-		"css          - Compile TailwindCSS",
-		"dev          - Start development server (auto-starts services if needed)",
-		"dev-down     - Stop docker-compose services",
-		"dev-services - Start docker-compose services",
-		"generate     - Generate all code (templ, mocks, SQL)",
-		"help         - Show this help message",
-		"js           - Bundle JavaScript with esbuild",
-		"lint         - Run linters",
-		"mocks        - Generate mocks from interfaces",
-		"sqlc         - Generate type-safe SQL code",
-		"templ        - Generate templ templates",
-		"test         - Run all tests",
+		"assets         - Build all assets (CSS and JS)",
+		"build          - Build the server binary (includes assets)",
+		"clean          - Remove build artifacts",
+		"css            - Compile TailwindCSS",
+		"dev            - Start development server (auto-starts services if needed)",
+		"dev-down       - Stop docker-compose services",
+		"dev-services   - Start docker-compose services",
+		"generate       - Generate all code (templ, mocks, SQL)",
+		"help           - Show this help message",
+		"js             - Bundle JavaScript with esbuild",
+		"lint           - Run linters",
+		"migrate-create - Create new migration (usage: make migrate-create NAME=add_users)",
+		"migrate-down   - Rollback last migration",
+		"migrate-status - Show migration status",
+		"migrate-up     - Apply all pending migrations",
+		"mocks          - Generate mocks from interfaces",
+		"sqlc           - Generate type-safe SQL code",
+		"templ          - Generate templ templates",
+		"test           - Run all tests",
 	})
 }
 
@@ -134,4 +145,69 @@ func TestMakefileNoHardcodedPaths(t *testing.T) {
 	assert.Contains(t, result, "./cmd/server")
 	assert.NotContains(t, result, "/myproject/")
 	assert.NotContains(t, result, "/usr/local/")
+}
+
+func TestMakefileMigrationTargets(t *testing.T) {
+	result := renderMakefileTemplate(t)
+
+	tests := []struct {
+		name  string
+		items []string
+	}{
+		{"migrate-up target", []string{
+			"migrate-up: ## Apply all pending migrations",
+			"go run ./cmd/migrate up",
+		}},
+		{"migrate-down target", []string{
+			"migrate-down: ## Rollback last migration",
+			"go run ./cmd/migrate down",
+		}},
+		{"migrate-status target", []string{
+			"migrate-status: ## Show migration status",
+			"go run ./cmd/migrate status",
+		}},
+		{"migrate-create target", []string{
+			"migrate-create: ## Create new migration (usage: make migrate-create NAME=add_users)",
+			`if [ -z "$(NAME)" ]`,
+			"Usage: make migrate-create NAME=migration_name",
+			`timestamp=$$(date +%Y%m%d%H%M%S)`,
+			"-- +goose Up",
+			"-- +goose Down",
+			"-- +goose StatementBegin",
+			"-- +goose StatementEnd",
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testutil.AssertContainsAll(t, result, tt.items)
+		})
+	}
+}
+
+func TestMakefileMigrateDirSQLite(t *testing.T) {
+	tests := []struct {
+		driver   string
+		expected string
+	}{
+		{"sqlite3", "MIGRATE_DIR := internal/db/migrations/sqlite"},
+		{"go-libsql", "MIGRATE_DIR := internal/db/migrations/sqlite"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.driver, func(t *testing.T) {
+			result := renderMakefileTemplateWithDriver(t, tt.driver)
+			assert.Contains(t, result, tt.expected, "should set correct MIGRATE_DIR for %s", tt.driver)
+		})
+	}
+}
+
+func TestMakefileMigrateDirPostgres(t *testing.T) {
+	result := renderMakefileTemplateWithDriver(t, "postgres")
+	assert.Contains(t, result, "MIGRATE_DIR := internal/db/migrations/postgres", "should set postgres migration directory")
+}
+
+func TestMakefileMigrateCreateUsesDir(t *testing.T) {
+	result := renderMakefileTemplate(t)
+	assert.Contains(t, result, "$(MIGRATE_DIR)/", "migrate-create should use MIGRATE_DIR variable")
 }
