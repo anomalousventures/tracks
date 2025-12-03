@@ -153,7 +153,7 @@ You should see output like:
 Tracks CLI vX.X.X
 Commit: abc1234
 Built:  2025-01-15T10:30:00Z
-Go:     go1.25.0
+Go:     go1.25.5
 ```
 
 Test creating a new project:

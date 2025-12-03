@@ -34,7 +34,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### Prerequisites
 
-- Go 1.25.3 or later
+- Go 1.25.5 or later
 - Node.js 24+ and pnpm
 - Git
 - Make
