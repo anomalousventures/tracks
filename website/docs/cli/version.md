@@ -52,7 +52,7 @@ $ tracks -v version
 Tracks CLI v0.1.0
 Git Commit: abc123def456
 Build Date: 2025-10-24T08:00:00Z
-Go Version: go1.25.3
+Go Version: go1.25.5
 Platform: linux/amd64
 ```
 

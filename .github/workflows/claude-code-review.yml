@@ -49,12 +49,12 @@ jobs:
             Please review this pull request and provide feedback based on the file types:
 
             **Context: Go 1.24+ Modern Practices**
-            This project uses Go 1.25.3 with modern tooling patterns:
+            This project uses Go 1.25.5 with modern tooling patterns:
             - The `tool` directive in go.mod (introduced in Go 1.24) declares development tools
             - Tools are invoked with `go tool <name>` (e.g., `go tool golangci-lint`)
             - This is the modern approach and replaces the legacy tools.go pattern
             - All make commands should use `go tool` prefix for tools declared in the tool block
-            - Go 1.25.3 is the current stable version (not a typo)
+            - Go 1.25.5 is the current stable version (not a typo)
 
             **For Go Code Files:**
 
