@@ -155,6 +155,9 @@ Generates idiomatic Go code you'd write yourself. No magic, full control.`,
 	uiCmd := commands.NewUICommand(detector, uiExecutor, NewRendererFromCommand, FlushRenderer)
 	rootCmd.AddCommand(uiCmd.Command())
 
+	dbCmd := commands.NewDBCommand(detector, NewRendererFromCommand, FlushRenderer)
+	rootCmd.AddCommand(dbCmd.Command())
+
 	return rootCmd, nil
 }
 
