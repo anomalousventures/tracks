@@ -10,11 +10,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	// Database drivers - only import postgres (pure Go, no CGO conflicts)
-	// SQLite-based drivers (sqlite3, go-libsql) conflict when imported together
-	// and require CGO. The actual db commands will use the generated project's
-	// migration infrastructure which handles driver-specific imports.
-	_ "github.com/lib/pq"
+	// Database drivers
+	_ "github.com/lib/pq"                      // postgres
+	_ "github.com/tursodatabase/go-libsql"     // sqlite3 and go-libsql (Turso)
 )
 
 // Manager implements the DatabaseManager interface for CLI database operations.
@@ -117,16 +115,12 @@ func (m *Manager) Close() error {
 }
 
 // sqlDriverName returns the sql.Open driver name for the configured driver.
-// Note: SQLite-based drivers (sqlite3, go-libsql) require CGO and conflict
-// with each other when imported together. Direct connections from the CLI
-// only support postgres. For SQLite projects, use the generated project's
-// migration infrastructure via make commands.
 func (m *Manager) sqlDriverName() (string, error) {
 	switch m.driver {
 	case "postgres":
 		return "postgres", nil
 	case "sqlite3", "go-libsql":
-		return "", fmt.Errorf("%w: %s (SQLite drivers require CGO and conflict - use project's make commands instead)", ErrUnsupportedDriver, m.driver)
+		return "libsql", nil
 	default:
 		return "", fmt.Errorf("%w: %s", ErrUnsupportedDriver, m.driver)
 	}
