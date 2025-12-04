@@ -165,3 +165,33 @@ func TestManager_sqlDriverName(t *testing.T) {
 		})
 	}
 }
+
+func TestManager_LoadEnv_MalformedEnvFile(t *testing.T) {
+	ctx := testContext()
+	m := NewManager("postgres")
+
+	tmpDir := t.TempDir()
+	// godotenv fails on unterminated quoted values
+	envContent := "KEY='unclosed\n"
+	envPath := filepath.Join(tmpDir, ".env")
+	require.NoError(t, os.WriteFile(envPath, []byte(envContent), 0600))
+
+	err := m.LoadEnv(ctx, tmpDir)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to load .env file")
+}
+
+func TestManager_Connect_ContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(testContext())
+	cancel() // Cancel immediately
+
+	m := NewManager("postgres")
+	m.envLoaded = true
+	m.databaseURL = "postgres://localhost/testdb"
+
+	_, err := m.Connect(ctx)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "context cancelled")
+}

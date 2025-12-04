@@ -24,15 +24,12 @@ type Manager struct {
 	envLoaded   bool
 }
 
-// NewManager creates a new database manager for the given driver.
 func NewManager(driver string) *Manager {
 	return &Manager{
 		driver: driver,
 	}
 }
 
-// LoadEnv loads environment variables from the project's .env file.
-// Environment variables already set take precedence over .env values.
 func (m *Manager) LoadEnv(ctx context.Context, projectDir string) error {
 	logger := zerolog.Ctx(ctx)
 
@@ -53,17 +50,15 @@ func (m *Manager) LoadEnv(ctx context.Context, projectDir string) error {
 	return nil
 }
 
-// GetDatabaseURL returns the DATABASE_URL from environment.
 func (m *Manager) GetDatabaseURL() string {
 	return m.databaseURL
 }
 
-// GetDriver returns the database driver name.
 func (m *Manager) GetDriver() string {
 	return m.driver
 }
 
-// Connect opens a database connection using the loaded configuration.
+// Must call LoadEnv first.
 func (m *Manager) Connect(ctx context.Context) (*sql.DB, error) {
 	if !m.envLoaded {
 		return nil, ErrEnvNotLoaded
@@ -109,7 +104,6 @@ func (m *Manager) Connect(ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-// Close closes the database connection if open.
 func (m *Manager) Close() error {
 	if m.db == nil {
 		return ErrNotConnected
@@ -124,7 +118,6 @@ func (m *Manager) IsConnected() bool {
 	return m.db != nil
 }
 
-// sqlDriverName returns the sql.Open driver name for the configured driver.
 // Only postgres supports direct CLI connections. SQLite-based drivers require
 // native libraries that aren't cross-platform. For SQLite projects, use the
 // generated project's make commands (e.g., make db-migrate).
