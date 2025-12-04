@@ -31,10 +31,9 @@ func TestNewManager(t *testing.T) {
 			m := NewManager(tt.driver)
 
 			require.NotNil(t, m)
-			assert.Equal(t, tt.driver, m.driver)
-			assert.Empty(t, m.databaseURL)
-			assert.Nil(t, m.db)
-			assert.False(t, m.envLoaded)
+			assert.Equal(t, tt.driver, m.GetDriver())
+			assert.Empty(t, m.GetDatabaseURL())
+			assert.False(t, m.IsConnected())
 		})
 	}
 }

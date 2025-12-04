@@ -10,9 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	// Only postgres driver is imported to avoid CGO symbol conflicts.
-	// Multiple SQLite implementations cannot coexist in the same binary.
-	// SQLite projects use the generated app's make commands instead.
+	// Cross-platform CLI binary requires avoiding CGO for static builds on Alpine/Windows.
 	_ "github.com/lib/pq"
 )
 
@@ -58,7 +56,6 @@ func (m *Manager) GetDriver() string {
 	return m.driver
 }
 
-// Must call LoadEnv first.
 func (m *Manager) Connect(ctx context.Context) (*sql.DB, error) {
 	if !m.envLoaded {
 		return nil, ErrEnvNotLoaded
@@ -118,9 +115,6 @@ func (m *Manager) IsConnected() bool {
 	return m.db != nil
 }
 
-// Only postgres supports direct CLI connections. SQLite-based drivers require
-// native libraries that aren't cross-platform. For SQLite projects, use the
-// generated project's make commands (e.g., make db-migrate).
 func (m *Manager) sqlDriverName() (string, error) {
 	switch m.driver {
 	case "postgres":
