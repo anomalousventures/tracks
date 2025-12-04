@@ -10,10 +10,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	// Database drivers - only postgres is supported for direct CLI connections
-	// SQLite-based drivers (sqlite3, go-libsql) require native libraries that
-	// aren't available on all platforms. For SQLite projects, database operations
-	// delegate to the generated project's make commands.
+	// Only postgres driver is imported to avoid CGO symbol conflicts.
+	// Multiple SQLite implementations cannot coexist in the same binary.
+	// SQLite projects use the generated app's make commands instead.
 	_ "github.com/lib/pq"
 )
 
@@ -94,6 +93,11 @@ func (m *Manager) Connect(ctx context.Context) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
+	if err := ctx.Err(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("context cancelled before ping: %w", err)
+	}
+
 	if err := db.PingContext(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
@@ -114,6 +118,11 @@ func (m *Manager) Close() error {
 	err := m.db.Close()
 	m.db = nil
 	return err
+}
+
+// IsConnected returns true if a database connection is established.
+func (m *Manager) IsConnected() bool {
+	return m.db != nil
 }
 
 // sqlDriverName returns the sql.Open driver name for the configured driver.

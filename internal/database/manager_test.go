@@ -132,6 +132,12 @@ func TestManager_Close_NotConnected(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotConnected)
 }
 
+func TestManager_IsConnected(t *testing.T) {
+	m := NewManager("postgres")
+
+	assert.False(t, m.IsConnected())
+}
+
 func TestManager_sqlDriverName(t *testing.T) {
 	tests := []struct {
 		driver   string
