@@ -139,8 +139,8 @@ func TestManager_sqlDriverName(t *testing.T) {
 		wantErr  bool
 	}{
 		{driver: "postgres", expected: "postgres", wantErr: false},
-		{driver: "sqlite3", expected: "libsql", wantErr: false},
-		{driver: "go-libsql", expected: "libsql", wantErr: false},
+		{driver: "sqlite3", expected: "", wantErr: true},
+		{driver: "go-libsql", expected: "", wantErr: true},
 		{driver: "unknown", expected: "", wantErr: true},
 	}
 

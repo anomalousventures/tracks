@@ -10,9 +10,11 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	// Database drivers
-	_ "github.com/lib/pq"                      // postgres
-	_ "github.com/tursodatabase/go-libsql"     // sqlite3 and go-libsql (Turso)
+	// Database drivers - only postgres is supported for direct CLI connections
+	// SQLite-based drivers (sqlite3, go-libsql) require native libraries that
+	// aren't available on all platforms. For SQLite projects, database operations
+	// delegate to the generated project's make commands.
+	_ "github.com/lib/pq"
 )
 
 // Manager implements the DatabaseManager interface for CLI database operations.
@@ -115,12 +117,15 @@ func (m *Manager) Close() error {
 }
 
 // sqlDriverName returns the sql.Open driver name for the configured driver.
+// Only postgres supports direct CLI connections. SQLite-based drivers require
+// native libraries that aren't cross-platform. For SQLite projects, use the
+// generated project's make commands (e.g., make db-migrate).
 func (m *Manager) sqlDriverName() (string, error) {
 	switch m.driver {
 	case "postgres":
 		return "postgres", nil
 	case "sqlite3", "go-libsql":
-		return "libsql", nil
+		return "", fmt.Errorf("%w: %s (use project's make commands for SQLite databases)", ErrUnsupportedDriver, m.driver)
 	default:
 		return "", fmt.Errorf("%w: %s", ErrUnsupportedDriver, m.driver)
 	}
