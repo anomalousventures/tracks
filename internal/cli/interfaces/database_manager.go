@@ -27,4 +27,6 @@ type DatabaseManager interface {
 
 	// Close closes the database connection if open.
 	Close() error
+
+	IsConnected() bool
 }

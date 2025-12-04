@@ -120,7 +120,6 @@ func (m *Manager) Close() error {
 	return err
 }
 
-// IsConnected returns true if a database connection is established.
 func (m *Manager) IsConnected() bool {
 	return m.db != nil
 }

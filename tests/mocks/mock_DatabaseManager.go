@@ -232,6 +232,50 @@ func (_c *MockDatabaseManager_GetDriver_Call) RunAndReturn(run func() string) *M
 	return _c
 }
 
+// IsConnected provides a mock function for the type MockDatabaseManager
+func (_mock *MockDatabaseManager) IsConnected() bool {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsConnected")
+	}
+
+	var r0 bool
+	if returnFunc, ok := ret.Get(0).(func() bool); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	return r0
+}
+
+// MockDatabaseManager_IsConnected_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsConnected'
+type MockDatabaseManager_IsConnected_Call struct {
+	*mock.Call
+}
+
+// IsConnected is a helper method to define mock.On call
+func (_e *MockDatabaseManager_Expecter) IsConnected() *MockDatabaseManager_IsConnected_Call {
+	return &MockDatabaseManager_IsConnected_Call{Call: _e.mock.On("IsConnected")}
+}
+
+func (_c *MockDatabaseManager_IsConnected_Call) Run(run func()) *MockDatabaseManager_IsConnected_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockDatabaseManager_IsConnected_Call) Return(b bool) *MockDatabaseManager_IsConnected_Call {
+	_c.Call.Return(b)
+	return _c
+}
+
+func (_c *MockDatabaseManager_IsConnected_Call) RunAndReturn(run func() bool) *MockDatabaseManager_IsConnected_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // LoadEnv provides a mock function for the type MockDatabaseManager
 func (_mock *MockDatabaseManager) LoadEnv(ctx context.Context, projectDir string) error {
 	ret := _mock.Called(ctx, projectDir)
