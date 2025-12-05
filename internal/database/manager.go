@@ -10,8 +10,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	// Import only postgres driver because sqlite3 and go-libsql both embed SQLite
-	// with conflicting symbols that prevent linking in the same binary.
+	// Postgres driver imported for direct CLI connections.
+	// SQLite-based drivers (sqlite3, go-libsql) have symbol conflicts when linked together,
+	// so SQLite projects use generated make commands instead (avoids CGO conflicts).
 	_ "github.com/lib/pq"
 )
 

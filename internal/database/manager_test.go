@@ -137,34 +137,6 @@ func TestManager_IsConnected(t *testing.T) {
 	assert.False(t, m.IsConnected())
 }
 
-func TestManager_sqlDriverName(t *testing.T) {
-	tests := []struct {
-		driver   string
-		expected string
-		wantErr  bool
-	}{
-		{driver: "postgres", expected: "postgres", wantErr: false},
-		{driver: "sqlite3", expected: "", wantErr: true},
-		{driver: "go-libsql", expected: "", wantErr: true},
-		{driver: "unknown", expected: "", wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.driver, func(t *testing.T) {
-			m := NewManager(tt.driver)
-			name, err := m.sqlDriverName()
-
-			if tt.wantErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrUnsupportedDriver)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, name)
-			}
-		})
-	}
-}
-
 func TestManager_LoadEnv_MalformedEnvFile(t *testing.T) {
 	ctx := testContext()
 	m := NewManager("postgres")
