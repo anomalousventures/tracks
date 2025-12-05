@@ -50,6 +50,13 @@ This command must be run from within a Tracks project (containing .tracks.yaml).
 		Run: c.run,
 	}
 
+	// Add subcommands
+	migrateCmd := NewDBMigrateCommand(c.detector, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(migrateCmd.Command())
+
+	rollbackCmd := NewDBRollbackCommand(c.detector, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(rollbackCmd.Command())
+
 	return cmd
 }
 
