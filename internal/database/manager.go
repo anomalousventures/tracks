@@ -10,7 +10,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	// Cross-platform CLI binary requires avoiding CGO for static builds on Alpine/Windows.
+	// Only postgres driver imported to avoid CGO symbol conflicts between sqlite3/libsql.
+	// SQLite-based projects use generated app's migration infrastructure instead.
 	_ "github.com/lib/pq"
 )
 
