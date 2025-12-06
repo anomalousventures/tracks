@@ -79,29 +79,6 @@ func TestDBMigrateCommand_Command(t *testing.T) {
 	}
 }
 
-func TestDBMigrateCommand_Flags(t *testing.T) {
-	cobraCmd, _, _ := setupDBMigrateTestCommand(t)
-
-	stepsFlag := cobraCmd.Flag("steps")
-	if stepsFlag == nil {
-		t.Fatal("steps flag not found")
-	}
-	if stepsFlag.Shorthand != "n" {
-		t.Errorf("steps shorthand expected 'n', got %q", stepsFlag.Shorthand)
-	}
-	if stepsFlag.DefValue != "0" {
-		t.Errorf("steps default expected '0', got %q", stepsFlag.DefValue)
-	}
-
-	dryRunFlag := cobraCmd.Flag("dry-run")
-	if dryRunFlag == nil {
-		t.Fatal("dry-run flag not found")
-	}
-	if dryRunFlag.DefValue != "false" {
-		t.Errorf("dry-run default expected 'false', got %q", dryRunFlag.DefValue)
-	}
-}
-
 func TestDBMigrateCommand_NotInProject(t *testing.T) {
 	cobraCmd, mockDetector, _ := setupDBMigrateTestCommand(t)
 

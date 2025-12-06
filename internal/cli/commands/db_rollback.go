@@ -8,14 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DBRollbackCommand represents the 'db rollback' subcommand for rolling back migrations.
 type DBRollbackCommand struct {
 	detector      interfaces.ProjectDetector
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
 }
 
-// NewDBRollbackCommand creates a new instance of the 'db rollback' command.
 func NewDBRollbackCommand(
 	detector interfaces.ProjectDetector,
 	newRenderer RendererFactory,
@@ -28,7 +26,6 @@ func NewDBRollbackCommand(
 	}
 }
 
-// Command returns the cobra.Command for the 'db rollback' subcommand.
 func (c *DBRollbackCommand) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rollback",

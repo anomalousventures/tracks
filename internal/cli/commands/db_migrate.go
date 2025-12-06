@@ -8,14 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DBMigrateCommand represents the 'db migrate' subcommand for running migrations.
 type DBMigrateCommand struct {
 	detector      interfaces.ProjectDetector
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
 }
 
-// NewDBMigrateCommand creates a new instance of the 'db migrate' command.
 func NewDBMigrateCommand(
 	detector interfaces.ProjectDetector,
 	newRenderer RendererFactory,
@@ -28,7 +26,6 @@ func NewDBMigrateCommand(
 	}
 }
 
-// Command returns the cobra.Command for the 'db migrate' subcommand.
 func (c *DBMigrateCommand) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate",

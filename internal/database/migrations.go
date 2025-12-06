@@ -12,13 +12,11 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-// MigrationRunner handles database migration operations using Goose.
 type MigrationRunner struct {
 	db       *sql.DB
 	provider *goose.Provider
 }
 
-// MigrationStatus represents the status of a single migration.
 type MigrationStatus struct {
 	Version   int64
 	Name      string
@@ -26,13 +24,11 @@ type MigrationStatus struct {
 	AppliedAt *time.Time
 }
 
-// MigrationResult represents the result of a migration operation.
 type MigrationResult struct {
 	Direction string // "up" or "down"
 	Applied   []MigrationStatus
 }
 
-// NewMigrationRunner creates a new migration runner for the given database and migrations directory.
 func NewMigrationRunner(db *sql.DB, driver string, migrationsDir string) (*MigrationRunner, error) {
 	dialect, err := gooseDialect(driver)
 	if err != nil {
@@ -69,9 +65,6 @@ func NewMigrationRunner(db *sql.DB, driver string, migrationsDir string) (*Migra
 	}, nil
 }
 
-// Up applies pending migrations.
-// If steps is 0, applies all pending migrations.
-// If steps > 0, applies at most that many migrations.
 func (r *MigrationRunner) Up(ctx context.Context, steps int) (*MigrationResult, error) {
 	var results []*goose.MigrationResult
 	var err error
@@ -105,9 +98,6 @@ func (r *MigrationRunner) Up(ctx context.Context, steps int) (*MigrationResult, 
 	}, nil
 }
 
-// Down rolls back migrations.
-// If steps is 0, rolls back the last migration.
-// If steps > 0, rolls back that many migrations.
 func (r *MigrationRunner) Down(ctx context.Context, steps int) (*MigrationResult, error) {
 	if steps <= 0 {
 		steps = 1
@@ -120,7 +110,8 @@ func (r *MigrationRunner) Down(ctx context.Context, steps int) (*MigrationResult
 			if i == 0 {
 				return nil, fmt.Errorf("rollback failed: %w", err)
 			}
-			// Partial rollback - return what we have
+			// Return partial results: user should see which migrations succeeded
+			// before the failure, enabling manual recovery decisions
 			break
 		}
 		if result == nil {
@@ -136,7 +127,6 @@ func (r *MigrationRunner) Down(ctx context.Context, steps int) (*MigrationResult
 	}, nil
 }
 
-// Status returns the status of all migrations.
 func (r *MigrationRunner) Status(ctx context.Context) ([]MigrationStatus, error) {
 	sources := r.provider.ListSources()
 	statuses, err := r.provider.Status(ctx)
@@ -161,12 +151,10 @@ func (r *MigrationRunner) Status(ctx context.Context) ([]MigrationStatus, error)
 	return result, nil
 }
 
-// GetMigrationsDir returns the path to the migrations directory for a given project and driver.
 func GetMigrationsDir(projectDir, driver string) string {
 	return filepath.Join(projectDir, "internal", "db", "migrations", driver)
 }
 
-// gooseDialect converts a tracks driver name to a goose dialect.
 func gooseDialect(driver string) (goose.Dialect, error) {
 	switch driver {
 	case "postgres":
@@ -178,7 +166,6 @@ func gooseDialect(driver string) (goose.Dialect, error) {
 	}
 }
 
-// gooseResultsToStatus converts goose migration results to our status type.
 func gooseResultsToStatus(results []*goose.MigrationResult) []MigrationStatus {
 	statuses := make([]MigrationStatus, 0, len(results))
 	for _, r := range results {

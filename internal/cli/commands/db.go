@@ -5,14 +5,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DBCommand represents the 'db' parent command for database management.
 type DBCommand struct {
 	detector      interfaces.ProjectDetector
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
 }
 
-// NewDBCommand creates a new instance of the 'db' command with injected dependencies.
 func NewDBCommand(
 	detector interfaces.ProjectDetector,
 	newRenderer RendererFactory,
@@ -25,7 +23,6 @@ func NewDBCommand(
 	}
 }
 
-// Command returns the cobra.Command for the 'db' subcommand.
 func (c *DBCommand) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "db",
