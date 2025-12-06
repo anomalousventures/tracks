@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/pressly/goose/v3"
 )
 
 func TestGetMigrationsDir(t *testing.T) {
@@ -159,6 +161,100 @@ func TestGooseResultsToStatus_EmptyResults(t *testing.T) {
 	}
 	if len(result) != 0 {
 		t.Errorf("expected empty result for empty input, got %d items", len(result))
+	}
+}
+
+func TestGooseResultsToStatus_WithNilElementsInSlice(t *testing.T) {
+	results := make([]*goose.MigrationResult, 3)
+	results[0] = nil
+	results[1] = nil
+	results[2] = nil
+
+	statuses := gooseResultsToStatus(results)
+	if len(statuses) != 0 {
+		t.Errorf("expected empty result for slice of nils, got %d items", len(statuses))
+	}
+}
+
+func TestGooseResultsToStatus_WithNilSource(t *testing.T) {
+	results := []*goose.MigrationResult{
+		{Source: nil},
+	}
+
+	statuses := gooseResultsToStatus(results)
+	if len(statuses) != 0 {
+		t.Errorf("expected empty result when Source is nil, got %d items", len(statuses))
+	}
+}
+
+func TestGooseResultsToStatus_WithValidResults(t *testing.T) {
+	results := []*goose.MigrationResult{
+		{
+			Source: &goose.Source{
+				Version: 1,
+				Path:    "/migrations/001_init.sql",
+			},
+		},
+		{
+			Source: &goose.Source{
+				Version: 2,
+				Path:    "/migrations/002_users.sql",
+			},
+		},
+	}
+
+	statuses := gooseResultsToStatus(results)
+	if len(statuses) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(statuses))
+	}
+
+	if statuses[0].Version != 1 {
+		t.Errorf("expected version 1, got %d", statuses[0].Version)
+	}
+	if statuses[0].Name != "001_init.sql" {
+		t.Errorf("expected name '001_init.sql', got %q", statuses[0].Name)
+	}
+	if !statuses[0].Applied {
+		t.Error("expected Applied to be true")
+	}
+
+	if statuses[1].Version != 2 {
+		t.Errorf("expected version 2, got %d", statuses[1].Version)
+	}
+	if statuses[1].Name != "002_users.sql" {
+		t.Errorf("expected name '002_users.sql', got %q", statuses[1].Name)
+	}
+}
+
+func TestGooseResultsToStatus_MixedNilAndValid(t *testing.T) {
+	results := []*goose.MigrationResult{
+		nil,
+		{
+			Source: &goose.Source{
+				Version: 1,
+				Path:    "/migrations/001_init.sql",
+			},
+		},
+		{Source: nil},
+		{
+			Source: &goose.Source{
+				Version: 2,
+				Path:    "/migrations/002_users.sql",
+			},
+		},
+		nil,
+	}
+
+	statuses := gooseResultsToStatus(results)
+	if len(statuses) != 2 {
+		t.Fatalf("expected 2 valid results, got %d", len(statuses))
+	}
+
+	if statuses[0].Version != 1 {
+		t.Errorf("expected first valid version 1, got %d", statuses[0].Version)
+	}
+	if statuses[1].Version != 2 {
+		t.Errorf("expected second valid version 2, got %d", statuses[1].Version)
 	}
 }
 

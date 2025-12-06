@@ -106,7 +106,10 @@ func (r *MigrationRunner) Down(ctx context.Context, steps int) (*MigrationResult
 			if i == 0 {
 				return nil, fmt.Errorf("rollback failed: %w", err)
 			}
-			break
+			return &MigrationResult{
+				Direction: "down",
+				Applied:   gooseResultsToStatus(results),
+			}, fmt.Errorf("rollback partially completed (%d of %d): %w", i, steps, err)
 		}
 		if result == nil {
 			break

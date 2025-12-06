@@ -39,6 +39,7 @@ func RunCLI(t *testing.T, args ...string) (stdout, stderr string, exitCode int, 
 }
 
 // RunCLIInDir executes the tracks binary from a specific directory.
+// If dir is empty, runs in the current working directory.
 // Returns stdout, stderr, exit code, and any error.
 func RunCLIInDir(t *testing.T, dir string, args ...string) (stdout, stderr string, exitCode int, err error) {
 	t.Helper()
