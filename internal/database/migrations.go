@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -35,7 +34,6 @@ func NewMigrationRunner(db *sql.DB, driver string, migrationsDir string) (*Migra
 		return nil, err
 	}
 
-	// Verify migrations directory exists
 	info, err := os.Stat(migrationsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -47,7 +45,6 @@ func NewMigrationRunner(db *sql.DB, driver string, migrationsDir string) (*Migra
 		return nil, fmt.Errorf("migrations path is not a directory: %s", migrationsDir)
 	}
 
-	// Create filesystem from the migrations directory
 	fsys := os.DirFS(migrationsDir)
 
 	provider, err := goose.NewProvider(
@@ -75,7 +72,6 @@ func (r *MigrationRunner) Up(ctx context.Context, steps int) (*MigrationResult, 
 		for appliedCount := 0; appliedCount < steps; appliedCount++ {
 			result, upErr := r.provider.UpByOne(ctx)
 			if upErr != nil {
-				// ErrNoNextVersion means no more migrations to apply
 				if upErr == goose.ErrNoNextVersion {
 					break
 				}
@@ -115,7 +111,6 @@ func (r *MigrationRunner) Down(ctx context.Context, steps int) (*MigrationResult
 			break
 		}
 		if result == nil {
-			// No more migrations to roll back
 			break
 		}
 		results = append(results, result)
@@ -180,6 +175,3 @@ func gooseResultsToStatus(results []*goose.MigrationResult) []MigrationStatus {
 	}
 	return statuses
 }
-
-// Ensure MigrationRunner uses the fs.FS interface correctly
-var _ fs.FS = os.DirFS(".")
