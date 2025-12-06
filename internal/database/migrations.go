@@ -106,8 +106,6 @@ func (r *MigrationRunner) Down(ctx context.Context, steps int) (*MigrationResult
 			if i == 0 {
 				return nil, fmt.Errorf("rollback failed: %w", err)
 			}
-			// Return partial results: user should see which migrations succeeded
-			// before the failure, enabling manual recovery decisions
 			break
 		}
 		if result == nil {
