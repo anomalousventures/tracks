@@ -152,3 +152,99 @@ func TestDBRollbackCommand_CommandDescriptions(t *testing.T) {
 		t.Error("Example missing --steps usage")
 	}
 }
+
+func setupDBRollbackWithMockedDB(t *testing.T) (*cobra.Command, *mocks.MockProjectDetector, *mocks.MockDatabaseManager, *mocks.MockRenderer) {
+	mockDetector := mocks.NewMockProjectDetector(t)
+	mockDBManager := mocks.NewMockDatabaseManager(t)
+	mockRenderer := mocks.NewMockRenderer(t)
+	mockRenderer.On("Title", mock.Anything).Return().Maybe()
+	mockRenderer.On("Section", mock.Anything).Return().Maybe()
+	mockRenderer.On("Flush").Return(nil).Maybe()
+
+	factory := func(*cobra.Command) interfaces.Renderer {
+		return mockRenderer
+	}
+	flusher := func(*cobra.Command, interfaces.Renderer) {
+		mockRenderer.Flush()
+	}
+	dbFactory := func(_ string) interfaces.DatabaseManager {
+		return mockDBManager
+	}
+
+	cmd := NewDBRollbackCommandWithFactory(mockDetector, factory, flusher, dbFactory)
+	cobraCmd := cmd.Command()
+	cobraCmd.SetOut(new(bytes.Buffer))
+	cobraCmd.SetErr(new(bytes.Buffer))
+
+	return cobraCmd, mockDetector, mockDBManager, mockRenderer
+}
+
+func TestDBRollbackCommand_LoadEnvError(t *testing.T) {
+	cobraCmd, mockDetector, mockDBManager, _ := setupDBRollbackWithMockedDB(t)
+
+	mockDetector.On("Detect", mock.Anything, ".").
+		Return(&interfaces.TracksProject{
+			Name:       "testproject",
+			ModulePath: "example.com/testproject",
+			DBDriver:   "postgres",
+		}, "/tmp/testproject", nil)
+
+	mockDBManager.On("LoadEnv", mock.Anything, "/tmp/testproject").
+		Return(errors.New("env file not found"))
+
+	err := cobraCmd.Execute()
+
+	if err == nil {
+		t.Fatal("expected error for LoadEnv failure")
+	}
+	if !strings.Contains(err.Error(), "failed to load environment") {
+		t.Errorf("expected 'failed to load environment' error, got: %v", err)
+	}
+}
+
+func TestDBRollbackCommand_EmptyDatabaseURL(t *testing.T) {
+	cobraCmd, mockDetector, mockDBManager, _ := setupDBRollbackWithMockedDB(t)
+
+	mockDetector.On("Detect", mock.Anything, ".").
+		Return(&interfaces.TracksProject{
+			Name:       "testproject",
+			ModulePath: "example.com/testproject",
+			DBDriver:   "postgres",
+		}, "/tmp/testproject", nil)
+
+	mockDBManager.On("LoadEnv", mock.Anything, "/tmp/testproject").Return(nil)
+	mockDBManager.On("GetDatabaseURL").Return("")
+
+	err := cobraCmd.Execute()
+
+	if err == nil {
+		t.Fatal("expected error for empty DATABASE_URL")
+	}
+	if !strings.Contains(err.Error(), "DATABASE_URL is not set") {
+		t.Errorf("expected 'DATABASE_URL is not set' error, got: %v", err)
+	}
+}
+
+func TestDBRollbackCommand_ConnectError(t *testing.T) {
+	cobraCmd, mockDetector, mockDBManager, _ := setupDBRollbackWithMockedDB(t)
+
+	mockDetector.On("Detect", mock.Anything, ".").
+		Return(&interfaces.TracksProject{
+			Name:       "testproject",
+			ModulePath: "example.com/testproject",
+			DBDriver:   "postgres",
+		}, "/tmp/testproject", nil)
+
+	mockDBManager.On("LoadEnv", mock.Anything, "/tmp/testproject").Return(nil)
+	mockDBManager.On("GetDatabaseURL").Return("postgres://localhost/test")
+	mockDBManager.On("Connect", mock.Anything).Return(nil, errors.New("connection refused"))
+
+	err := cobraCmd.Execute()
+
+	if err == nil {
+		t.Fatal("expected error for Connect failure")
+	}
+	if !strings.Contains(err.Error(), "failed to connect to database") {
+		t.Errorf("expected 'failed to connect to database' error, got: %v", err)
+	}
+}

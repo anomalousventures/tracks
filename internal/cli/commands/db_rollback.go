@@ -12,6 +12,7 @@ type DBRollbackCommand struct {
 	detector      interfaces.ProjectDetector
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
+	newDBManager  DatabaseManagerFactory
 }
 
 func NewDBRollbackCommand(
@@ -23,6 +24,22 @@ func NewDBRollbackCommand(
 		detector:      detector,
 		newRenderer:   newRenderer,
 		flushRenderer: flushRenderer,
+		newDBManager:  DefaultDatabaseManagerFactory(),
+	}
+}
+
+// NewDBRollbackCommandWithFactory creates a DBRollbackCommand with a custom factory for testing.
+func NewDBRollbackCommandWithFactory(
+	detector interfaces.ProjectDetector,
+	newRenderer RendererFactory,
+	flushRenderer RendererFlusher,
+	newDBManager DatabaseManagerFactory,
+) *DBRollbackCommand {
+	return &DBRollbackCommand{
+		detector:      detector,
+		newRenderer:   newRenderer,
+		flushRenderer: flushRenderer,
+		newDBManager:  newDBManager,
 	}
 }
 
@@ -68,7 +85,7 @@ func (c *DBRollbackCommand) runE(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Create database manager
-	dbManager := database.NewManager(project.DBDriver)
+	dbManager := c.newDBManager(project.DBDriver)
 	if err := dbManager.LoadEnv(ctx, projectDir); err != nil {
 		return fmt.Errorf("failed to load environment: %w", err)
 	}

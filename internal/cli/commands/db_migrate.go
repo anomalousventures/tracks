@@ -8,10 +8,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// DatabaseManagerFactory creates a DatabaseManager for a given driver.
+type DatabaseManagerFactory func(driver string) interfaces.DatabaseManager
+
+// DefaultDatabaseManagerFactory returns the production database manager factory.
+func DefaultDatabaseManagerFactory() DatabaseManagerFactory {
+	return func(driver string) interfaces.DatabaseManager {
+		return database.NewManager(driver)
+	}
+}
+
 type DBMigrateCommand struct {
 	detector      interfaces.ProjectDetector
 	newRenderer   RendererFactory
 	flushRenderer RendererFlusher
+	newDBManager  DatabaseManagerFactory
 }
 
 func NewDBMigrateCommand(
@@ -23,6 +34,22 @@ func NewDBMigrateCommand(
 		detector:      detector,
 		newRenderer:   newRenderer,
 		flushRenderer: flushRenderer,
+		newDBManager:  DefaultDatabaseManagerFactory(),
+	}
+}
+
+// NewDBMigrateCommandWithFactory creates a DBMigrateCommand with a custom factory for testing.
+func NewDBMigrateCommandWithFactory(
+	detector interfaces.ProjectDetector,
+	newRenderer RendererFactory,
+	flushRenderer RendererFlusher,
+	newDBManager DatabaseManagerFactory,
+) *DBMigrateCommand {
+	return &DBMigrateCommand{
+		detector:      detector,
+		newRenderer:   newRenderer,
+		flushRenderer: flushRenderer,
+		newDBManager:  newDBManager,
 	}
 }
 
@@ -72,7 +99,7 @@ func (c *DBMigrateCommand) runE(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Create database manager
-	dbManager := database.NewManager(project.DBDriver)
+	dbManager := c.newDBManager(project.DBDriver)
 	if err := dbManager.LoadEnv(ctx, projectDir); err != nil {
 		return fmt.Errorf("failed to load environment: %w", err)
 	}
@@ -92,7 +119,7 @@ func (c *DBMigrateCommand) runE(cmd *cobra.Command, _ []string) error {
 	return c.migrate(cmd, dbManager, migrationsDir, steps)
 }
 
-func (c *DBMigrateCommand) dryRun(cmd *cobra.Command, dbManager *database.Manager, migrationsDir string) error {
+func (c *DBMigrateCommand) dryRun(cmd *cobra.Command, dbManager interfaces.DatabaseManager, migrationsDir string) error {
 	r := c.newRenderer(cmd)
 	ctx := cmd.Context()
 	defer c.flushRenderer(cmd, r)
@@ -140,7 +167,7 @@ func (c *DBMigrateCommand) dryRun(cmd *cobra.Command, dbManager *database.Manage
 	return nil
 }
 
-func (c *DBMigrateCommand) migrate(cmd *cobra.Command, dbManager *database.Manager, migrationsDir string, steps int) error {
+func (c *DBMigrateCommand) migrate(cmd *cobra.Command, dbManager interfaces.DatabaseManager, migrationsDir string, steps int) error {
 	r := c.newRenderer(cmd)
 	ctx := cmd.Context()
 	defer c.flushRenderer(cmd, r)
