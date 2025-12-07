@@ -3,6 +3,7 @@ package database
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pressly/goose/v3"
@@ -95,7 +96,7 @@ func TestGooseDialect(t *testing.T) {
 				return
 			}
 			if tt.wantErr && tt.errSubstr != "" {
-				if err == nil || !contains(err.Error(), tt.errSubstr) {
+				if err == nil || !strings.Contains(err.Error(), tt.errSubstr) {
 					t.Errorf("gooseDialect() error = %v, want error containing %q", err, tt.errSubstr)
 				}
 			}
@@ -114,7 +115,7 @@ func TestNewMigrationRunner_MissingDirectory(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for missing migrations directory")
 	}
-	if !contains(err.Error(), "not found") {
+	if !strings.Contains(err.Error(), "not found") {
 		t.Errorf("expected 'not found' error, got: %v", err)
 	}
 }
@@ -130,7 +131,7 @@ func TestNewMigrationRunner_NotADirectory(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for path that is not a directory")
 	}
-	if !contains(err.Error(), "not a directory") {
+	if !strings.Contains(err.Error(), "not a directory") {
 		t.Errorf("expected 'not a directory' error, got: %v", err)
 	}
 }
@@ -142,7 +143,7 @@ func TestNewMigrationRunner_UnsupportedDriver(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for unsupported driver")
 	}
-	if !contains(err.Error(), "unsupported database driver") {
+	if !strings.Contains(err.Error(), "unsupported database driver") {
 		t.Errorf("expected 'unsupported database driver' error, got: %v", err)
 	}
 }
@@ -256,17 +257,4 @@ func TestGooseResultsToStatus_MixedNilAndValid(t *testing.T) {
 	if statuses[1].Version != 2 {
 		t.Errorf("expected second valid version 2, got %d", statuses[1].Version)
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstring(s, substr))
-}
-
-func containsSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
