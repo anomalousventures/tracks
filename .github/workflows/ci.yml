@@ -120,7 +120,7 @@ jobs:
 
       - name: Run integration tests
         shell: bash
-        run: go test -v -timeout $GO_TEST_TIMEOUT -coverprofile=coverage-integration.out -p 1 ./tests/integration
+        run: go test -v -tags integration -timeout $GO_TEST_TIMEOUT -coverprofile=coverage-integration.out -p 1 ./tests/integration
 
       - name: Upload integration test coverage
         uses: codecov/codecov-action@v5
@@ -238,6 +238,36 @@ jobs:
           echo "$output" | grep -q "Rolled back" || { echo "FAIL: Expected 'Rolled back' in output"; exit 1; }
 
           make migrate-up
+
+      - name: Test tracks db commands
+        if: matrix.driver == 'postgres'
+        run: |
+          cd testapp
+
+          # Test tracks db status
+          output=$(../bin/tracks db status 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "Applied" || { echo "FAIL: Expected 'Applied' in status output"; exit 1; }
+
+          # Test tracks db rollback
+          output=$(../bin/tracks db rollback 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "rolled back" || { echo "FAIL: Expected 'rolled back' in output"; exit 1; }
+
+          # Test tracks db status shows pending after rollback
+          output=$(../bin/tracks db status 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "Pending" || { echo "FAIL: Expected 'Pending' after rollback"; exit 1; }
+
+          # Test tracks db migrate
+          output=$(../bin/tracks db migrate 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "applied" || { echo "FAIL: Expected 'applied' in migrate output"; exit 1; }
+
+          # Test tracks db reset --force
+          output=$(../bin/tracks db reset --force 2>&1)
+          echo "$output"
+          echo "$output" | grep -q "Reset complete" || { echo "FAIL: Expected 'Reset complete' in reset output"; exit 1; }
 
       - name: Start dev server
         run: |

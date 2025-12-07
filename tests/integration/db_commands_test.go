@@ -114,6 +114,8 @@ func TestDBCommand_Help(t *testing.T) {
 	AssertContains(t, stdout, "Database management commands")
 	AssertContains(t, stdout, "migrate")
 	AssertContains(t, stdout, "rollback")
+	AssertContains(t, stdout, "status")
+	AssertContains(t, stdout, "reset")
 }
 
 func TestDBMigrate_NotInProject(t *testing.T) {
@@ -284,4 +286,110 @@ func TestDBMigrate_DryRun(t *testing.T) {
 	assert.True(t, strings.Contains(output, "Dry run") ||
 		strings.Contains(output, "No pending migrations"),
 		"should show dry run output or no pending migrations")
+}
+
+func TestDBStatus_NotInProject(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	stdout, stderr, _ := RunCLIInDirExpectFailure(t, tmpDir, "db", "status")
+
+	output := stdout + stderr
+	AssertContains(t, output, "not in a Tracks project directory")
+}
+
+func TestDBStatus_UnsupportedDriver_SQLite(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "sqlitestatusapp"
+
+	cfg := generator.ProjectConfig{
+		ProjectName:    projectName,
+		ModulePath:     "github.com/test/sqlitestatusapp",
+		DatabaseDriver: "sqlite3",
+		EnvPrefix:      "APP",
+		InitGit:        false,
+		OutputPath:     tmpDir,
+	}
+
+	gen := generator.NewProjectGenerator()
+	ctx := context.Background()
+	err := gen.Generate(ctx, cfg)
+	require.NoError(t, err, "project generation should succeed")
+
+	projectRoot := filepath.Join(tmpDir, projectName)
+
+	stdout, stderr, _ := RunCLIInDirExpectFailure(t, projectRoot, "db", "status")
+
+	output := stdout + stderr
+	AssertContains(t, output, "only supports Postgres")
+	AssertContains(t, output, "make migrate-status")
+}
+
+func TestDBReset_NotInProject(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	stdout, stderr, _ := RunCLIInDirExpectFailure(t, tmpDir, "db", "reset", "--force")
+
+	output := stdout + stderr
+	AssertContains(t, output, "not in a Tracks project directory")
+}
+
+func TestDBReset_UnsupportedDriver_SQLite(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "sqliteresetapp"
+
+	cfg := generator.ProjectConfig{
+		ProjectName:    projectName,
+		ModulePath:     "github.com/test/sqliteresetapp",
+		DatabaseDriver: "sqlite3",
+		EnvPrefix:      "APP",
+		InitGit:        false,
+		OutputPath:     tmpDir,
+	}
+
+	gen := generator.NewProjectGenerator()
+	ctx := context.Background()
+	err := gen.Generate(ctx, cfg)
+	require.NoError(t, err, "project generation should succeed")
+
+	projectRoot := filepath.Join(tmpDir, projectName)
+
+	stdout, stderr, _ := RunCLIInDirExpectFailure(t, projectRoot, "db", "reset", "--force")
+
+	output := stdout + stderr
+	AssertContains(t, output, "only supports Postgres")
+	AssertContains(t, output, "make migrate-reset")
+}
+
+func TestDBStatus_PostgresProject(t *testing.T) {
+	projectRoot, cleanup := setupPostgresProject(t, "pgstatustest")
+	defer cleanup()
+
+	t.Log("Running tracks db migrate first...")
+	stdout, stderr := RunCLIInDirExpectSuccess(t, projectRoot, "db", "migrate")
+	t.Logf("Migrate output: %s", stdout+stderr)
+
+	t.Log("Running tracks db status...")
+	stdout, stderr = RunCLIInDirExpectSuccess(t, projectRoot, "db", "status")
+
+	output := stdout + stderr
+	assert.True(t, strings.Contains(output, "Applied") ||
+		strings.Contains(output, "applied"),
+		"should show applied migrations")
+}
+
+func TestDBReset_PostgresProject(t *testing.T) {
+	projectRoot, cleanup := setupPostgresProject(t, "pgresettest")
+	defer cleanup()
+
+	t.Log("Running tracks db migrate first...")
+	stdout, stderr := RunCLIInDirExpectSuccess(t, projectRoot, "db", "migrate")
+	t.Logf("Migrate output: %s", stdout+stderr)
+
+	t.Log("Running tracks db reset --force...")
+	stdout, stderr = RunCLIInDirExpectSuccess(t, projectRoot, "db", "reset", "--force")
+
+	output := stdout + stderr
+	assert.True(t, strings.Contains(output, "Reset complete") ||
+		strings.Contains(output, "applied"),
+		"should report reset completion")
 }
