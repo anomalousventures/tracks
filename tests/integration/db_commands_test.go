@@ -7,6 +7,7 @@ package integration
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,9 +16,31 @@ import (
 	"time"
 
 	"github.com/anomalousventures/tracks/internal/generator"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// waitForPostgres attempts to connect to Postgres with retries until successful
+// or timeout is reached. Returns an error if connection cannot be established.
+func waitForPostgres(t *testing.T, dbURL string, maxRetries int) error {
+	t.Helper()
+
+	for i := 0; i < maxRetries; i++ {
+		db, err := sql.Open("postgres", dbURL)
+		if err == nil {
+			err = db.Ping()
+			db.Close()
+			if err == nil {
+				t.Logf("Postgres ready after %d attempt(s)", i+1)
+				return nil
+			}
+		}
+		t.Logf("Waiting for Postgres (attempt %d/%d)...", i+1, maxRetries)
+		time.Sleep(1 * time.Second)
+	}
+	return fmt.Errorf("postgres not ready after %d attempts", maxRetries)
+}
 
 // setupPostgresProject generates a Postgres project, starts Docker, and returns
 // the project root path along with a cleanup function. Skips the test if not in CI
@@ -70,11 +93,13 @@ func setupPostgresProject(t *testing.T, projectName string) (projectRoot string,
 		_ = composeDown.Run()
 	}
 
-	t.Log("Waiting for postgres to be ready...")
-	time.Sleep(5 * time.Second)
-
 	dbURL := fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable",
 		projectName, projectName, projectName)
+
+	t.Log("Waiting for postgres to be ready...")
+	err = waitForPostgres(t, dbURL, 30)
+	require.NoError(t, err, "postgres should become ready")
+
 	envContent := fmt.Sprintf("DATABASE_URL=%s\n", dbURL)
 	envPath := filepath.Join(projectRoot, ".env")
 	err = os.WriteFile(envPath, []byte(envContent), 0644)
