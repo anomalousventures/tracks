@@ -35,12 +35,23 @@ func init() {
 // Returns stdout, stderr, exit code, and any error.
 func RunCLI(t *testing.T, args ...string) (stdout, stderr string, exitCode int, err error) {
 	t.Helper()
+	return RunCLIInDir(t, "", args...)
+}
+
+// RunCLIInDir executes the tracks binary from a specific directory.
+// If dir is empty, runs in the current working directory.
+// Returns stdout, stderr, exit code, and any error.
+func RunCLIInDir(t *testing.T, dir string, args ...string) (stdout, stderr string, exitCode int, err error) {
+	t.Helper()
 
 	if _, err := os.Stat(binaryPath); os.IsNotExist(err) {
 		t.Fatalf("tracks binary not found at %s. Run 'make build' first.", binaryPath)
 	}
 
 	cmd := exec.Command(binaryPath, args...)
+	if dir != "" {
+		cmd.Dir = dir
+	}
 
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
@@ -65,11 +76,17 @@ func RunCLI(t *testing.T, args ...string) (stdout, stderr string, exitCode int, 
 // Returns stdout and stderr. Fails the test if exit code is non-zero.
 func RunCLIExpectSuccess(t *testing.T, args ...string) (stdout, stderr string) {
 	t.Helper()
+	return RunCLIInDirExpectSuccess(t, "", args...)
+}
 
-	stdout, stderr, exitCode, err := RunCLI(t, args...)
+// RunCLIInDirExpectSuccess runs the CLI from a directory and expects a zero exit code.
+func RunCLIInDirExpectSuccess(t *testing.T, dir string, args ...string) (stdout, stderr string) {
+	t.Helper()
+
+	stdout, stderr, exitCode, err := RunCLIInDir(t, dir, args...)
 	if exitCode != 0 {
-		t.Fatalf("CLI failed with exit code %d\nArgs: %v\nStdout: %s\nStderr: %s\nError: %v",
-			exitCode, args, stdout, stderr, err)
+		t.Fatalf("CLI failed with exit code %d\nDir: %s\nArgs: %v\nStdout: %s\nStderr: %s\nError: %v",
+			exitCode, dir, args, stdout, stderr, err)
 	}
 
 	return stdout, stderr
@@ -79,11 +96,17 @@ func RunCLIExpectSuccess(t *testing.T, args ...string) (stdout, stderr string) {
 // Returns stdout, stderr, and exit code. Fails the test if exit code is zero.
 func RunCLIExpectFailure(t *testing.T, args ...string) (stdout, stderr string, exitCode int) {
 	t.Helper()
+	return RunCLIInDirExpectFailure(t, "", args...)
+}
 
-	stdout, stderr, exitCode, _ = RunCLI(t, args...)
+// RunCLIInDirExpectFailure runs the CLI from a directory and expects a non-zero exit code.
+func RunCLIInDirExpectFailure(t *testing.T, dir string, args ...string) (stdout, stderr string, exitCode int) {
+	t.Helper()
+
+	stdout, stderr, exitCode, _ = RunCLIInDir(t, dir, args...)
 	if exitCode == 0 {
-		t.Fatalf("CLI succeeded but expected failure\nArgs: %v\nStdout: %s\nStderr: %s",
-			args, stdout, stderr)
+		t.Fatalf("CLI succeeded but expected failure\nDir: %s\nArgs: %v\nStdout: %s\nStderr: %s",
+			dir, args, stdout, stderr)
 	}
 
 	return stdout, stderr, exitCode
