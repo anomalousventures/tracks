@@ -246,30 +246,56 @@ jobs:
         if: matrix.driver == 'postgres'
         run: |
           cd testapp
+          set +e
 
           echo "Testing: tracks db status"
           output=$(../bin/tracks db status 2>&1)
+          status=$?
           echo "$output"
+          if [ $status -ne 0 ]; then
+            echo "FAIL: tracks db status exited with code $status"
+            exit 1
+          fi
           echo "$output" | grep -q "applied" || { echo "FAIL: Expected 'applied' in status output"; exit 1; }
 
           echo "Testing: tracks db rollback"
           output=$(../bin/tracks db rollback 2>&1)
+          status=$?
           echo "$output"
+          if [ $status -ne 0 ]; then
+            echo "FAIL: tracks db rollback exited with code $status"
+            exit 1
+          fi
           echo "$output" | grep -q "rolled back" || { echo "FAIL: Expected 'rolled back' in output"; exit 1; }
 
           echo "Testing: tracks db status (should show pending)"
           output=$(../bin/tracks db status 2>&1)
+          status=$?
           echo "$output"
+          if [ $status -ne 0 ]; then
+            echo "FAIL: tracks db status exited with code $status"
+            exit 1
+          fi
           echo "$output" | grep -q "pending" || { echo "FAIL: Expected 'pending' after rollback"; exit 1; }
 
           echo "Testing: tracks db migrate"
           output=$(../bin/tracks db migrate 2>&1)
+          status=$?
           echo "$output"
+          if [ $status -ne 0 ]; then
+            echo "FAIL: tracks db migrate exited with code $status"
+            exit 1
+          fi
           echo "$output" | grep -q "applied" || { echo "FAIL: Expected 'applied' in migrate output"; exit 1; }
 
           echo "Testing: tracks db reset --force"
           output=$(../bin/tracks db reset --force 2>&1)
+          status=$?
           echo "$output"
+          if [ $status -ne 0 ]; then
+            echo "FAIL: tracks db reset exited with code $status"
+            exit 1
+          fi
           echo "$output" | grep -q "Reset complete" || { echo "FAIL: Expected 'Reset complete' in output"; exit 1; }
 
           echo "All tracks db commands passed!"
