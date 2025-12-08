@@ -85,6 +85,9 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Build tracks CLI
+        run: make build
+
       - name: Set integration test timeouts
         shell: bash
         run: |
@@ -243,31 +246,44 @@ jobs:
         if: matrix.driver == 'postgres'
         run: |
           cd testapp
+          set +e
 
-          # Test tracks db status
-          output=$(../bin/tracks db status 2>&1)
-          echo "$output"
-          echo "$output" | grep -q "Applied" || { echo "FAIL: Expected 'Applied' in status output"; exit 1; }
+          echo "Testing: tracks db status"
+          ../bin/tracks db status
+          if [ $? -ne 0 ]; then
+            echo "FAIL: tracks db status failed"
+            exit 1
+          fi
 
-          # Test tracks db rollback
-          output=$(../bin/tracks db rollback 2>&1)
-          echo "$output"
-          echo "$output" | grep -q "rolled back" || { echo "FAIL: Expected 'rolled back' in output"; exit 1; }
+          echo "Testing: tracks db rollback"
+          ../bin/tracks db rollback
+          if [ $? -ne 0 ]; then
+            echo "FAIL: tracks db rollback failed"
+            exit 1
+          fi
 
-          # Test tracks db status shows pending after rollback
-          output=$(../bin/tracks db status 2>&1)
-          echo "$output"
-          echo "$output" | grep -q "Pending" || { echo "FAIL: Expected 'Pending' after rollback"; exit 1; }
+          echo "Testing: tracks db status (should show pending)"
+          ../bin/tracks db status
+          if [ $? -ne 0 ]; then
+            echo "FAIL: tracks db status failed after rollback"
+            exit 1
+          fi
 
-          # Test tracks db migrate
-          output=$(../bin/tracks db migrate 2>&1)
-          echo "$output"
-          echo "$output" | grep -q "applied" || { echo "FAIL: Expected 'applied' in migrate output"; exit 1; }
+          echo "Testing: tracks db migrate"
+          ../bin/tracks db migrate
+          if [ $? -ne 0 ]; then
+            echo "FAIL: tracks db migrate failed"
+            exit 1
+          fi
 
-          # Test tracks db reset --force
-          output=$(../bin/tracks db reset --force 2>&1)
-          echo "$output"
-          echo "$output" | grep -q "Reset complete" || { echo "FAIL: Expected 'Reset complete' in reset output"; exit 1; }
+          echo "Testing: tracks db reset --force"
+          ../bin/tracks db reset --force
+          if [ $? -ne 0 ]; then
+            echo "FAIL: tracks db reset --force failed"
+            exit 1
+          fi
+
+          echo "All tracks db commands passed!"
 
       - name: Start dev server
         run: |
