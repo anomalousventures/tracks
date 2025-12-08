@@ -24,7 +24,7 @@ type MigrationStatus struct {
 }
 
 type MigrationResult struct {
-	Direction string // "up" or "down"
+	Direction string
 	Applied   []MigrationStatus
 }
 

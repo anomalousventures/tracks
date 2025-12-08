@@ -155,7 +155,7 @@ This action will:
 
 Are you sure? (y/N): `
 
-	fmt.Fprintf(cmd.OutOrStdout(), warning, dbURL)
+	fmt.Fprintf(cmd.OutOrStdout(), warning, database.SanitizeURL(dbURL))
 
 	reader := bufio.NewReader(cmd.InOrStdin())
 	response, err := reader.ReadString('\n')

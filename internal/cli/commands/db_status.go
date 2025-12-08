@@ -112,7 +112,7 @@ func (c *DBStatusCommand) runE(cmd *cobra.Command, _ []string) error {
 	}
 
 	var body string
-	body += fmt.Sprintf("Database: %s\n", dbURL)
+	body += fmt.Sprintf("Database: %s\n", database.SanitizeURL(dbURL))
 	body += fmt.Sprintf("Driver: %s\n\n", project.DBDriver)
 
 	if len(applied) > 0 {
