@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// SanitizeURL masks credentials in a database URL for safe display.
 func SanitizeURL(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -15,7 +14,6 @@ func SanitizeURL(rawURL string) string {
 		return rawURL
 	}
 
-	// Rebuild URL with masked credentials
 	var result strings.Builder
 	result.WriteString(u.Scheme)
 	result.WriteString("://")
