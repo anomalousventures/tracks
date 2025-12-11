@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -28,6 +29,10 @@ func TestTemplUIInitDuringGeneration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" && tt.databaseDriver != "sqlite3" {
+				t.Skip("skipping non-sqlite3 driver on Windows (slow go mod download)")
+			}
+
 			tmpDir := t.TempDir()
 			projectName := "templui-init-test"
 
@@ -112,6 +117,10 @@ func TestTemplUIPagesRender(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" && tt.databaseDriver != "sqlite3" {
+				t.Skip("skipping non-sqlite3 driver on Windows (slow go mod download)")
+			}
+
 			tmpDir := t.TempDir()
 			projectName := "templui-render-test"
 
