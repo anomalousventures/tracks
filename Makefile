@@ -1,6 +1,13 @@
 # Makefile for Tracks Framework
 # This provides convenient commands for development and CI
 
+# Detect Windows for binary extension
+ifeq ($(OS),Windows_NT)
+    BINARY_EXT := .exe
+else
+    BINARY_EXT :=
+endif
+
 # Version information
 VERSION := $(shell git --no-pager describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT := $(shell git --no-pager rev-parse --short HEAD 2>/dev/null || echo "none")
@@ -179,12 +186,12 @@ test-gen-app-full: test-gen-app test-gen-app-validate ## Full workflow: generate
 build: ## Build tracks CLI
 	@echo "Building tracks..."
 	@mkdir -p bin
-	@go build $(LDFLAGS) -o bin/tracks ./cmd/tracks
+	@go build $(LDFLAGS) -o bin/tracks$(BINARY_EXT) ./cmd/tracks
 
 build-mcp: ## Build tracks-mcp server
 	@echo "Building tracks-mcp..."
 	@mkdir -p bin
-	@go build $(LDFLAGS) -o bin/tracks-mcp ./cmd/tracks-mcp
+	@go build $(LDFLAGS) -o bin/tracks-mcp$(BINARY_EXT) ./cmd/tracks-mcp
 
 build-all: build build-mcp ## Build all binaries for current platform
 
