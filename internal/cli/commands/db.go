@@ -54,6 +54,12 @@ This command must be run from within a Tracks project (containing .tracks.yaml).
 	rollbackCmd := NewDBRollbackCommand(c.detector, c.newRenderer, c.flushRenderer)
 	cmd.AddCommand(rollbackCmd.Command())
 
+	statusCmd := NewDBStatusCommand(c.detector, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(statusCmd.Command())
+
+	resetCmd := NewDBResetCommand(c.detector, c.newRenderer, c.flushRenderer)
+	cmd.AddCommand(resetCmd.Command())
+
 	return cmd
 }
 
