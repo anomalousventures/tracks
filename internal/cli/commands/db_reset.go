@@ -72,7 +72,10 @@ For SQLite/go-libsql projects, use: make migrate-reset`,
 func (c *DBResetCommand) runE(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	force, _ := cmd.Flags().GetBool("force")
+	force, err := cmd.Flags().GetBool("force")
+	if err != nil {
+		return fmt.Errorf("failed to read force flag: %w", err)
+	}
 
 	project, projectDir, err := c.detector.Detect(ctx, ".")
 	if err != nil {

@@ -68,7 +68,8 @@ func TestCLINewCommandMissingArg(t *testing.T) {
 }
 
 func TestCLINewCommandWithArg(t *testing.T) {
-	stdout, stderr := RunCLIExpectSuccess(t, "new", "test-project")
+	tmpDir := t.TempDir()
+	stdout, stderr := RunCLIInDirExpectSuccess(t, tmpDir, "new", "test-project")
 
 	output := stdout + stderr
 	AssertContains(t, output, "test-project")
@@ -157,7 +158,8 @@ func TestCLIJSONOutput(t *testing.T) {
 	})
 
 	t.Run("json flag with new command", func(t *testing.T) {
-		stdout, _ := RunCLIExpectSuccess(t, "--json", "new", "testapp")
+		tmpDir := t.TempDir()
+		stdout, _ := RunCLIInDirExpectSuccess(t, tmpDir, "--json", "new", "testapp")
 
 		AssertJSONOutput(t, stdout)
 		AssertContains(t, stdout, "Creating new Tracks application")
