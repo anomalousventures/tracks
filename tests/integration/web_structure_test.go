@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/anomalousventures/tracks/internal/generator"
@@ -144,6 +145,9 @@ func TestWebDirectoryStructure(t *testing.T) {
 func TestWebDirectoryWithDifferentProjectNames(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
+	}
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping multi-project test on Windows (slow go mod download)")
 	}
 
 	testCases := []struct {

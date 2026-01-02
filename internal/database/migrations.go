@@ -24,7 +24,7 @@ type MigrationStatus struct {
 }
 
 type MigrationResult struct {
-	Direction string // "up" or "down"
+	Direction string
 	Applied   []MigrationStatus
 }
 
@@ -145,6 +145,23 @@ func (r *MigrationRunner) Status(ctx context.Context) ([]MigrationStatus, error)
 	}
 
 	return result, nil
+}
+
+func (r *MigrationRunner) Reset(ctx context.Context) (*MigrationResult, error) {
+	_, err := r.provider.DownTo(ctx, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to roll back migrations: %w", err)
+	}
+
+	results, err := r.provider.Up(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to re-apply migrations: %w", err)
+	}
+
+	return &MigrationResult{
+		Direction: "reset",
+		Applied:   gooseResultsToStatus(results),
+	}, nil
 }
 
 func GetMigrationsDir(projectDir, driver string) string {
