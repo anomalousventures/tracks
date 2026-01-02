@@ -30,9 +30,19 @@ func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
+{{- if eq .DBDriver "postgres"}}
 	db.SetMaxOpenConns(cfg.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+{{- else}}
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
+	if _, err := db.ExecContext(ctx, "PRAGMA journal_mode=WAL"); err != nil {
+		return nil, fmt.Errorf("enable WAL mode: %w", err)
+	}
+{{- end}}
 
 	pingCtx, cancel := context.WithTimeout(ctx, cfg.ConnectTimeout)
 	defer cancel()

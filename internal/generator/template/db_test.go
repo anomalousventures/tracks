@@ -40,7 +40,12 @@ func TestDBTemplate(t *testing.T) {
 			assert.Contains(t, result, "package db", "should have package db")
 			assert.Contains(t, result, "func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error)", "should have New function with correct signature")
 			assert.Contains(t, result, "db.PingContext(", "should call PingContext to verify connection")
-			assert.Contains(t, result, "db.SetMaxOpenConns(cfg.MaxOpenConns)", "should configure connection pool")
+			if tt.driver == "postgres" {
+				assert.Contains(t, result, "db.SetMaxOpenConns(cfg.MaxOpenConns)", "postgres should use configurable connection pool")
+			} else {
+				assert.Contains(t, result, "db.SetMaxOpenConns(1)", "SQLite should use single connection")
+				assert.Contains(t, result, `PRAGMA journal_mode=WAL`, "SQLite should enable WAL mode")
+			}
 			assert.NotEmpty(t, result, "template should render")
 		})
 	}
@@ -199,6 +204,7 @@ func TestDBConnectionPoolConfiguration(t *testing.T) {
 	poolSettings := []string{
 		"db.SetMaxOpenConns(cfg.MaxOpenConns)",
 		"db.SetMaxIdleConns(cfg.MaxIdleConns)",
+		"db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)",
 		"db.SetConnMaxLifetime(cfg.ConnMaxLifetime)",
 	}
 
