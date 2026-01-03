@@ -12,6 +12,15 @@ Quick reference for all Tracks CLI commands.
 
 Create a new Tracks application with production-ready structure and database support.
 
+### [tracks db](db.md)
+
+Manage database migrations. Subcommands:
+
+- `tracks db migrate` - Apply pending migrations
+- `tracks db rollback` - Roll back last migration
+- `tracks db status` - Show migration status
+- `tracks db reset` - Reset database (rollback all, reapply)
+
 ### [tracks version](version.md)
 
 Display version, commit, and build information.

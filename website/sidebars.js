@@ -24,16 +24,36 @@ const sidebars = {
       type: 'category',
       label: 'Guides',
       items: [
-        'guides/architecture-overview',
-        'guides/example-walkthrough',
-        'guides/layer-guide',
-        'guides/routing-guide',
-        'guides/middleware',
-        'guides/troubleshooting-routing',
-        'guides/patterns',
-        'guides/testing',
-        'guides/development-workflow',
-        'guides/caching',
+        {
+          type: 'category',
+          label: 'Architecture',
+          items: ['guides/architecture-overview', 'guides/layer-guide', 'guides/patterns'],
+        },
+        {
+          type: 'category',
+          label: 'Routing & HTTP',
+          items: ['guides/routing-guide', 'guides/middleware', 'guides/troubleshooting-routing'],
+        },
+        {
+          type: 'category',
+          label: 'Database',
+          items: [
+            'guides/database-setup',
+            'guides/migrations',
+            'guides/sqlc-queries',
+            'guides/database-troubleshooting',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Development',
+          items: [
+            'guides/example-walkthrough',
+            'guides/testing',
+            'guides/development-workflow',
+            'guides/caching',
+          ],
+        },
       ],
     },
     {
@@ -45,7 +65,7 @@ const sidebars = {
         {
           type: 'category',
           label: 'Commands',
-          items: ['cli/commands', 'cli/new', 'cli/version', 'cli/help'],
+          items: ['cli/commands', 'cli/new', 'cli/db', 'cli/version', 'cli/help'],
         },
       ],
     },
