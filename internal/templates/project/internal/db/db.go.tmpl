@@ -38,10 +38,12 @@ func New(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error) {
 {{- else}}
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
+{{- if eq .DBDriver "sqlite3"}}
 
 	if _, err := db.ExecContext(ctx, "PRAGMA journal_mode=WAL"); err != nil {
 		return nil, fmt.Errorf("enable WAL mode: %w", err)
 	}
+{{- end}}
 {{- end}}
 
 	pingCtx, cancel := context.WithTimeout(ctx, cfg.ConnectTimeout)

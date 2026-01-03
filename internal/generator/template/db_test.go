@@ -43,8 +43,13 @@ func TestDBTemplate(t *testing.T) {
 			if tt.driver == "postgres" {
 				assert.Contains(t, result, "db.SetMaxOpenConns(cfg.MaxOpenConns)", "postgres should use configurable connection pool")
 			} else {
-				assert.Contains(t, result, "db.SetMaxOpenConns(1)", "SQLite should use single connection")
-				assert.Contains(t, result, `PRAGMA journal_mode=WAL`, "SQLite should enable WAL mode")
+				assert.Contains(t, result, "db.SetMaxOpenConns(1)", "SQLite/libsql should use single connection")
+			}
+			if tt.driver == "sqlite3" {
+				assert.Contains(t, result, `PRAGMA journal_mode=WAL`, "sqlite3 should enable WAL mode")
+			}
+			if tt.driver == "go-libsql" {
+				assert.NotContains(t, result, `PRAGMA`, "go-libsql should not use PRAGMA commands")
 			}
 			assert.NotEmpty(t, result, "template should render")
 		})
