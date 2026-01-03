@@ -124,7 +124,8 @@ func TestConfigDefaults(t *testing.T) {
 		`v.SetDefault("database.connect_timeout", "10s")`,
 		`v.SetDefault("database.max_open_conns", 25)`,
 		`v.SetDefault("database.max_idle_conns", 5)`,
-		`v.SetDefault("database.conn_max_lifetime", "5m")`,
+		`v.SetDefault("database.conn_max_idle_time", "5m")`,
+		`v.SetDefault("database.conn_max_lifetime", "1h")`,
 		`v.SetDefault("logging.level", "info")`,
 		`v.SetDefault("logging.format", "json")`,
 	})
