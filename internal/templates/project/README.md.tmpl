@@ -82,6 +82,63 @@ make mocks     # Generate mocks from interfaces
 make sqlc      # Generate type-safe SQL code
 ```
 
+## Database
+
+{{- if eq .DBDriver "postgres"}}
+
+This project uses **PostgreSQL** for data storage.
+{{- else if eq .DBDriver "go-libsql"}}
+
+This project uses **go-libsql** (Turso) for data storage.
+{{- else}}
+
+This project uses **SQLite3** for data storage.
+{{- end}}
+
+### Quick Start
+
+```bash
+# Apply migrations
+make migrate-up
+
+# Check migration status
+tracks db status
+
+# Create a new migration
+goose -dir db/migrations create add_users_table sql
+```
+
+### Schema Changes
+
+1. Create migration: `goose -dir db/migrations create <name> sql`
+2. Write SQL in the generated file
+3. Apply with `make migrate-up`
+4. Regenerate SQLC: `make sqlc`
+
+### Writing Queries
+
+SQL queries live in `db/queries/`. SQLC generates type-safe Go code from annotated SQL:
+
+```sql
+-- name: GetUser :one
+SELECT * FROM users WHERE id = ? LIMIT 1;
+```
+
+See the [SQLC Queries Guide](https://go-tracks.io/docs/guides/sqlc-queries) for patterns.
+
+### Database Commands
+
+```bash
+make migrate-up       # Apply pending migrations
+make migrate-down     # Rollback last migration
+make migrate-status   # Show migration status
+tracks db migrate     # Apply via CLI
+tracks db rollback    # Rollback via CLI
+tracks db status      # Status via CLI
+```
+
+For setup details and troubleshooting, see the [Database Setup Guide](https://go-tracks.io/docs/guides/database-setup).
+
 ## Development Workflow
 
 The `make dev` command uses [Air](https://github.com/air-verse/air) for live reload:
