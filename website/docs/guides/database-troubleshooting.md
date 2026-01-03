@@ -50,19 +50,16 @@ UPDATE goose_db_version SET is_applied = true WHERE version_id = <version>;
 ls -la internal/db/migrations/
 ```
 
-## SQLite Issues
+## SQLite3 Issues
 
 ### Database Is Locked
 
-Multiple processes trying to write. Tracks mitigates this with:
+Multiple processes trying to write. Tracks mitigates this with single-connection mode and WAL (enabled automatically).
 
-```go
-db.SetMaxOpenConns(1)  // Single connection
-```
+If still experiencing locks, add busy timeout:
 
 ```sql
-PRAGMA journal_mode=WAL;    -- Better concurrency
-PRAGMA busy_timeout=5000;   -- Wait before failing
+PRAGMA busy_timeout=5000;   -- Wait 5s before failing
 ```
 
 ### Disk I/O Error

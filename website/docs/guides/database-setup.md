@@ -64,18 +64,18 @@ db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime) // default: 5m
 db.SetConnMaxLifetime(cfg.ConnMaxLifetime) // default: 1h
 ```
 
-### SQLite
+### SQLite3
 
-Single connection with WAL mode for consistency:
+Single connection with WAL mode (enabled automatically):
 
 ```go
 db.SetMaxOpenConns(1)
 db.SetMaxIdleConns(1)
 ```
 
-```sql
-PRAGMA journal_mode=WAL
-```
+### go-libsql
+
+Connects via HTTP to Turso—connection pooling is managed server-side. Local instances use the same single-connection pattern as SQLite3 but without WAL mode (Turso handles durability).
 
 ## Local Development
 
