@@ -105,19 +105,19 @@ make migrate-up
 tracks db status
 
 # Create a new migration
-goose -dir db/migrations create add_users_table sql
+goose -dir internal/db/migrations create add_users_table sql
 ```
 
 ### Schema Changes
 
-1. Create migration: `goose -dir db/migrations create <name> sql`
+1. Create migration: `goose -dir internal/db/migrations create <name> sql`
 2. Write SQL in the generated file
 3. Apply with `make migrate-up`
 4. Regenerate SQLC: `make sqlc`
 
 ### Writing Queries
 
-SQL queries live in `db/queries/`. SQLC generates type-safe Go code from annotated SQL:
+SQL queries live in `internal/db/queries/`. SQLC generates type-safe Go code from annotated SQL:
 
 ```sql
 -- name: GetUser :one
